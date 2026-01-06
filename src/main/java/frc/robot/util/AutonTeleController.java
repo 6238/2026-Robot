@@ -1,0 +1,70 @@
+package frc.robot.util;
+
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.path.PathConstraints;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.Constants.PathfindingConfig;
+import java.util.function.DoubleSupplier;
+
+public class AutonTeleController {
+  DoubleSupplier xSupplier;
+  DoubleSupplier ySupplier;
+  DoubleSupplier turnSupplier;
+
+  public AutonTeleController(
+      DoubleSupplier xSupplier, DoubleSupplier ySupplier, DoubleSupplier turnSupplier) {
+    this.xSupplier = xSupplier;
+    this.ySupplier = ySupplier;
+    this.turnSupplier = turnSupplier;
+  }
+
+  public boolean isDriverInputting() {
+    return Math.abs(xSupplier.getAsDouble()) > PathfindingConfig.DRIVE_RESUME_DEADBAND
+        && Math.abs(xSupplier.getAsDouble()) > PathfindingConfig.DRIVE_RESUME_DEADBAND
+        && Math.abs(xSupplier.getAsDouble()) > PathfindingConfig.DRIVE_RESUME_DEADBAND;
+  }
+
+  public Command GoToPose(Pose2d targetPose) {
+    PathConstraints constraints =
+        new PathConstraints(3.0, 3.0, Units.degreesToRadians(360), Units.degreesToRadians(540));
+
+    Command pathfindingCommand = AutoBuilder.pathfindToPose(targetPose, constraints, 0.0);
+
+    return pathfindingCommand;
+  }
+
+  public Command GoToPose(Pose2d targetPose, double maxSpeed) {
+    PathConstraints constraints =
+        new PathConstraints(
+            maxSpeed, 3.0, Units.degreesToRadians(360), Units.degreesToRadians(540));
+
+    Command pathfindingCommand = AutoBuilder.pathfindToPose(targetPose, constraints, 0.0);
+
+    return pathfindingCommand;
+  }
+
+  public Command GoToPose(Pose2d targetPose, double maxSpeed, double targetEndVelocity) {
+    PathConstraints constraints =
+        new PathConstraints(
+            maxSpeed, 3.0, Units.degreesToRadians(360), Units.degreesToRadians(540));
+
+    Command pathfindingCommand =
+        AutoBuilder.pathfindToPose(targetPose, constraints, targetEndVelocity);
+
+    return pathfindingCommand;
+  }
+
+  public Command GoToPose(
+      Pose2d targetPose, double maxSpeed, double targetEndVelocity, double maxAcceleration) {
+    PathConstraints constraints =
+        new PathConstraints(
+            maxSpeed, maxAcceleration, Units.degreesToRadians(360), Units.degreesToRadians(540));
+
+    Command pathfindingCommand =
+        AutoBuilder.pathfindToPose(targetPose, constraints, targetEndVelocity);
+
+    return pathfindingCommand;
+  }
+}
