@@ -3,7 +3,9 @@
 ## Installation
 
 To work on the Robot Codebase simply:
-```git clone https://github.com/6238/2026-Robot```
+```
+git clone https://github.com/6238/2026-Robot
+```
 
 After cloning the robot code, if you want to work on the Jetson Object Detection code run:
 ```
