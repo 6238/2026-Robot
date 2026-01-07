@@ -2,7 +2,7 @@
 
 ## Installation
 
-To work on the Robot Codebase simply:
+To work on the Robot Codebase simply run:
 ```
 git clone https://github.com/6238/2026-Robot
 ```
