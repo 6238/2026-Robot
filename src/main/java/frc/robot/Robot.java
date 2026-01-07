@@ -83,10 +83,10 @@ public class Robot extends LoggedRobot {
     // Check for valid swerve config
     var modules =
         new SwerveModuleConstants[] {
-          TunerConstants.FrontLeft,
-          TunerConstants.FrontRight,
-          TunerConstants.BackLeft,
-          TunerConstants.BackRight
+          RobotIdentity.getTunerConstants().FrontLeft,
+          RobotIdentity.getTunerConstants().FrontRight,
+          RobotIdentity.getTunerConstants().BackLeft,
+          RobotIdentity.getTunerConstants().BackRight
         };
     for (var constants : modules) {
       if (constants.DriveMotorType != DriveMotorArrangement.TalonFX_Integrated
