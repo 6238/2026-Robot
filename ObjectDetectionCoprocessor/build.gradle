@@ -1,0 +1,51 @@
+plugins {
+    id 'base'
+}
+
+def buildDir = layout.projectDirectory.dir("build-gradle")
+def cmakeBuildDir = buildDir.dir("cmake")
+
+task cmakeConfigure(type: Exec) {
+    group = "build"
+    description = "Configure the project with CMake"
+    
+    mkdir(cmakeBuildDir)
+    workingDir cmakeBuildDir
+    
+    commandLine "cmake", "../..", 
+                "-DCMAKE_BUILD_TYPE=Release",
+                "-DUSE_ONNX_RUNTIME=OFF",
+                "-DUSE_TENSORRT=ON",
+                "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+                "-DCMAKE_C_COMPILER=clang-15",
+                "-DCMAKE_CXX_COMPILER=clang++-15"
+    
+    // Using Clang as recommended in the README
+}
+
+task cmakeBuild(type: Exec) {
+    group = "build"
+    description = "Build the project with CMake"
+    dependsOn cmakeConfigure
+    
+    workingDir cmakeBuildDir
+    commandLine "cmake", "--build", ".", "--parallel"
+}
+
+task runTests(type: Exec) {
+    group = "verification"
+    description = "Run project tests"
+    dependsOn cmakeBuild
+    
+    workingDir cmakeBuildDir
+    commandLine "ctest", "--output-on-failure"
+}
+
+// Map standard Gradle tasks to CMake tasks
+build.dependsOn cmakeBuild
+check.dependsOn runTests
+
+clean.doFirst {
+    delete buildDir
+}
+
