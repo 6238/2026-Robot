@@ -491,7 +491,7 @@ int main(int argc, char* argv[]) {
         double avg_fetch_ms = 0.0;
         double avg_inference_ms = 0.0;
         double avg_postprocess_ms = 0.0;
-        double avg_drawing_ms = 0.0;
+        double avg_output_ms = 0.0;
 
         const int display_scale = 2;
 
@@ -630,13 +630,13 @@ int main(int argc, char* argv[]) {
                 std::chrono::duration<double, std::milli>(t2 - t1).count();
             double postprocess_ms =
                 std::chrono::duration<double, std::milli>(t3 - t2).count();
-            double drawing_ms =
+            double output_ms =
                 std::chrono::duration<double, std::milli>(t4 - t3).count();
 
             static double avg_fetch_ms = 0.0;
             static double avg_inference_ms = 0.0;
             static double avg_postprocess_ms = 0.0;
-            static double avg_drawing_ms = 0.0;
+            static double avg_output_ms = 0.0;
 
             avg_fetch_ms =
                 fps_alpha * fetch_ms + (1.0 - fps_alpha) * avg_fetch_ms;
@@ -644,8 +644,8 @@ int main(int argc, char* argv[]) {
                 fps_alpha * inference_ms + (1.0 - fps_alpha) * avg_inference_ms;
             avg_postprocess_ms =
                 fps_alpha * postprocess_ms + (1.0 - fps_alpha) * avg_postprocess_ms;
-            avg_drawing_ms =
-                fps_alpha * drawing_ms + (1.0 - fps_alpha) * avg_drawing_ms;
+            avg_output_ms =
+                fps_alpha * output_ms + (1.0 - fps_alpha) * avg_output_ms;
 
             auto frame_end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double> elapsed = frame_end - frame_start;
@@ -694,10 +694,10 @@ int main(int argc, char* argv[]) {
             draw_timing("Fetch (threaded)", avg_fetch_ms);
             draw_timing("Inference", avg_inference_ms);
             draw_timing("Postprocess", avg_postprocess_ms);
-            draw_timing("Drawing", avg_drawing_ms);
+            draw_timing("Output", avg_output_ms);
 
             double total_ms = avg_fetch_ms + avg_inference_ms +
-                              avg_postprocess_ms + avg_drawing_ms;
+                              avg_postprocess_ms + avg_output_ms;
             cv::putText(undistorted_frame,
                         "Total: " +
                         std::to_string(static_cast<int>(total_ms * 10) / 10.0),
