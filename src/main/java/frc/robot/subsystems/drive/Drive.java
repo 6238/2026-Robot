@@ -57,8 +57,9 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
-import frc.robot.generated.TunerConstants;
 import frc.robot.util.LocalADStarAK;
+import frc.robot.util.RobotIdentity;
+
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
@@ -70,15 +71,25 @@ import org.littletonrobotics.junction.Logger;
 public class Drive extends SubsystemBase {
   // TunerConstants doesn't include these constants, so they are declared locally
   static final double ODOMETRY_FREQUENCY =
-      new CANBus(RobotIdentity.getTunerConstants().DrivetrainConstants.CANBusName).isNetworkFD() ? 250.0 : 100.0;
+      new CANBus(RobotIdentity.getTunerConstants().DrivetrainConstants.CANBusName).isNetworkFD()
+          ? 250.0
+          : 100.0;
   public static final double DRIVE_BASE_RADIUS =
       Math.max(
           Math.max(
-              Math.hypot(RobotIdentity.getTunerConstants().FrontLeft.LocationX, RobotIdentity.getTunerConstants().FrontLeft.LocationY),
-              Math.hypot(RobotIdentity.getTunerConstants().FrontRight.LocationX, RobotIdentity.getTunerConstants().FrontRight.LocationY)),
+              Math.hypot(
+                  RobotIdentity.getTunerConstants().FrontLeft.LocationX,
+                  RobotIdentity.getTunerConstants().FrontLeft.LocationY),
+              Math.hypot(
+                  RobotIdentity.getTunerConstants().FrontRight.LocationX,
+                  RobotIdentity.getTunerConstants().FrontRight.LocationY)),
           Math.max(
-              Math.hypot(RobotIdentity.getTunerConstants().BackLeft.LocationX, RobotIdentity.getTunerConstants().BackLeft.LocationY),
-              Math.hypot(RobotIdentity.getTunerConstants().BackRight.LocationX, RobotIdentity.getTunerConstants().BackRight.LocationY)));
+              Math.hypot(
+                  RobotIdentity.getTunerConstants().BackLeft.LocationX,
+                  RobotIdentity.getTunerConstants().BackLeft.LocationY),
+              Math.hypot(
+                  RobotIdentity.getTunerConstants().BackRight.LocationX,
+                  RobotIdentity.getTunerConstants().BackRight.LocationY)));
 
   // PathPlanner config constants
   private static final double ROBOT_MASS_KG = 31.175;
@@ -92,7 +103,8 @@ public class Drive extends SubsystemBase {
               RobotIdentity.getTunerConstants().FrontLeft.WheelRadius,
               RobotIdentity.getTunerConstants().kSpeedAt12Volts.in(MetersPerSecond),
               WHEEL_COF,
-              DCMotor.getKrakenX60(1).withReduction(RobotIdentity.getTunerConstants().FrontLeft.DriveMotorGearRatio),
+              DCMotor.getKrakenX60(1)
+                  .withReduction(RobotIdentity.getTunerConstants().FrontLeft.DriveMotorGearRatio),
               RobotIdentity.getTunerConstants().FrontLeft.SlipCurrent,
               1),
           getModuleTranslations());
@@ -384,10 +396,18 @@ public class Drive extends SubsystemBase {
   /** Returns an array of module translations. */
   public static Translation2d[] getModuleTranslations() {
     return new Translation2d[] {
-      new Translation2d(RobotIdentity.getTunerConstants().FrontLeft.LocationX, RobotIdentity.getTunerConstants().FrontLeft.LocationY),
-      new Translation2d(RobotIdentity.getTunerConstants().FrontRight.LocationX, RobotIdentity.getTunerConstants().FrontRight.LocationY),
-      new Translation2d(RobotIdentity.getTunerConstants().BackLeft.LocationX, RobotIdentity.getTunerConstants().BackLeft.LocationY),
-      new Translation2d(RobotIdentity.getTunerConstants().BackRight.LocationX, RobotIdentity.getTunerConstants().BackRight.LocationY)
+      new Translation2d(
+          RobotIdentity.getTunerConstants().FrontLeft.LocationX,
+          RobotIdentity.getTunerConstants().FrontLeft.LocationY),
+      new Translation2d(
+          RobotIdentity.getTunerConstants().FrontRight.LocationX,
+          RobotIdentity.getTunerConstants().FrontRight.LocationY),
+      new Translation2d(
+          RobotIdentity.getTunerConstants().BackLeft.LocationX,
+          RobotIdentity.getTunerConstants().BackLeft.LocationY),
+      new Translation2d(
+          RobotIdentity.getTunerConstants().BackRight.LocationX,
+          RobotIdentity.getTunerConstants().BackRight.LocationY)
     };
   }
 
