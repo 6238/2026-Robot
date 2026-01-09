@@ -21,7 +21,7 @@ public class RobotIdentity {
                 return RobotType.PRACTICE_BOT;
             default:
                 serialNumberAlert.set(true);
-                return RobotType.COMP_BOT;
+                return RobotType.PRACTICE_BOT;
         }
     }
 

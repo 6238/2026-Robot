@@ -60,6 +60,8 @@ ENV PATH="/opt/gradle-${GRADLE_VERSION}/bin:${PATH}"
 WORKDIR /app
 COPY . .
 
+RUN chmod +x ./gradlew
+
 # Build the project
 RUN ./gradlew build --no-daemon
 
