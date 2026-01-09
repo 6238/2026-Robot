@@ -1,39 +1,3 @@
-// Build the Docker container for the Jetson coprocessor
-// tasks.register("deploy-jetson", Exec) {
-//     description = "Builds the Docker container natively on the Jetson."
-//     group = "deploy"
-//     workingDir 'ObjectDetectionCoprocessor'
-//     // These variables tell the NVIDIA runtime to allow access to GPU libs during build
-//     environment "DOCKER_BUILDKIT", "1"
-//     environment "NVIDIA_VISIBLE_DEVICES", "all"
-//     environment "NVIDIA_DRIVER_CAPABILITIES", "all"
-//     commandLine 'docker', 'build', '--progress=plain', '-t', 'jetson-vision', '.'
-// }
-
-// // Stop and remove ANY container running our vision image
-// tasks.register("stop-jetson", Exec) {
-//     description = "Stops and removes all containers running the jetson-vision image."
-//     group = "deploy"
-//     // Force kill specific name and any ancestors, then wait for release
-//     commandLine 'sh', '-c', 'docker rm -f jetson-vision 2>/dev/null || true; docker ps -a -q --filter ancestor=jetson-vision | xargs -r docker rm -f 2>/dev/null || true; for i in {1..10}; do if ! docker ps -a --format "{{.Names}}" | grep -q "^jetson-vision$"; then break; fi; sleep 1; done'
-// }
-
-// // Start the container in "Robot Mode" (detached with auto-restart)
-// tasks.register("start-jetson", Exec) {
-//     description = "Starts the jetson-vision container in detached mode with auto-restart."
-//     group = "deploy"
-//     dependsOn "stop-jetson"
-//     // We add -t (Pseudo-TTY) to ensure output is unbuffered and drivers initialize correctly
-//     commandLine 'docker', 'run', '-d', '-t',
-//         '--name', 'jetson-vision',
-//         '--restart', 'always',
-//         '--runtime', 'nvidia',
-//         '--shm-size=1g',
-//         '--ulimit', 'memlock=-1',
-//         '--device', '/dev/video0:/dev/video0',
-//         'jetson-vision'
-// }
-
 plugins {
     id "java"
     id "edu.wpi.first.GradleRIO" version "2025.3.2"
@@ -255,4 +219,40 @@ spotless {
         indentWithSpaces(2)
         endWithNewline()
     }
+}
+
+// Build the Docker container for the Jetson coprocessor
+tasks.register("deploy-jetson", Exec) {
+    description = "Builds the Docker container natively on the Jetson."
+    group = "deploy"
+    workingDir 'ObjectDetectionCoprocessor'
+    // These variables tell the NVIDIA runtime to allow access to GPU libs during build
+    environment "DOCKER_BUILDKIT", "1"
+    environment "NVIDIA_VISIBLE_DEVICES", "all"
+    environment "NVIDIA_DRIVER_CAPABILITIES", "all"
+    commandLine 'docker', 'build', '--progress=plain', '-t', 'jetson-vision', '.'
+}
+
+// Stop and remove ANY container running our vision image
+tasks.register("stop-jetson", Exec) {
+    description = "Stops and removes all containers running the jetson-vision image."
+    group = "deploy"
+    // Force kill specific name and any ancestors, then wait for release
+    commandLine 'sh', '-c', 'docker rm -f jetson-vision 2>/dev/null || true; docker ps -a -q --filter ancestor=jetson-vision | xargs -r docker rm -f 2>/dev/null || true; for i in {1..10}; do if ! docker ps -a --format "{{.Names}}" | grep -q "^jetson-vision$"; then break; fi; sleep 1; done'
+}
+
+// Start the container in "Robot Mode" (detached with auto-restart)
+tasks.register("start-jetson", Exec) {
+    description = "Starts the jetson-vision container in detached mode with auto-restart."
+    group = "deploy"
+    dependsOn "stop-jetson"
+    // We add -t (Pseudo-TTY) to ensure output is unbuffered and drivers initialize correctly
+    commandLine 'docker', 'run', '-d', '-t',
+        '--name', 'jetson-vision',
+        '--restart', 'always',
+        '--runtime', 'nvidia',
+        '--shm-size=1g',
+        '--ulimit', 'memlock=-1',
+        '--device', '/dev/video0:/dev/video0',
+        'jetson-vision'
 }
