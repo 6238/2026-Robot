@@ -1,10 +1,10 @@
 package frc.robot.subsystems.shooter;
 
 import static edu.wpi.first.units.Units.Volts;
+import static frc.robot.util.PhoenixUtil.tryUntilOk;
 
-import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
-import com.ctre.phoenix6.StatusSignalCollection;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.ParentDevice;
@@ -13,19 +13,28 @@ import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
+import frc.robot.util.BetterStatusSignalCollection;
 
 public class ShooterIOTalonFX implements ShooterIO {
-  private TalonFX shooterTalon;
+  // Alerts
+  private Alert statusSignalAlert = new Alert("ISSUe", "Status Signal Error", AlertType.kError);
+  private Alert flywheelConfigAlert = new Alert("CRITICAL", "Failed To Configure Flywheel Motor", AlertType.kError);
+  private Alert feederConfigAlert = new Alert("CRITICAL", "Failed To Configure Feeder Motor", AlertType.kError);
+
+  // Motor Controllers
+  private TalonFX flywheelTalon;
   private TalonFX feederTalon;
 
   // Status Signal Management
-  public StatusSignalCollection statusSignalCollector;
+  public BetterStatusSignalCollection statusSignalCollector;
 
-  // Shooter Inputs
-  public StatusSignal<AngularVelocity> shooterVelocity;
-  public StatusSignal<AngularAcceleration> shooterAcceleration;
-  public StatusSignal<Current> shooterAppliedCurent;
-  public StatusSignal<Voltage> shooterAppliedVoltage;
+  // flywheel Inputs
+  public StatusSignal<AngularVelocity> flywheelVelocity;
+  public StatusSignal<AngularAcceleration> flywheelAcceleration;
+  public StatusSignal<Current> flywheelAppliedCurent;
+  public StatusSignal<Voltage> flywheelAppliedVoltage;
 
   // Feeder Inputs
   public StatusSignal<AngularVelocity> feederVelocity;
@@ -35,50 +44,67 @@ public class ShooterIOTalonFX implements ShooterIO {
 
   // Control Requests
   public PositionVoltage hoodPositionVoltage = new PositionVoltage(0).withSlot(0);
-  public VelocityVoltage shooterVelocityVoltage = new VelocityVoltage(0).withSlot(0);
+  public VelocityVoltage flywheelVelocityVoltage = new VelocityVoltage(0).withSlot(0);
 
   public ShooterIOTalonFX() {
-    shooterTalon = new TalonFX(ShooterConstants.SHOOTER_MOTOR_ID, ShooterConstants.CAN_BUS);
+    flywheelTalon = new TalonFX(ShooterConstants.FLYWHEEL_MOTOR_ID, ShooterConstants.CAN_BUS);
     feederTalon = new TalonFX(ShooterConstants.FEEDER_MOTOR_ID, ShooterConstants.CAN_BUS);
 
-    // BaseStatusSignal.setUpdateFrequencyForAll(
-    //     50.0,
-    //     shooterVelocity,
-    //     shooterAcceleration,
-    //     shooterAppliedCurent,
-    //     shooterAppliedVoltage,
-    //     feederVelocity,
-    //     feederAcceleration,
-    //     feederAppliedCurent,
-    //     feederAppliedVoltage,
-    //     hoodAngle,
-    //     hoodVelocity,
-    //     hoodAcceleration,
-    //     hoodAppliedCurent,
-    //     hoodAppliedVoltage);
-    ParentDevice.optimizeBusUtilizationForAll(shooterTalon, feederTalon);
-  }
+    // Configure TalonFX Motors
+    TalonFXConfiguration flywheelConfig = new TalonFXConfiguration();
+    flywheelConfig.Feedback.SensorToMechanismRatio = ShooterConstants.FLYWHEEL_GEARING;
+    flywheelConfig.Slot0 = ShooterConstants.FLYWHEEL_GAINS.toSlot0Configs();
 
-  public void updateInputs(ShooterIOInputsAutoLogged inputs) {
-    BaseStatusSignal.refreshAll(
-        shooterVelocity,
-        shooterAcceleration,
-        shooterAppliedCurent,
-        shooterAppliedVoltage,
+    TalonFXConfiguration feederConfig = new TalonFXConfiguration();
+    feederConfig.Feedback.SensorToMechanismRatio =
+        ShooterConstants.FEEDER_GEARING;
+
+    if (tryUntilOk(5, () -> flywheelTalon.getConfigurator().apply(flywheelConfig))) {
+      flywheelConfigAlert.set(false);
+    } else {
+      flywheelConfigAlert.set(true);
+    }
+
+    if (tryUntilOk(5, () -> feederTalon.getConfigurator().apply(feederConfig))) {
+      feederConfigAlert.set(false);
+    } else {
+      feederConfigAlert.set(true);
+    }
+
+    // Initialize Status Signals
+    statusSignalCollector = new BetterStatusSignalCollection(
+        flywheelVelocity,
+        flywheelAcceleration,
+        flywheelAppliedCurent,
+        flywheelAppliedVoltage,
         feederVelocity,
         feederAcceleration,
         feederAppliedCurent,
         feederAppliedVoltage);
+    ParentDevice.optimizeBusUtilizationForAll(flywheelTalon, feederTalon);
+  }
+
+  public void updateInputs(ShooterIOInputsAutoLogged inputs) {
+    statusSignalCollector.refreshAll();
+
+    if (!statusSignalCollector.isAllGood()) {
+      statusSignalAlert.set(true);
+      statusSignalAlert.setText(
+          "Shooter TalonFX Status Signal Error: "
+              + statusSignalCollector.getBadSignalsString());
+    } else {
+      statusSignalAlert.set(false);
+    }
 
     // Are motors connected?
-    inputs.shooterTalonConnected = shooterTalon.isConnected();
+    inputs.flywheelTalonConnected = flywheelTalon.isConnected();
     inputs.feederTalonConnected = feederTalon.isConnected();
 
     // Update Inputs
-    inputs.shooterVelocity = shooterTalon.getVelocity().getValue();
-    inputs.shooterAcceleration = shooterTalon.getAcceleration().getValue();
-    inputs.shooterAppliedCurrent = shooterTalon.getSupplyCurrent().getValue();
-    inputs.shooterAppliedVoltage = shooterTalon.getSupplyVoltage().getValue();
+    inputs.flywheelVelocity = flywheelTalon.getVelocity().getValue();
+    inputs.flywheelAcceleration = flywheelTalon.getAcceleration().getValue();
+    inputs.flywheelAppliedCurrent = flywheelTalon.getSupplyCurrent().getValue();
+    inputs.flywheelAppliedVoltage = flywheelTalon.getSupplyVoltage().getValue();
 
     inputs.feederVelocity = feederTalon.getVelocity().getValue();
     inputs.fAcceleration = feederTalon.getAcceleration().getValue();
@@ -86,12 +112,12 @@ public class ShooterIOTalonFX implements ShooterIO {
     inputs.feederAppliedVoltage = feederTalon.getSupplyVoltage().getValue();
   }
 
-  public void setShooterRPM(AngularVelocity rpm) {
-    shooterTalon.setControl(shooterVelocityVoltage.withVelocity(rpm));
+  public void setFlywheelRPM(AngularVelocity rpm) {
+    flywheelTalon.setControl(flywheelVelocityVoltage.withVelocity(rpm));
   }
 
-  public void setShooterVoltage(Voltage voltage) {
-    shooterTalon.setVoltage(voltage.in(Volts));
+  public void setFlywheelVoltage(Voltage voltage) {
+    flywheelTalon.setVoltage(voltage.in(Volts));
   }
 
   public void setFeederVoltage(Voltage voltage) {

@@ -26,7 +26,7 @@ public class Shooter extends SubsystemBase {
     io.updateInputs(inputs);
 
     // update alerts based on motor connection status
-    AlertUtils.updateAlert(shooterMotorConnectedAlert, !inputs.shooterTalonConnected);
+    AlertUtils.updateAlert(shooterMotorConnectedAlert, !inputs.flywheelTalonConnected);
     AlertUtils.updateAlert(feederMotorConnectedAlert, !inputs.feederTalonConnected);
   }
 }

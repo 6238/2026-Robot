@@ -187,16 +187,6 @@ public class RobotContainer {
                             new Pose2d(drive.getPose().getTranslation(), new Rotation2d())),
                     drive)
                 .ignoringDisable(true));
-    // controller
-    //     .a()
-    //     .onTrue(Commands.runOnce(() -> shooter.setFeederVoltage(Volts.of(12))))
-    //     .onFalse(Commands.runOnce(() -> shooter.setFeederVoltage(Volts.of(0))));
-    // controller
-    //     .b()
-    //     .onTrue(
-    //         Commands.runOnce(() ->
-    // shooter.setShooterVoltage(Volts.of(Constants.shootVolt.get()))))
-    //     .onFalse(Commands.runOnce(() -> shooter.setShooterVoltage(Volts.of(0))));
   }
 
   /**
