@@ -15,11 +15,12 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
+import frc.robot.Constants;
 import frc.robot.util.BetterStatusSignalCollection;
 
 public class ShooterIOTalonFX implements ShooterIO {
   // Alerts
-  private Alert statusSignalAlert = new Alert("ISSUe", "Status Signal Error", AlertType.kError);
+  private Alert statusSignalAlert = new Alert("ISSUE", "Status Signal Error", AlertType.kError);
   private Alert flywheelConfigAlert = new Alert("CRITICAL", "Failed To Configure Flywheel Motor", AlertType.kError);
   private Alert feederConfigAlert = new Alert("CRITICAL", "Failed To Configure Feeder Motor", AlertType.kError);
 
@@ -59,13 +60,13 @@ public class ShooterIOTalonFX implements ShooterIO {
     feederConfig.Feedback.SensorToMechanismRatio =
         ShooterConstants.FEEDER_GEARING;
 
-    if (tryUntilOk(5, () -> flywheelTalon.getConfigurator().apply(flywheelConfig))) {
+    if (tryUntilOk(Constants.MAX_PHEONIX_RETRIES, () -> flywheelTalon.getConfigurator().apply(flywheelConfig))) {
       flywheelConfigAlert.set(false);
     } else {
       flywheelConfigAlert.set(true);
     }
 
-    if (tryUntilOk(5, () -> feederTalon.getConfigurator().apply(feederConfig))) {
+    if (tryUntilOk(Constants.MAX_PHEONIX_RETRIES, () -> feederTalon.getConfigurator().apply(feederConfig))) {
       feederConfigAlert.set(false);
     } else {
       feederConfigAlert.set(true);

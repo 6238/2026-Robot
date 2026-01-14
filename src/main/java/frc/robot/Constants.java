@@ -40,6 +40,8 @@ public final class Constants {
     REPLAY
   }
 
+  public static final int MAX_PHEONIX_RETRIES = 5;
+
   public final class PathfindingConfig {
     public static final double DRIVE_RESUME_DEADBAND = 0.2;
   }
