@@ -21,4 +21,6 @@ public interface HopperIO {
   }
 
   public void updateInputs(HopperIOInputs inputs);
+
+  public void setIndexerVoltage(Voltage voltage);
 }

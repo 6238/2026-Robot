@@ -1,5 +1,6 @@
 package frc.robot.subsystems.hopper;
 
+import static edu.wpi.first.units.Units.*;
 import static frc.robot.util.PhoenixUtil.tryUntilOk;
 
 import com.ctre.phoenix6.StatusSignal;
@@ -38,6 +39,7 @@ public class HopperIOTalonFX implements HopperIO {
         // Configure TalonFX Motors
         TalonFXConfiguration indexerConfig = new TalonFXConfiguration();
         indexerConfig.Feedback.SensorToMechanismRatio = HopperConstants.INDEXER_GEARING;
+        indexerConfig.MotorOutput.Inverted = HopperConstants.INDEXER_MOTOR_DIRECTION;
 
         if (tryUntilOk(Constants.MAX_PHEONIX_RETRIES, () -> indexerTalon.getConfigurator().apply(indexerConfig))) {
             indexerConfigAlert.set(false);
@@ -74,5 +76,9 @@ public class HopperIOTalonFX implements HopperIO {
         inputs.hopperAcceleration = indexerAcceleration.getValue();
         inputs.hopperAppliedCurrent = indexerCurrent.getValue();
         inputs.hopperAppliedVoltage = indexerVoltage.getValue();
+    }
+
+    public void setIndexerVoltage(Voltage voltage) {
+        indexerTalon.setVoltage(voltage.in(Volts));
     }
 }
