@@ -7,6 +7,7 @@ import edu.wpi.first.wpilibj.RobotController;
 import frc.robot.generated.COMPTunerConstants;
 import frc.robot.generated.PRACTICETunerConstants;
 import frc.robot.generated.RobotTunerConstants;
+import org.littletonrobotics.junction.Logger;
 
 public class RobotIdentity {
   public static Alert serialNumberAlert =
@@ -23,7 +24,7 @@ public class RobotIdentity {
   public static final String COMP_RIO_SERIAL =
       "R123456789"; // TODO: Replace with actual serial number of competition robot
   public static final String PRACTICE_RIO_SERIAL =
-      "R987654321"; // TODO: Replace with actual serial number of competition robot
+      "03182373"; // TODO: Replace with actual serial number of competition robot
 
   public static RobotType getRobotType() {
     switch (RobotController.getSerialNumber()) {
@@ -33,7 +34,7 @@ public class RobotIdentity {
         return RobotType.PRACTICE_BOT;
       default:
         serialNumberAlert.set(true);
-        return RobotType.PRACTICE_BOT;
+        return RobotType.COMP_BOT;
     }
   }
 
@@ -47,6 +48,8 @@ public class RobotIdentity {
       cached = fromComp();
       return cached;
     }
+
+    Logger.recordMetadata("Robot Type", getRobotType().toString());
 
     switch (getRobotType()) {
       case COMP_BOT:
@@ -67,7 +70,7 @@ public class RobotIdentity {
         COMPTunerConstants.FrontRight,
         COMPTunerConstants.BackLeft,
         COMPTunerConstants.BackRight,
-      COMPTunerConstants.kSpeedAt12Volts);
+        COMPTunerConstants.kSpeedAt12Volts);
   }
 
   private static RobotTunerConstants fromPractice() {
@@ -77,6 +80,6 @@ public class RobotIdentity {
         PRACTICETunerConstants.FrontRight,
         PRACTICETunerConstants.BackLeft,
         PRACTICETunerConstants.BackRight,
-      PRACTICETunerConstants.kSpeedAt12Volts);
+        PRACTICETunerConstants.kSpeedAt12Volts);
   }
 }

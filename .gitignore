@@ -57,8 +57,6 @@
 *.tar.gz
 *.rar
 
-!ObjectDetectionCoprocessor/*.tar.gz
-
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 
@@ -172,7 +170,7 @@ out/
 
 # Simulation GUI and other tools window save file
 networktables.json
-simgui*.json
+simgui.json
 *-window.json
 
 # Simulation data log directory
@@ -185,5 +183,5 @@ ctre_sim/
 /.cache
 compile_commands.json
 
-# Version file
-src/main/java/frc/robot/BuildConstants.java
+# Eclipse generated file for annotation processors
+.factorypath

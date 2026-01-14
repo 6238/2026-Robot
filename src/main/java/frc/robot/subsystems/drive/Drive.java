@@ -59,7 +59,6 @@ import frc.robot.Constants;
 import frc.robot.Constants.Mode;
 import frc.robot.util.LocalADStarAK;
 import frc.robot.util.RobotIdentity;
-
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;

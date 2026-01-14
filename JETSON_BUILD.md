@@ -15,7 +15,7 @@ The vision code is maintained as a separate repository to keep development isola
 ## 2. Remote Build Architecture (Docker Contexts)
 We use **Remote Docker Contexts** to build the image.
 - **The Workflow**: You run `./gradlew deploy-jetson` on your laptop. Gradle tells your local Docker client to send the "build context" (source code and libraries) to the Jetson over SSH.
-- **Why?**: 
+- **Why?**:
   - **Native Performance**: Building directly on the Jetson's ARM64 processor is faster and more reliable than emulating ARM64 on an Intel/Apple Silicon Mac.
   - **Zero Setup**: Students don't need to install CUDA, TensorRT, or OpenCV on their laptops. Only Docker is required.
 
@@ -40,7 +40,7 @@ The main robot `build.gradle` includes several lifecycle tasks. The most common 
 - **`start-jetson`**: Restarts the vision system with the latest code (see Lifecycle Management below).
 
 ### ⚠️ Critical Note on Updating
-Running `deploy-jetson` alone will **not** update the robot's active vision code. 
+Running `deploy-jetson` alone will **not** update the robot's active vision code.
 - `deploy-jetson` builds the new software, but the old container will continue running the old code.
 - You **must** run `start-jetson` to kill the old container and launch the new one.
 - **The Golden Command**: Always use `./gradlew deploy-jetson start-jetson` to ensure the robot is actually running your latest changes.

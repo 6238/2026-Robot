@@ -13,23 +13,19 @@
 
 package frc.robot;
 
-import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Meters;
-import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.Volts;
 import static frc.robot.subsystems.vision.VisionConstants.*;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import frc.robot.Constants.Mode;
 import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
@@ -40,16 +36,16 @@ import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.objectdetection.ObjectDetection;
 import frc.robot.subsystems.objectdetection.ObjectDetectionIO;
 import frc.robot.subsystems.objectdetection.ObjectDetectionIOJetson;
+import frc.robot.subsystems.shooter.Shooter;
+import frc.robot.subsystems.shooter.ShooterIOTalonFX;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOPhotonVision;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.util.AutoPilotUtils;
 import frc.robot.util.RobotIdentity;
-
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.seasonspecific.crescendo2024.Arena2024Crescendo;
-import org.ironmaple.simulation.seasonspecific.crescendo2024.NoteOnFly;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -63,6 +59,7 @@ public class RobotContainer {
   private final Drive drive;
   private final Vision vision;
   private final ObjectDetection objectDetection;
+  private final Shooter shooter;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -90,6 +87,7 @@ public class RobotContainer {
         objectDetection =
             new ObjectDetection(
                 new ObjectDetectionIOJetson(), (timestamp) -> drive.getTimestampPose(timestamp));
+        shooter = new Shooter(new ShooterIOTalonFX());
         break;
 
       case SIM:
@@ -108,6 +106,7 @@ public class RobotContainer {
         objectDetection =
             new ObjectDetection(
                 new ObjectDetectionIO() {}, (timestamp) -> drive.getTimestampPose(timestamp));
+        shooter = new Shooter(new ShooterIOTalonFX());
         break;
 
       default:
@@ -122,6 +121,7 @@ public class RobotContainer {
         objectDetection =
             new ObjectDetection(
                 new ObjectDetectionIO() {}, (timestamp) -> drive.getTimestampPose(timestamp));
+        shooter = new Shooter(new ShooterIOTalonFX());
         break;
     }
 
@@ -191,38 +191,15 @@ public class RobotContainer {
                             new Pose2d(drive.getPose().getTranslation(), new Rotation2d())),
                     drive)
                 .ignoringDisable(true));
-
-    if (Constants.currentMode == Mode.SIM) {
-      controller
-          .a()
-          .onTrue(
-              Commands.runOnce(
-                  () ->
-                      new NoteOnFly(
-                          drive.getPose().getTranslation(),
-                          new Translation2d(0, 0),
-                          drive.getChassisSpeeds(),
-                          drive.getRotation(),
-                          Meters.of(0.3),
-                          MetersPerSecond.of(10),
-                          Degrees.of(30))));
-    }
-
+    controller
+        .a()
+        .onTrue(Commands.runOnce(() -> shooter.setFeederVoltage(Volts.of(12))))
+        .onFalse(Commands.runOnce(() -> shooter.setFeederVoltage(Volts.of(0))));
     controller
         .b()
-        .whileTrue(
-            Commands.either(
-                AutoPilotUtils.generateIterativePickupCommand(drive, objectDetection, controller),
-                Commands.none(),
-                () -> objectDetection.getTrackedObjects().length > 0));
-
-    controller
-        .x()
         .onTrue(
-            Commands.runOnce(
-                    () -> drive.setPose(new Pose2d(new Translation2d(3, 2), new Rotation2d())),
-                    drive)
-                .ignoringDisable(true));
+            Commands.runOnce(() -> shooter.setShooterVoltage(Volts.of(Constants.shootVolt.get()))))
+        .onFalse(Commands.runOnce(() -> shooter.setShooterVoltage(Volts.of(0))));
   }
 
   /**

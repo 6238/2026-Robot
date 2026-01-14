@@ -4,7 +4,6 @@ import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
-
 import edu.wpi.first.units.measure.LinearVelocity;
 
 /** Instance wrapper so code can do RobotIdentity.getTunerConstants()..FrontLeft, etc. */
@@ -13,17 +12,29 @@ public final class RobotTunerConstants {
 
   public final SwerveDrivetrainConstants DrivetrainConstants;
 
-  public final SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> FrontLeft;
-  public final SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> FrontRight;
-  public final SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> BackLeft;
-  public final SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> BackRight;
+  public final SwerveModuleConstants<
+          TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
+      FrontLeft;
+  public final SwerveModuleConstants<
+          TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
+      FrontRight;
+  public final SwerveModuleConstants<
+          TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
+      BackLeft;
+  public final SwerveModuleConstants<
+          TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
+      BackRight;
 
   public RobotTunerConstants(
       SwerveDrivetrainConstants drivetrainConstants,
-      SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> frontLeft,
-      SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> frontRight,
-      SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> backLeft,
-      SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> backRight,
+      SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
+          frontLeft,
+      SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
+          frontRight,
+      SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
+          backLeft,
+      SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
+          backRight,
       LinearVelocity speedAt12Volts) {
     this.DrivetrainConstants = drivetrainConstants;
     this.FrontLeft = frontLeft;

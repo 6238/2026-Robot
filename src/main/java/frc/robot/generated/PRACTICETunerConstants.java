@@ -19,11 +19,11 @@ public class PRACTICETunerConstants {
   // output type specified by SwerveModuleConstants.SteerMotorClosedLoopOutput
   private static final Slot0Configs steerGains =
       new Slot0Configs()
-          .withKP(100)
+          .withKP(40)
           .withKI(0)
-          .withKD(0.5)
+          .withKD(0.3)
           .withKS(0.1)
-          .withKV(1.28)
+          .withKV(1.5)
           .withKA(0)
           .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign);
   // When using closed-loop control, the drive motor uses the control
@@ -71,7 +71,7 @@ public class PRACTICETunerConstants {
 
   // CAN bus that the devices are located on;
   // All swerve devices must share the same CAN bus
-  public static final CANBus kCANBus = new CANBus("canivore", "./logs/example.hoot");
+  public static final CANBus kCANBus = new CANBus("rio", "./logs/example.hoot");
 
   // Theoretical free speed (m/s) at 12 V applied output;
   // This needs to be tuned to your individual robot
