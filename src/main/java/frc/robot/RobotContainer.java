@@ -33,6 +33,9 @@ import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
+import frc.robot.subsystems.hopper.Hopper;
+import frc.robot.subsystems.hopper.HopperIO;
+import frc.robot.subsystems.hopper.HopperIOTalonFX;
 import frc.robot.subsystems.objectdetection.ObjectDetection;
 import frc.robot.subsystems.objectdetection.ObjectDetectionIO;
 import frc.robot.subsystems.objectdetection.ObjectDetectionIOJetson;
@@ -63,6 +66,7 @@ public class RobotContainer {
     private final Vision vision;
     private final ObjectDetection objectDetection;
     private final Shooter shooter;
+    private final Hopper hopper;
 
     // Controller
     private final CommandXboxController controller = new CommandXboxController(0);
@@ -90,6 +94,7 @@ public class RobotContainer {
                 objectDetection = new ObjectDetection(
                         new ObjectDetectionIOJetson(), (timestamp) -> drive.getTimestampPose(timestamp));
                 shooter = new Shooter(new ShooterIOTalonFX());
+                hopper = new Hopper(new HopperIOTalonFX());
                 break;
 
             case SIM:
@@ -107,8 +112,8 @@ public class RobotContainer {
                 objectDetection = new ObjectDetection(
                         new ObjectDetectionIO() {
                         }, (timestamp) -> drive.getTimestampPose(timestamp));
-                shooter = new Shooter(new ShooterIO() {
-                });
+                shooter = new Shooter(new ShooterIO() {});
+                hopper = new Hopper(new HopperIO() {});
                 break;
 
             default:
@@ -129,8 +134,8 @@ public class RobotContainer {
                 objectDetection = new ObjectDetection(
                         new ObjectDetectionIO() {
                         }, (timestamp) -> drive.getTimestampPose(timestamp));
-                shooter = new Shooter(new ShooterIO() {
-                });
+                shooter = new Shooter(new ShooterIO() {});
+                hopper = new Hopper(new HopperIO() {});
                 break;
         }
 
@@ -203,6 +208,10 @@ public class RobotContainer {
                 .onFalse(shooter.setFlywheelRPM(() -> RPM.of(0)));
         controller.a().onTrue(shooter.setFeederVoltage(() -> Volts.of(ShooterConstants.FEEDER_VOLTAGE.get())))
                 .onFalse(shooter.setFeederVoltage(() -> Volts.of(0)));
+        controller.b().onTrue(hopper.spinIndexer())
+                .onFalse(hopper.stopIndexer());
+        controller.x().onTrue(hopper.reverseIndexer())
+                .onFalse(hopper.stopIndexer());
     }
 
     /**

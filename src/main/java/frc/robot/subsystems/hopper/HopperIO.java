@@ -20,7 +20,7 @@ public interface HopperIO {
     public Voltage hopperAppliedVoltage = Volts.of(0.0);
   }
 
-  public void updateInputs(HopperIOInputs inputs);
+  public default void updateInputs(HopperIOInputs inputs) {};
 
-  public void setIndexerVoltage(Voltage voltage);
+  public default void setIndexerVoltage(Voltage voltage) {};
 }
