@@ -1,8 +1,6 @@
 package frc.robot.subsystems.shooter;
 
-import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Volts;
-import static frc.robot.util.PhoenixUtil.tryUntilOk;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
@@ -11,7 +9,6 @@ import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
-import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
@@ -41,10 +38,8 @@ public class ShooterIOTalonFX implements ShooterIO {
   public VelocityVoltage shooterVelocityVoltage = new VelocityVoltage(0).withSlot(0);
 
   public ShooterIOTalonFX() {
-    shooterTalon = new TalonFX(ShooterConstants.SHOOTER_MOTOR_ID, ShooterConstants.CAN_BUS_NAME);
-    feederTalon = new TalonFX(ShooterConstants.FEEDER_MOTOR_ID, ShooterConstants.CAN_BUS_NAME);
-
-    tryUntilOk(5, () -> hoodTalon.setPosition(Degrees.of(22)));
+    shooterTalon = new TalonFX(ShooterConstants.SHOOTER_MOTOR_ID, ShooterConstants.CAN_BUS);
+    feederTalon = new TalonFX(ShooterConstants.FEEDER_MOTOR_ID, ShooterConstants.CAN_BUS);
 
     // BaseStatusSignal.setUpdateFrequencyForAll(
     //     50.0,
@@ -61,7 +56,7 @@ public class ShooterIOTalonFX implements ShooterIO {
     //     hoodAcceleration,
     //     hoodAppliedCurent,
     //     hoodAppliedVoltage);
-    ParentDevice.optimizeBusUtilizationForAll(shooterTalon, feederTalon, hoodTalon);
+    ParentDevice.optimizeBusUtilizationForAll(shooterTalon, feederTalon);
   }
 
   public void updateInputs(ShooterIOInputsAutoLogged inputs) {
@@ -73,17 +68,11 @@ public class ShooterIOTalonFX implements ShooterIO {
         feederVelocity,
         feederAcceleration,
         feederAppliedCurent,
-        feederAppliedVoltage,
-        hoodAngle,
-        hoodVelocity,
-        hoodAcceleration,
-        hoodAppliedCurent,
-        hoodAppliedVoltage);
+        feederAppliedVoltage);
 
     // Are motors connected?
     inputs.shooterTalonConnected = shooterTalon.isConnected();
     inputs.feederTalonConnected = feederTalon.isConnected();
-    inputs.hoodTalonConnected = shooterTalon.isConnected();
 
     // Update Inputs
     inputs.shooterVelocity = shooterTalon.getVelocity().getValue();
@@ -95,12 +84,6 @@ public class ShooterIOTalonFX implements ShooterIO {
     inputs.fAcceleration = feederTalon.getAcceleration().getValue();
     inputs.feederAppliedCurrent = feederTalon.getSupplyCurrent().getValue();
     inputs.feederAppliedVoltage = feederTalon.getSupplyVoltage().getValue();
-
-    inputs.hoodAngle = hoodTalon.getPosition().getValue();
-    inputs.hoodVelocity = hoodTalon.getVelocity().getValue();
-    inputs.hoodAcceleration = hoodTalon.getAcceleration().getValue();
-    inputs.hoodAppliedCurrent = hoodTalon.getSupplyCurrent().getValue();
-    inputs.hoodAppliedVoltage = hoodTalon.getSupplyVoltage().getValue();
   }
 
   public void setShooterRPM(AngularVelocity rpm) {
@@ -113,9 +96,5 @@ public class ShooterIOTalonFX implements ShooterIO {
 
   public void setFeederVoltage(Voltage voltage) {
     feederTalon.setVoltage(voltage.in(Volts));
-  }
-
-  public void setHoodAngle(Angle angle) {
-    hoodTalon.setControl(hoodPositionVoltage.withPosition(angle));
   }
 }

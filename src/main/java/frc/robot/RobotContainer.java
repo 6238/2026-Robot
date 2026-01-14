@@ -13,7 +13,6 @@
 
 package frc.robot;
 
-import static edu.wpi.first.units.Units.Volts;
 import static frc.robot.subsystems.vision.VisionConstants.*;
 
 import com.pathplanner.lib.auto.AutoBuilder;
@@ -37,6 +36,7 @@ import frc.robot.subsystems.objectdetection.ObjectDetection;
 import frc.robot.subsystems.objectdetection.ObjectDetectionIO;
 import frc.robot.subsystems.objectdetection.ObjectDetectionIOJetson;
 import frc.robot.subsystems.shooter.Shooter;
+import frc.robot.subsystems.shooter.ShooterIO;
 import frc.robot.subsystems.shooter.ShooterIOTalonFX;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionIO;
@@ -44,8 +44,6 @@ import frc.robot.subsystems.vision.VisionIOPhotonVision;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.util.AutoPilotUtils;
 import frc.robot.util.RobotIdentity;
-import org.ironmaple.simulation.SimulatedArena;
-import org.ironmaple.simulation.seasonspecific.crescendo2024.Arena2024Crescendo;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -106,7 +104,7 @@ public class RobotContainer {
         objectDetection =
             new ObjectDetection(
                 new ObjectDetectionIO() {}, (timestamp) -> drive.getTimestampPose(timestamp));
-        shooter = new Shooter(new ShooterIOTalonFX());
+        shooter = new Shooter(new ShooterIO() {});
         break;
 
       default:
@@ -121,7 +119,7 @@ public class RobotContainer {
         objectDetection =
             new ObjectDetection(
                 new ObjectDetectionIO() {}, (timestamp) -> drive.getTimestampPose(timestamp));
-        shooter = new Shooter(new ShooterIOTalonFX());
+        shooter = new Shooter(new ShooterIO() {});
         break;
     }
 
@@ -145,8 +143,6 @@ public class RobotContainer {
         "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
     autoChooser.addOption(
         "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
-
-    SimulatedArena.overrideInstance(new Arena2024Crescendo());
 
     configureButtonBindings();
   }
@@ -191,15 +187,16 @@ public class RobotContainer {
                             new Pose2d(drive.getPose().getTranslation(), new Rotation2d())),
                     drive)
                 .ignoringDisable(true));
-    controller
-        .a()
-        .onTrue(Commands.runOnce(() -> shooter.setFeederVoltage(Volts.of(12))))
-        .onFalse(Commands.runOnce(() -> shooter.setFeederVoltage(Volts.of(0))));
-    controller
-        .b()
-        .onTrue(
-            Commands.runOnce(() -> shooter.setShooterVoltage(Volts.of(Constants.shootVolt.get()))))
-        .onFalse(Commands.runOnce(() -> shooter.setShooterVoltage(Volts.of(0))));
+    // controller
+    //     .a()
+    //     .onTrue(Commands.runOnce(() -> shooter.setFeederVoltage(Volts.of(12))))
+    //     .onFalse(Commands.runOnce(() -> shooter.setFeederVoltage(Volts.of(0))));
+    // controller
+    //     .b()
+    //     .onTrue(
+    //         Commands.runOnce(() ->
+    // shooter.setShooterVoltage(Volts.of(Constants.shootVolt.get()))))
+    //     .onFalse(Commands.runOnce(() -> shooter.setShooterVoltage(Volts.of(0))));
   }
 
   /**
