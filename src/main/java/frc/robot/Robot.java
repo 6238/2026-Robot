@@ -136,7 +136,7 @@ public class Robot extends LoggedRobot {
 
     // schedule the autonomous command (example)
     if (autonomousCommand != null) {
-      autonomousCommand.schedule();
+      CommandScheduler.getInstance().schedule(autonomousCommand);
     }
   }
 
@@ -165,6 +165,13 @@ public class Robot extends LoggedRobot {
   public void testInit() {
     // Cancels all running commands at the start of test mode.
     CommandScheduler.getInstance().cancelAll();
+  
+    Command testCommand = robotContainer.getTestCommand();
+
+    // schedule the autonomous command (example)
+    if (testCommand != null) {
+      CommandScheduler.getInstance().schedule(testCommand);
+    }
   }
 
   /** This function is called periodically during test mode. */

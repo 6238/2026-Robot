@@ -22,6 +22,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -73,6 +74,7 @@ public class RobotContainer {
 
     // Dashboard inputs
     private final LoggedDashboardChooser<Command> autoChooser;
+    private final LoggedDashboardChooser<Command> testChooser;
 
     /**
      * The container for the robot. Contains subsystems, OI devices, and commands.
@@ -161,6 +163,18 @@ public class RobotContainer {
                 "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
         configureButtonBindings();
+        
+        testChooser = new LoggedDashboardChooser<Command>("Test Choices", createTestModeChooser());
+    }
+
+    private SendableChooser<Command> createTestModeChooser() {
+        SendableChooser<Command> testSendableChooser = new SendableChooser<>();
+        testSendableChooser.setDefaultOption("No Tests", Commands.none());
+        testSendableChooser.addOption("Full System Test", Commands.sequence(
+            
+        ));
+
+        return testSendableChooser;
     }
 
     private void configureNamedCommands() {
@@ -220,6 +234,15 @@ public class RobotContainer {
      * @return the command to run in autonomous
      */
     public Command getAutonomousCommand() {
+        return autoChooser.get();
+    }
+
+    /**
+     * Use this to pass the autonomous command to the main {@link Robot} class.
+     *
+     * @return the command to run in autonomous
+     */
+    public Command getTestCommand() {
         return autoChooser.get();
     }
 
