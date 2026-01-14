@@ -2,6 +2,8 @@ package frc.robot.subsystems.shooter;
 
 import static edu.wpi.first.units.Units.*;
 
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
+
 import com.ctre.phoenix6.CANBus;
 import edu.wpi.first.units.measure.Distance;
 import frc.robot.util.LoggedNetworkPIDFeedforwardGains;
@@ -29,4 +31,9 @@ public class ShooterConstants {
           0.0, // kG
           "ShooterFlywheel"
       );
+  
+  public static final LoggedNetworkNumber FLYWHEEL_RPM =
+      new LoggedNetworkNumber("Shooter/FlywheelRPM", 5000);
+  public static final LoggedNetworkNumber FEEDER_VOLTAGE =
+      new LoggedNetworkNumber("Shooter/FlywheelRPM", 8);
 }

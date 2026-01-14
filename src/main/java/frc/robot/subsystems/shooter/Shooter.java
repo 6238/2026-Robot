@@ -1,9 +1,12 @@
 package frc.robot.subsystems.shooter;
 
-import static edu.wpi.first.units.Units.*;
+import java.util.function.Supplier;
 
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.util.AlertUtils;
 
@@ -28,5 +31,13 @@ public class Shooter extends SubsystemBase {
     // update alerts based on motor connection status
     AlertUtils.updateAlert(shooterMotorConnectedAlert, !inputs.flywheelTalonConnected);
     AlertUtils.updateAlert(feederMotorConnectedAlert, !inputs.feederTalonConnected);
+  }
+
+  public Command setFlywheelRPM(Supplier<AngularVelocity> rpm) {
+    return runOnce(() -> io.setFlywheelRPM(rpm.get()));
+  }
+
+  public Command setFeederVoltage(Supplier<Voltage> voltage) {
+    return runOnce(() -> io.setFeederVoltage(voltage.get()));
   }
 }
