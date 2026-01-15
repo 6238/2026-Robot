@@ -35,6 +35,7 @@ import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.hopper.Hopper;
+import frc.robot.subsystems.hopper.HopperConstants;
 import frc.robot.subsystems.hopper.HopperIO;
 import frc.robot.subsystems.hopper.HopperIOTalonFX;
 import frc.robot.subsystems.objectdetection.ObjectDetection;
@@ -50,6 +51,9 @@ import frc.robot.subsystems.vision.VisionIOPhotonVision;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.util.AutoPilotUtils;
 import frc.robot.util.RobotIdentity;
+import frc.robot.util.TestMode;
+import frc.robot.util.TestMode.TestResultAggregator;
+
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -94,7 +98,8 @@ public class RobotContainer {
                         new VisionIOPhotonVision(camera0Name, robotToCamera0),
                         new VisionIOPhotonVision(camera1Name, robotToCamera1));
                 objectDetection = new ObjectDetection(
-                        new ObjectDetectionIOJetson(), (timestamp) -> drive.getTimestampPose(timestamp));
+                        new ObjectDetectionIOJetson(),
+                        (timestamp) -> drive.getTimestampPose(timestamp));
                 shooter = new Shooter(new ShooterIOTalonFX());
                 hopper = new Hopper(new HopperIOTalonFX());
                 break;
@@ -109,13 +114,17 @@ public class RobotContainer {
                         new ModuleIOSim(RobotIdentity.getTunerConstants().BackRight));
                 vision = new Vision(
                         drive::addVisionMeasurement,
-                        new VisionIOPhotonVisionSim(camera0Name, robotToCamera0, drive::getPose),
-                        new VisionIOPhotonVisionSim(camera1Name, robotToCamera1, drive::getPose));
+                        new VisionIOPhotonVisionSim(camera0Name, robotToCamera0,
+                                drive::getPose),
+                        new VisionIOPhotonVisionSim(camera1Name, robotToCamera1,
+                                drive::getPose));
                 objectDetection = new ObjectDetection(
                         new ObjectDetectionIO() {
                         }, (timestamp) -> drive.getTimestampPose(timestamp));
-                shooter = new Shooter(new ShooterIO() {});
-                hopper = new Hopper(new HopperIO() {});
+                shooter = new Shooter(new ShooterIO() {
+                });
+                hopper = new Hopper(new HopperIO() {
+                });
                 break;
 
             default:
@@ -136,8 +145,10 @@ public class RobotContainer {
                 objectDetection = new ObjectDetection(
                         new ObjectDetectionIO() {
                         }, (timestamp) -> drive.getTimestampPose(timestamp));
-                shooter = new Shooter(new ShooterIO() {});
-                hopper = new Hopper(new HopperIO() {});
+                shooter = new Shooter(new ShooterIO() {
+                });
+                hopper = new Hopper(new HopperIO() {
+                });
                 break;
         }
 
@@ -148,7 +159,8 @@ public class RobotContainer {
 
         // Set up SysId routines
         autoChooser.addOption(
-                "Drive Wheel Radius Characterization", DriveCommands.wheelRadiusCharacterization(drive));
+                "Drive Wheel Radius Characterization",
+                DriveCommands.wheelRadiusCharacterization(drive));
         autoChooser.addOption(
                 "Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(drive));
         autoChooser.addOption(
@@ -163,16 +175,22 @@ public class RobotContainer {
                 "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
         configureButtonBindings();
-        
+
         testChooser = new LoggedDashboardChooser<Command>("Test Choices", createTestModeChooser());
     }
 
     private SendableChooser<Command> createTestModeChooser() {
+        TestResultAggregator testResultAggregator = new TestResultAggregator();
+
         SendableChooser<Command> testSendableChooser = new SendableChooser<>();
         testSendableChooser.setDefaultOption("No Tests", Commands.none());
         testSendableChooser.addOption("Full System Test", Commands.sequence(
-            
-        ));
+                TestMode.testMotorOutputProfile(hopper, testResultAggregator.getTestResultConsumer(),
+                        HopperConstants.HOPPER_TEST_PROFILE,
+                        (voltage) -> hopper.setIndexerVoltage(voltage),
+                        () -> hopper.inputs.hopperAppliedCurrent,
+                        () -> hopper.inputs.hopperVelocity),
+                testResultAggregator.outputResults()));
 
         return testSendableChooser;
     }
@@ -183,14 +201,17 @@ public class RobotContainer {
         NamedCommands.registerCommand(
                 "DynamicPickup",
                 Commands.either(
-                        AutoPilotUtils.generateIterativePickupCommand(drive, objectDetection, controller),
+                        AutoPilotUtils.generateIterativePickupCommand(drive, objectDetection,
+                                controller),
                         Commands.sequence(
                                 Commands.waitSeconds(0.3),
                                 Commands.either(
                                         AutoPilotUtils.generateIterativePickupCommand(
-                                                drive, objectDetection, controller),
+                                                drive, objectDetection,
+                                                controller),
                                         Commands.none(),
-                                        () -> objectDetection.getTrackedObjects().length > 0)),
+                                        () -> objectDetection
+                                                .getTrackedObjects().length > 0)),
                         () -> objectDetection.getTrackedObjects().length > 0));
     }
 
@@ -215,10 +236,13 @@ public class RobotContainer {
                 .onTrue(
                         Commands.runOnce(
                                 () -> drive.setPose(
-                                        new Pose2d(drive.getPose().getTranslation(), new Rotation2d())),
+                                        new Pose2d(drive.getPose()
+                                                .getTranslation(),
+                                                new Rotation2d())),
                                 drive)
                                 .ignoringDisable(true));
-        controller.rightTrigger().onTrue(shooter.setFlywheelRPM(() -> RPM.of(ShooterConstants.FLYWHEEL_RPM.get())))
+        controller.rightTrigger()
+                .onTrue(shooter.setFlywheelRPM(() -> RPM.of(ShooterConstants.FLYWHEEL_RPM.get())))
                 .onFalse(shooter.setFlywheelRPM(() -> RPM.of(0)));
         controller.a().onTrue(shooter.setFeederVoltage(() -> Volts.of(ShooterConstants.FEEDER_VOLTAGE.get())))
                 .onFalse(shooter.setFeederVoltage(() -> Volts.of(0)));
