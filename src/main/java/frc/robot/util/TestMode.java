@@ -46,12 +46,6 @@ public class TestMode {
             Time maxSettleTime) {
     }
 
-    public record EncoderTestProfile(
-            String motorName,
-            String encoderName,
-            Voltage voltage) {
-    }
-
     public static boolean withinThreshold(double value, double target, double threshold) {
         if (value >= target - threshold && value <= target + threshold) {
             return true;
