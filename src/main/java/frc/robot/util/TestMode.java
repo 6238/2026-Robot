@@ -52,14 +52,6 @@ public class TestMode {
             Voltage voltage) {
     }
 
-    // A command for testing an external encoder
-    public static Command testMotorEncoder(Subsystem subsystem, Consumer<TestResult> results,
-            EncoderTestProfile testProfile,
-            Consumer<Voltage> motorVoltageConsumer, Supplier<Current> motorPositionSupplier) {
-        return Commands.runOnce(() -> {
-        });
-    }
-
     public static boolean withinThreshold(double value, double target, double threshold) {
         if (value >= target - threshold && value <= target + threshold) {
             return true;
