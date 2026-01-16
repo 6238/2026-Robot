@@ -52,7 +52,7 @@ import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.util.AutoPilotUtils;
 import frc.robot.util.RobotIdentity;
 import frc.robot.util.TestMode;
-import frc.robot.util.TestMode.TestResultAggregator;
+import frc.robot.util.TestMode.NTTestHandle;
 
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
@@ -180,17 +180,16 @@ public class RobotContainer {
     }
 
     private SendableChooser<Command> createTestModeChooser() {
-        TestResultAggregator testResultAggregator = new TestResultAggregator();
+        NTTestHandle hopperHandle = TestMode.createAndPublishTest("hopper_current", "Hopper Current Draw", HopperConstants.HOPPER_TEST_PROFILE.duration().in(Seconds));
 
         SendableChooser<Command> testSendableChooser = new SendableChooser<>();
         testSendableChooser.setDefaultOption("No Tests", Commands.none());
-        testSendableChooser.addOption("Full System Test", Commands.sequence(
-                TestMode.testMotorOutputProfile(hopper, testResultAggregator.getTestResultConsumer(),
-                        HopperConstants.HOPPER_TEST_PROFILE,
-                        (voltage) -> hopper.setIndexerVoltage(voltage),
-                        () -> hopper.inputs.hopperAppliedCurrent,
-                        () -> hopper.inputs.hopperVelocity),
-                testResultAggregator.outputResults()));
+        testSendableChooser.addOption("Full System Test",
+            TestMode.testMotorOutputProfile(hopper, hopperHandle,
+                HopperConstants.HOPPER_TEST_PROFILE,
+                (voltage) -> hopper.setIndexerVoltage(voltage),
+                () -> hopper.inputs.hopperAppliedCurrent,
+                () -> hopper.inputs.hopperVelocity));
 
         return testSendableChooser;
     }
