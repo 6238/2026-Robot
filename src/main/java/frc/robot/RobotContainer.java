@@ -16,10 +16,14 @@ package frc.robot;
 import static edu.wpi.first.units.Units.*;
 import static frc.robot.subsystems.vision.VisionConstants.*;
 
+import java.util.Set;
+
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -43,6 +47,7 @@ import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.ShooterConstants;
 import frc.robot.subsystems.shooter.ShooterIO;
 import frc.robot.subsystems.shooter.ShooterIOTalonFX;
+import frc.robot.subsystems.shooter.ShooterSetpoint;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOPhotonVision;
@@ -52,186 +57,217 @@ import frc.robot.util.RobotIdentity;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
- * This class is where the bulk of the robot should be declared. Since
- * Command-based is a
- * "declarative" paradigm, very little robot logic should actually be handled in
- * the {@link Robot}
- * periodic methods (other than the scheduler calls). Instead, the structure of
- * the robot (including
+ * This class is where the bulk of the robot should be declared. Since Command-based is a
+ * "declarative" paradigm, very little robot logic should actually be handled in the {@link Robot}
+ * periodic methods (other than the scheduler calls). Instead, the structure of the robot (including
  * subsystems, commands, and button mappings) should be declared here.
  */
 public class RobotContainer {
-    // Subsystems
-    private final Drive drive;
-    private final Vision vision;
-    private final ObjectDetection objectDetection;
-    private final Shooter shooter;
-    private final Hopper hopper;
+  // Subsystems
+  private final Drive drive;
+  private final Vision vision;
+  private final ObjectDetection objectDetection;
+  private final Shooter shooter;
+  private final Hopper hopper;
 
-    // Controller
-    private final CommandXboxController controller = new CommandXboxController(0);
+  // Controller
+  private final CommandXboxController controller = new CommandXboxController(0);
 
-    // Dashboard inputs
-    private final LoggedDashboardChooser<Command> autoChooser;
+  // Dashboard inputs
+  private final LoggedDashboardChooser<Command> autoChooser;
 
-    /**
-     * The container for the robot. Contains subsystems, OI devices, and commands.
-     */
-    public RobotContainer() {
-        switch (Constants.currentMode) {
-            case REAL:
-                // Real robot, instantiate hardware IO implementations
-                drive = new Drive(
-                        new GyroIOPigeon2(),
-                        new ModuleIOTalonFX(RobotIdentity.getTunerConstants().FrontLeft),
-                        new ModuleIOTalonFX(RobotIdentity.getTunerConstants().FrontRight),
-                        new ModuleIOTalonFX(RobotIdentity.getTunerConstants().BackLeft),
-                        new ModuleIOTalonFX(RobotIdentity.getTunerConstants().BackRight));
-                vision = new Vision(
-                        drive::addVisionMeasurement,
-                        new VisionIOPhotonVision(camera0Name, robotToCamera0),
-                        new VisionIOPhotonVision(camera1Name, robotToCamera1));
-                objectDetection = new ObjectDetection(
-                        new ObjectDetectionIOJetson(), (timestamp) -> drive.getTimestampPose(timestamp));
-                shooter = new Shooter(new ShooterIOTalonFX());
-                hopper = new Hopper(new HopperIOTalonFX());
-                break;
+  private ShooterSetpoint shooterSetpoint = new ShooterSetpoint(RPM.of(0), Degrees.of(0), new Pose2d(), new ChassisSpeeds());
 
-            case SIM:
-                drive = new Drive(
-                        new GyroIO() {
-                        },
-                        new ModuleIOSim(RobotIdentity.getTunerConstants().FrontLeft),
-                        new ModuleIOSim(RobotIdentity.getTunerConstants().FrontRight),
-                        new ModuleIOSim(RobotIdentity.getTunerConstants().BackLeft),
-                        new ModuleIOSim(RobotIdentity.getTunerConstants().BackRight));
-                vision = new Vision(
-                        drive::addVisionMeasurement,
-                        new VisionIOPhotonVisionSim(camera0Name, robotToCamera0, drive::getPose),
-                        new VisionIOPhotonVisionSim(camera1Name, robotToCamera1, drive::getPose));
-                objectDetection = new ObjectDetection(
-                        new ObjectDetectionIO() {
-                        }, (timestamp) -> drive.getTimestampPose(timestamp));
-                shooter = new Shooter(new ShooterIO() {});
-                hopper = new Hopper(new HopperIO() {});
-                break;
+  /** The container for the robot. Contains subsystems, OI devices, and commands. */
+  public RobotContainer() {
+    switch (Constants.currentMode) {
+      case REAL:
+        // Real robot, instantiate hardware IO implementations
+        drive =
+            new Drive(
+                new GyroIOPigeon2(),
+                new ModuleIOTalonFX(RobotIdentity.getTunerConstants().FrontLeft),
+                new ModuleIOTalonFX(RobotIdentity.getTunerConstants().FrontRight),
+                new ModuleIOTalonFX(RobotIdentity.getTunerConstants().BackLeft),
+                new ModuleIOTalonFX(RobotIdentity.getTunerConstants().BackRight));
+        vision =
+            new Vision(
+                drive::addVisionMeasurement,
+                new VisionIOPhotonVision(camera0Name, robotToCamera0));
+        objectDetection =
+            new ObjectDetection(
+                new ObjectDetectionIOJetson(), (timestamp) -> drive.getTimestampPose(timestamp));
+        shooter = new Shooter(new ShooterIOTalonFX());
+        hopper = new Hopper(new HopperIOTalonFX());
+        break;
 
-            default:
-                drive = new Drive(
-                        new GyroIO() {
-                        },
-                        new ModuleIO() {
-                        },
-                        new ModuleIO() {
-                        },
-                        new ModuleIO() {
-                        },
-                        new ModuleIO() {
-                        });
-                vision = new Vision(drive::addVisionMeasurement, new VisionIO() {
-                }, new VisionIO() {
-                });
-                objectDetection = new ObjectDetection(
-                        new ObjectDetectionIO() {
-                        }, (timestamp) -> drive.getTimestampPose(timestamp));
-                shooter = new Shooter(new ShooterIO() {});
-                hopper = new Hopper(new HopperIO() {});
-                break;
-        }
+      case SIM:
+        drive =
+            new Drive(
+                new GyroIO() {},
+                new ModuleIOSim(RobotIdentity.getTunerConstants().FrontLeft),
+                new ModuleIOSim(RobotIdentity.getTunerConstants().FrontRight),
+                new ModuleIOSim(RobotIdentity.getTunerConstants().BackLeft),
+                new ModuleIOSim(RobotIdentity.getTunerConstants().BackRight));
+        vision =
+            new Vision(
+                drive::addVisionMeasurement,
+                new VisionIOPhotonVisionSim(camera0Name, robotToCamera0, drive::getPose));
+        objectDetection =
+            new ObjectDetection(
+                new ObjectDetectionIO() {}, (timestamp) -> drive.getTimestampPose(timestamp));
+        shooter = new Shooter(new ShooterIO() {});
+        hopper = new Hopper(new HopperIO() {});
+        break;
 
-        configureNamedCommands();
-
-        // Set up auto routines
-        autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
-
-        // Set up SysId routines
-        autoChooser.addOption(
-                "Drive Wheel Radius Characterization", DriveCommands.wheelRadiusCharacterization(drive));
-        autoChooser.addOption(
-                "Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(drive));
-        autoChooser.addOption(
-                "Drive SysId (Quasistatic Forward)",
-                drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-        autoChooser.addOption(
-                "Drive SysId (Quasistatic Reverse)",
-                drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-        autoChooser.addOption(
-                "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
-        autoChooser.addOption(
-                "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
-
-        configureButtonBindings();
+      default:
+        drive =
+            new Drive(
+                new GyroIO() {},
+                new ModuleIO() {},
+                new ModuleIO() {},
+                new ModuleIO() {},
+                new ModuleIO() {});
+        vision = new Vision(drive::addVisionMeasurement, new VisionIO() {});
+        objectDetection =
+            new ObjectDetection(
+                new ObjectDetectionIO() {}, (timestamp) -> drive.getTimestampPose(timestamp));
+        shooter = new Shooter(new ShooterIO() {});
+        hopper = new Hopper(new HopperIO() {});
+        break;
     }
 
-    private void configureNamedCommands() {
-        AutoPilotUtils.initializeAutoPilot();
+    configureNamedCommands();
 
-        NamedCommands.registerCommand(
-                "DynamicPickup",
+    // Set up auto routines
+    autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
+
+    // Set up SysId routines
+    autoChooser.addOption(
+        "Drive Wheel Radius Characterization", DriveCommands.wheelRadiusCharacterization(drive));
+    autoChooser.addOption(
+        "Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(drive));
+    autoChooser.addOption(
+        "Drive SysId (Quasistatic Forward)",
+        drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+    autoChooser.addOption(
+        "Drive SysId (Quasistatic Reverse)",
+        drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+    autoChooser.addOption(
+        "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
+    autoChooser.addOption(
+        "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+
+    configureButtonBindings();
+  }
+
+  private void configureNamedCommands() {
+    AutoPilotUtils.initializeAutoPilot();
+
+    NamedCommands.registerCommand(
+        "DynamicPickup",
+        Commands.either(
+            AutoPilotUtils.generateIterativePickupCommand(drive, objectDetection, controller),
+            Commands.sequence(
+                Commands.waitSeconds(0.3),
                 Commands.either(
-                        AutoPilotUtils.generateIterativePickupCommand(drive, objectDetection, controller),
-                        Commands.sequence(
-                                Commands.waitSeconds(0.3),
-                                Commands.either(
-                                        AutoPilotUtils.generateIterativePickupCommand(
-                                                drive, objectDetection, controller),
-                                        Commands.none(),
-                                        () -> objectDetection.getTrackedObjects().length > 0)),
-                        () -> objectDetection.getTrackedObjects().length > 0));
-    }
+                    AutoPilotUtils.generateIterativePickupCommand(
+                        drive, objectDetection, controller),
+                    Commands.none(),
+                    () -> objectDetection.getTrackedObjects().length > 0)),
+            () -> objectDetection.getTrackedObjects().length > 0));
+  }
 
-    /**
-     * Use this method to define your button->command mappings. Buttons can be
-     * created by
-     * instantiating a {@link GenericHID} or one of its subclasses ({@link
-     * edu.wpi.first.wpilibj.Joystick} or {@link XboxController}), and then passing
-     * it to a {@link
-     * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
-     */
-    private void configureButtonBindings() {
-        drive.setDefaultCommand(
-                DriveCommands.joystickDriveRobotRelative(
-                        drive,
-                        () -> controller.getLeftY(),
-                        () -> controller.getLeftX(),
-                        () -> -controller.getRightX()));
+  /**
+   * Use this method to define your button->command mappings. Buttons can be created by
+   * instantiating a {@link GenericHID} or one of its subclasses ({@link
+   * edu.wpi.first.wpilibj.Joystick} or {@link XboxController}), and then passing it to a {@link
+   * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
+   */
+  private void configureButtonBindings() {
+    drive.setDefaultCommand(
+        DriveCommands.joystickDriveRobotRelative(
+            drive,
+            () -> controller.getLeftY(),
+            () -> controller.getLeftX(),
+            () -> -controller.getRightX()));
 
-        controller
-                .start()
-                .onTrue(
-                        Commands.runOnce(
-                                () -> drive.setPose(
-                                        new Pose2d(drive.getPose().getTranslation(), new Rotation2d())),
-                                drive)
-                                .ignoringDisable(true));
-        controller.rightTrigger().onTrue(shooter.setFlywheelRPM(() -> RPM.of(ShooterConstants.FLYWHEEL_RPM.get())))
-                .onFalse(shooter.setFlywheelRPM(() -> RPM.of(0)));
-        controller.a().onTrue(shooter.setFeederVoltage(() -> Volts.of(ShooterConstants.FEEDER_VOLTAGE.get())))
-                .onFalse(shooter.setFeederVoltage(() -> Volts.of(0)));
-        controller.b().onTrue(hopper.spinIndexer())
-                .onFalse(hopper.stopIndexer());
-        controller.x().onTrue(hopper.reverseIndexer())
-                .onFalse(hopper.stopIndexer());
-    }
+    controller
+        .start()
+        .onTrue(
+            Commands.runOnce(
+                    () ->
+                        drive.setPose(
+                            new Pose2d(drive.getPose().getTranslation(), new Rotation2d())),
+                    drive)
+                .ignoringDisable(true));
 
-    /**
-     * Use this to pass the autonomous command to the main {@link Robot} class.
-     *
-     * @return the command to run in autonomous
-     */
-    public Command getAutonomousCommand() {
-        return autoChooser.get();
-    }
+    // controller
+    //     .rightTrigger()
+    //     .onTrue(shooter.setFlywheelRPM(() -> RPM.of(ShooterConstants.SPINUP_FLYWHEEL_SPEED.get())))
+    //     .onFalse(shooter.setFlywheelRPM(() -> RPM.of(0)));
 
-    public Drive getDriveSubsystem() {
-        return drive;
-    }
+    // controller
+    //     .a()
+    //     .onTrue(shooter.setFeederVoltage(() -> Volts.of(ShooterConstants.FEEDER_VOLTAGE.get())))
+    //     .onFalse(shooter.setFeederVoltage(() -> Volts.of(0)));
+    // controller.b().onTrue(hopper.spinIndexer()).onFalse(hopper.stopIndexer());
+    // controller.x().onTrue(hopper.reverseIndexer()).onFalse(hopper.stopIndexer());
 
-    public Vision getVisionSubsystem() {
-        return vision;
-    }
+    controller.rightTrigger().whileTrue(
+        Commands.parallel(
+            Commands.run(() -> shooterSetpoint = ShooterSetpoint.generateNearestShooterSetpoint(drive.getPose(), drive.getChassisSpeeds())), // Seconds.of(ShooterConstants.LEAD_TIME_SEC.get())
+            DriveCommands.joystickDriveAtAngle(
+                drive,
+                () -> controller.getLeftY(),
+                () -> controller.getLeftX(),
+                () -> shooterSetpoint.robotPose.getRotation()),
+            shooter.setFlywheelRPM(() -> shooterSetpoint.flywheelSpeed),
+            shooter.setFeederVoltage(() -> Volts.of(ShooterConstants.FEEDER_VOLTAGE.get())),
+            hopper.spinIndexer().onlyWhile(() -> {
+                // Check if within shot tolerance
+                AngularVelocity currentRPM = shooter.getCurrentFlywheelSpeed();
+                AngularVelocity targetRPM = shooterSetpoint.flywheelSpeed;
+                double rpmError = Math.abs(currentRPM.in(RPM) - targetRPM.in(RPM));
+                boolean shooterRPMWithinTolerance = rpmError < ShooterConstants.FLYWHEEL_TOLERANCE_BEFORE_SHOT.in(RPM);
 
-    public ObjectDetection getObjectDetectionSubsystem() {
-        return objectDetection;
-    }
+                // Check if within hub position and rotation tolerance
+                Pose2d currentPose = drive.getPose();
+                double positionError = currentPose.getTranslation().getDistance(shooterSetpoint.robotPose.getTranslation());
+                double rotationError = Math.abs(currentPose.getRotation().minus(shooterSetpoint.robotPose.getRotation()).getDegrees());
+                boolean hubPositionWithinTolerance = positionError < ShooterConstants.HUB_POSITION_TOLERANCE.in(Meters);
+                boolean hubRotationWithinTolerance = rotationError < ShooterConstants.HUB_ROTATION_TOLERANCE.in(Degrees);
+
+                return shooterRPMWithinTolerance && hubPositionWithinTolerance && hubRotationWithinTolerance;
+            })
+        )
+    ).onFalse(
+        Commands.sequence(
+            hopper.stopIndexer(),
+            Commands.waitSeconds(0.2),
+            shooter.setFeederVoltage(() -> Volts.of(0))
+        )
+    );
+  }
+
+  /**
+   * Use this to pass the autonomous command to the main {@link Robot} class.
+   *
+   * @return the command to run in autonomous
+   */
+  public Command getAutonomousCommand() {
+    return autoChooser.get();
+  }
+
+  public Drive getDriveSubsystem() {
+    return drive;
+  }
+
+  public Vision getVisionSubsystem() {
+    return vision;
+  }
+
+  public ObjectDetection getObjectDetectionSubsystem() {
+    return objectDetection;
+  }
 }

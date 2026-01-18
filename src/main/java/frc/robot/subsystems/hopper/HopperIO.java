@@ -2,25 +2,35 @@ package frc.robot.subsystems.hopper;
 
 import static edu.wpi.first.units.Units.*;
 
-import org.littletonrobotics.junction.AutoLog;
-
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
+import org.littletonrobotics.junction.AutoLog;
 
 public interface HopperIO {
   @AutoLog
   public static class HopperIOInputs {
     public boolean indexerTalonConnected = false;
+    public boolean topIndexerTalonConnected = false;
 
-    public AngularVelocity hopperVelocity = RotationsPerSecond.of(0.0);
-    public AngularAcceleration hopperAcceleration = RotationsPerSecondPerSecond.of(0.0);
-    public Current hopperAppliedCurrent = Amps.of(0.0);
-    public Voltage hopperAppliedVoltage = Volts.of(0.0);
+    public AngularVelocity indexerVelocity = RotationsPerSecond.of(0.0);
+    public AngularAcceleration indexerAcceleration = RotationsPerSecondPerSecond.of(0.0);
+    public Current indexerAppliedCurrent = Amps.of(0.0);
+    public Voltage indexerAppliedVoltage = Volts.of(0.0);
+    
+    // public AngularVelocity topIndexerVelocity = RotationsPerSecond.of(0.0);
+    // public AngularAcceleration topIndexerAcceleration = RotationsPerSecondPerSecond.of(0.0);
+    // public Current topIndexerAppliedCurrent = Amps.of(0.0);
+    // public Voltage topIndexerAppliedVoltage = Volts.of(0.0);
   }
 
-  public default void updateInputs(HopperIOInputs inputs) {};
+  public default void updateInputs(HopperIOInputs inputs) {}
+  ;
 
-  public default void setIndexerVoltage(Voltage voltage) {};
+  public default void setIndexerVoltage(Voltage voltage) {}
+  ;
+
+  // public default void setTopIndexerVoltage(Voltage voltage) {}
+  // ;
 }

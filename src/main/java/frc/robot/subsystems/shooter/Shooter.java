@@ -1,7 +1,5 @@
 package frc.robot.subsystems.shooter;
 
-import java.util.function.Supplier;
-
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Alert;
@@ -9,6 +7,9 @@ import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.util.AlertUtils;
+import java.util.function.Supplier;
+
+import org.littletonrobotics.junction.Logger;
 
 public class Shooter extends SubsystemBase {
   private final ShooterIO io;
@@ -27,6 +28,8 @@ public class Shooter extends SubsystemBase {
   @Override
   public void periodic() {
     io.updateInputs(inputs);
+    Logger.processInputs("Shooter", inputs);
+  
 
     // update alerts based on motor connection status
     AlertUtils.updateAlert(shooterMotorConnectedAlert, !inputs.flywheelTalonConnected);
@@ -39,5 +42,9 @@ public class Shooter extends SubsystemBase {
 
   public Command setFeederVoltage(Supplier<Voltage> voltage) {
     return runOnce(() -> io.setFeederVoltage(voltage.get()));
+  }
+
+  public AngularVelocity getCurrentFlywheelSpeed() {
+    return inputs.flywheelVelocity;
   }
 }

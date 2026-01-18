@@ -21,8 +21,10 @@ import frc.robot.util.BetterStatusSignalCollection;
 public class ShooterIOTalonFX implements ShooterIO {
   // Alerts
   private Alert statusSignalAlert = new Alert("ISSUE", "Status Signal Error", AlertType.kError);
-  private Alert flywheelConfigAlert = new Alert("CRITICAL", "Failed To Configure Flywheel Motor", AlertType.kError);
-  private Alert feederConfigAlert = new Alert("CRITICAL", "Failed To Configure Feeder Motor", AlertType.kError);
+  private Alert flywheelConfigAlert =
+      new Alert("CRITICAL", "Failed To Configure Flywheel Motor", AlertType.kError);
+  private Alert feederConfigAlert =
+      new Alert("CRITICAL", "Failed To Configure Feeder Motor", AlertType.kError);
 
   // Motor Controllers
   private TalonFX flywheelTalon;
@@ -44,7 +46,6 @@ public class ShooterIOTalonFX implements ShooterIO {
   public StatusSignal<Voltage> feederAppliedVoltage;
 
   // Control Requests
-  public PositionVoltage hoodPositionVoltage = new PositionVoltage(0).withSlot(0);
   public VelocityVoltage flywheelVelocityVoltage = new VelocityVoltage(0).withSlot(0);
 
   public ShooterIOTalonFX() {
@@ -55,33 +56,39 @@ public class ShooterIOTalonFX implements ShooterIO {
     TalonFXConfiguration flywheelConfig = new TalonFXConfiguration();
     flywheelConfig.Feedback.SensorToMechanismRatio = ShooterConstants.FLYWHEEL_GEARING;
     flywheelConfig.Slot0 = ShooterConstants.FLYWHEEL_GAINS.toSlot0Configs();
+    flywheelConfig.MotionMagic = ShooterConstants.FLYWHEEL_MOTION_MAGIC_CONFIGS;
+    flywheelConfig.MotorOutput.Inverted = ShooterConstants.FLYWHEEL_INVERTED;
 
     TalonFXConfiguration feederConfig = new TalonFXConfiguration();
-    feederConfig.Feedback.SensorToMechanismRatio =
-        ShooterConstants.FEEDER_GEARING;
+    feederConfig.Feedback.SensorToMechanismRatio = ShooterConstants.FEEDER_GEARING;
+    feederConfig.MotorOutput.Inverted = ShooterConstants.FEEDER_INVERTED;
 
-    if (tryUntilOk(Constants.MAX_PHEONIX_RETRIES, () -> flywheelTalon.getConfigurator().apply(flywheelConfig))) {
+    if (tryUntilOk(
+        Constants.MAX_PHEONIX_RETRIES,
+        () -> flywheelTalon.getConfigurator().apply(flywheelConfig))) {
       flywheelConfigAlert.set(false);
     } else {
       flywheelConfigAlert.set(true);
     }
 
-    if (tryUntilOk(Constants.MAX_PHEONIX_RETRIES, () -> feederTalon.getConfigurator().apply(feederConfig))) {
+    if (tryUntilOk(
+        Constants.MAX_PHEONIX_RETRIES, () -> feederTalon.getConfigurator().apply(feederConfig))) {
       feederConfigAlert.set(false);
     } else {
       feederConfigAlert.set(true);
     }
 
     // Initialize Status Signals
-    statusSignalCollector = new BetterStatusSignalCollection(
-        flywheelVelocity,
-        flywheelAcceleration,
-        flywheelAppliedCurent,
-        flywheelAppliedVoltage,
-        feederVelocity,
-        feederAcceleration,
-        feederAppliedCurent,
-        feederAppliedVoltage);
+    statusSignalCollector =
+        new BetterStatusSignalCollection(
+            flywheelVelocity,
+            flywheelAcceleration,
+            flywheelAppliedCurent,
+            flywheelAppliedVoltage,
+            feederVelocity,
+            feederAcceleration,
+            feederAppliedCurent,
+            feederAppliedVoltage);
     ParentDevice.optimizeBusUtilizationForAll(flywheelTalon, feederTalon);
   }
 
@@ -91,8 +98,7 @@ public class ShooterIOTalonFX implements ShooterIO {
     if (!statusSignalCollector.isAllGood()) {
       statusSignalAlert.set(true);
       statusSignalAlert.setText(
-          "Shooter TalonFX Status Signal Error: "
-              + statusSignalCollector.getBadSignalsString());
+          "Shooter TalonFX Status Signal Error: " + statusSignalCollector.getBadSignalsString());
     } else {
       statusSignalAlert.set(false);
     }
