@@ -13,7 +13,10 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.wpilibj.RobotBase;
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 /**
  * This class defines the runtime mode used by AdvantageKit. The mode is always "real" when running
@@ -23,6 +26,8 @@ import edu.wpi.first.wpilibj.RobotBase;
 public final class Constants {
   public static final Mode simMode = Mode.REPLAY;
   public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
+
+  public static final LoggedNetworkNumber shootVolt = new LoggedNetworkNumber("Shoot", 3);
 
   public static enum Mode {
     /** Running on a real robot. */
@@ -35,7 +40,11 @@ public final class Constants {
     REPLAY
   }
 
+  public static final int MAX_PHEONIX_RETRIES = 5;
+
   public final class PathfindingConfig {
     public static final double DRIVE_RESUME_DEADBAND = 0.2;
   }
+
+  public static final Pose3d HUB_POSE_3D = new Pose3d(8.23, 4.115, 0.0, Rotation3d.kZero);
 }

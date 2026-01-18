@@ -1,6 +1,6 @@
 plugins {
     id "java"
-    id "edu.wpi.first.GradleRIO" version "2025.3.2"
+    id "edu.wpi.first.GradleRIO" version "2026.1.1"
     id "com.peterabeles.gversion" version "1.10"
     id "com.diffplug.spotless" version "6.12.0"
 }
@@ -9,9 +9,6 @@ java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
 }
-
-repositories { mavenCentral() }
-
 
 def ROBOT_MAIN_CLASS = "frc.robot.Main"
 
@@ -51,7 +48,7 @@ deploy {
                     directory = '/home/lvuser/deploy'
                     // Change to true to delete files on roboRIO that no
                     // longer exist in deploy directory on roboRIO
-                    deleteOldFiles = true
+                    deleteOldFiles = false
                 }
             }
         }
@@ -60,7 +57,8 @@ deploy {
 
 def deployArtifact = deploy.targets.roborio.artifacts.frcJava
 
-// Set to true to use debug for JNI.
+// Set to true to use debug for all targets including JNI, which will drastically impact
+// performance.
 wpi.java.debugJni = false
 
 // Set this to true to enable desktop support.
@@ -94,7 +92,6 @@ dependencies {
     simulationRelease wpi.sim.enableRelease()
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.1'
-    testImplementation 'org.mockito:mockito-inline:5.2.0'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
     def akitJson = new groovy.json.JsonSlurper().parseText(new File(projectDir.getAbsolutePath() + "/vendordeps/AdvantageKit.json").text)
@@ -109,9 +106,8 @@ test {
 // Simulation configuration (e.g. environment variables).
 //
 // The sim GUI is *disabled* by default to support running
-// AdvantageKit log replay from the command line. Set the
-// value to "true" to enable the sim GUI by default (this
-// is the standard WPILib behavior).
+// AdvantageKit log replay, which requires that all HAL
+// sim extensions be disabled.
 wpi.sim.addGui().defaultEnabled = false
 wpi.sim.addDriverstation()
 
@@ -206,7 +202,7 @@ spotless {
     json {
         target fileTree(".") {
             include "**/*.json"
-            exclude "**/build/**", "**/build-*/**"
+            exclude "**/build/**", "**/build-*/**", ".wpilib/**"
         }
         gson().indentWithSpaces(2)
     }
@@ -219,40 +215,4 @@ spotless {
         indentWithSpaces(2)
         endWithNewline()
     }
-}
-
-// Build the Docker container for the Jetson coprocessor
-tasks.register("deploy-jetson", Exec) {
-    description = "Builds the Docker container natively on the Jetson."
-    group = "deploy"
-    workingDir 'ObjectDetectionCoprocessor'
-    // These variables tell the NVIDIA runtime to allow access to GPU libs during build
-    environment "DOCKER_BUILDKIT", "1"
-    environment "NVIDIA_VISIBLE_DEVICES", "all"
-    environment "NVIDIA_DRIVER_CAPABILITIES", "all"
-    commandLine 'docker', 'build', '--progress=plain', '-t', 'jetson-vision', '.'
-}
-
-// Stop and remove ANY container running our vision image
-tasks.register("stop-jetson", Exec) {
-    description = "Stops and removes all containers running the jetson-vision image."
-    group = "deploy"
-    // Force kill specific name and any ancestors, then wait for release
-    commandLine 'sh', '-c', 'docker rm -f jetson-vision 2>/dev/null || true; docker ps -a -q --filter ancestor=jetson-vision | xargs -r docker rm -f 2>/dev/null || true; for i in {1..10}; do if ! docker ps -a --format "{{.Names}}" | grep -q "^jetson-vision$"; then break; fi; sleep 1; done'
-}
-
-// Start the container in "Robot Mode" (detached with auto-restart)
-tasks.register("start-jetson", Exec) {
-    description = "Starts the jetson-vision container in detached mode with auto-restart."
-    group = "deploy"
-    dependsOn "stop-jetson"
-    // We add -t (Pseudo-TTY) to ensure output is unbuffered and drivers initialize correctly
-    commandLine 'docker', 'run', '-d', '-t',
-        '--name', 'jetson-vision',
-        '--restart', 'always',
-        '--runtime', 'nvidia',
-        '--shm-size=1g',
-        '--ulimit', 'memlock=-1',
-        '--device', '/dev/video0:/dev/video0',
-        'jetson-vision'
 }

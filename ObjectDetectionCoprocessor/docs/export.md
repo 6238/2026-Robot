@@ -1,4 +1,4 @@
-# **RF-DETR Export Instructions**  
+# **RF-DETR Export Instructions**
 
 Follow the procedure listed at https://rfdetr.roboflow.com/learn/deploy/
 ## Requirements

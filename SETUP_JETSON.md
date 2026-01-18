@@ -21,7 +21,7 @@ ssh-keygen -t ed25519
 *Press **Enter** for all prompts (do not set a passphrase).*
 
 ## Step 2: Authorize your Laptop
-Copy your new key to the Jetson so you can log in without a password. 
+Copy your new key to the Jetson so you can log in without a password.
 **Note:** You will need the password for the `frc6238` user for this step.
 
 ```bash
@@ -71,4 +71,3 @@ Once setup is complete, you can build the vision code and deploy it to the Jetso
   ```bash
   docker context use default
   ```
-

@@ -23,7 +23,6 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import frc.robot.util.RobotIdentity;
-
 import java.util.Queue;
 
 /** IO implementation for Pigeon 2. */

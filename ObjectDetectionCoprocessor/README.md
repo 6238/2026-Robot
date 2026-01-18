@@ -86,7 +86,7 @@ Ensure `clang++-15` is available as your compiler.
 
 ---
 
-## Building 
+## Building
 
 ### Backend Selection
 
@@ -230,7 +230,7 @@ config.model_type = ModelType::SEGMENTATION;
 
 3. **Postprocessing**:
    - **Detection**: Select predictions above confidence threshold
-   - **Segmentation**: 
+   - **Segmentation**:
      - Apply sigmoid to class logits
      - Top-k selection across all classes and queries
      - Resize masks to original image dimensions using bilinear interpolation

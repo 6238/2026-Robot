@@ -83,4 +83,3 @@ This glossary explains technical terms used in the RF-DETR Inference project REA
 **Engine File (.engine / .trt)**: A TensorRT-optimized model file containing the serialized inference engine. Pre-built engine files can be loaded directly by TensorRT, skipping the ONNX-to-TensorRT conversion process and speeding up initialization. Engine files are typically platform and GPU-specific.
 
 **CUDA**: NVIDIA's parallel computing platform and programming model that enables general-purpose computing on GPUs. Required for TensorRT backend but not for ONNX Runtime CPU inference.
-
