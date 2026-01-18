@@ -41,7 +41,8 @@ public class HopperIOTalonFX implements HopperIO {
 
   public HopperIOTalonFX() {
     this.indexerTalon = new TalonFX(HopperConstants.INDEXER_MOTOR_ID, HopperConstants.CAN_BUS);
-    // this.topIndexerTalon = new TalonFX(HopperConstants.TOP_INDEXER_MOTOR_ID, HopperConstants.CAN_BUS);
+    // this.topIndexerTalon = new TalonFX(HopperConstants.TOP_INDEXER_MOTOR_ID,
+    // HopperConstants.CAN_BUS);
 
     // Configure TalonFX Motors
     TalonFXConfiguration indexerConfig = new TalonFXConfiguration();
@@ -61,7 +62,8 @@ public class HopperIOTalonFX implements HopperIO {
     // topIndexerConfig.MotorOutput.Inverted = HopperConstants.TOP_INDEXER_MOTOR_DIRECTION;
 
     // if (tryUntilOk(
-    //     Constants.MAX_PHEONIX_RETRIES, () -> topIndexerTalon.getConfigurator().apply(topIndexerConfig))) {
+    //     Constants.MAX_PHEONIX_RETRIES, () ->
+    // topIndexerTalon.getConfigurator().apply(topIndexerConfig))) {
     //   indexerConfigAlert.set(false);
     // } else {
     //   indexerConfigAlert.set(true);
@@ -80,8 +82,12 @@ public class HopperIOTalonFX implements HopperIO {
 
     statusSignalCollector =
         new BetterStatusSignalCollection(
-            indexerVelocity, indexerAcceleration, indexerCurrent, indexerVoltage);//, topIndexerVelocity, topIndexerAcceleration, topIndexerCurrent, topIndexerVoltage);
-    ParentDevice.optimizeBusUtilizationForAll(indexerTalon);//, topIndexerTalon);
+            indexerVelocity,
+            indexerAcceleration,
+            indexerCurrent,
+            indexerVoltage); // , topIndexerVelocity, topIndexerAcceleration, topIndexerCurrent,
+    // topIndexerVoltage);
+    ParentDevice.optimizeBusUtilizationForAll(indexerTalon); // , topIndexerTalon);
   }
 
   @Override
@@ -113,7 +119,7 @@ public class HopperIOTalonFX implements HopperIO {
   public void setIndexerVoltage(Voltage voltage) {
     indexerTalon.setVoltage(voltage.in(Volts));
   }
-  
+
   // public void setTopIndexerVoltage(Voltage voltage) {
   //   topIndexerTalon.setVoltage(voltage.in(Volts));
   // }

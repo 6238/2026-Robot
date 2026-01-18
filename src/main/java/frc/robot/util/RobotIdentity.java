@@ -21,10 +21,8 @@ public class RobotIdentity {
     PRACTICE_BOT,
   }
 
-  public static final String COMP_RIO_SERIAL =
-      "R123456789"; // TODO: Replace with actual serial number of competition robot
-  public static final String PRACTICE_RIO_SERIAL =
-      "03182373"; // TODO: Replace with actual serial number of competition robot
+  public static final String COMP_RIO_SERIAL = "032B1F73";
+  public static final String PRACTICE_RIO_SERIAL = "03182373";
 
   public static RobotType getRobotType() {
     switch (RobotController.getSerialNumber()) {

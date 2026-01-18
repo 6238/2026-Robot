@@ -18,7 +18,7 @@ public interface HopperIO {
     public AngularAcceleration indexerAcceleration = RotationsPerSecondPerSecond.of(0.0);
     public Current indexerAppliedCurrent = Amps.of(0.0);
     public Voltage indexerAppliedVoltage = Volts.of(0.0);
-    
+
     // public AngularVelocity topIndexerVelocity = RotationsPerSecond.of(0.0);
     // public AngularAcceleration topIndexerAcceleration = RotationsPerSecondPerSecond.of(0.0);
     // public Current topIndexerAppliedCurrent = Amps.of(0.0);

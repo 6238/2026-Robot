@@ -11,7 +11,7 @@ public class HopperConstants {
 
   public static final double INDEXER_GEARING = 1.0;
   public static final InvertedValue INDEXER_MOTOR_DIRECTION = InvertedValue.Clockwise_Positive;
-  
+
   public static final double TOP_INDEXER_GEARING = 1.0;
   public static final InvertedValue TOP_INDEXER_MOTOR_DIRECTION = InvertedValue.Clockwise_Positive;
 
