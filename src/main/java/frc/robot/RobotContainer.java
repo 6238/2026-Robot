@@ -51,7 +51,6 @@ import frc.robot.subsystems.vision.VisionIOPhotonVision;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.util.AutoPilotUtils;
 import frc.robot.util.RobotIdentity;
-
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
@@ -212,9 +211,7 @@ public class RobotContainer {
                     () ->
                         shooterSetpoint =
                             ShooterSetpoint.generateNearestShooterSetpoint(
-                                drive.getPose(),
-                                drive
-                                    .getChassisSpeeds())),
+                                drive.getPose(), drive.getChassisSpeeds())),
                 DriveCommands.joystickDriveAtAngle(
                     drive,
                     () -> controller.getLeftY(),
@@ -227,50 +224,62 @@ public class RobotContainer {
                 Commands.repeatingSequence(
                     hopper
                         .spinIndexer()
-                        .onlyWhile(
+                        .onlyIf(
                             () -> {
-                              Logger.recordOutput("Shooter/Setpoint/FlywheelSpeed", shooterSetpoint.flywheelSpeed);
-                              Logger.recordOutput("Shooter/Setpoint/HoodAngle", shooterSetpoint.hoodAngle);
-                              Logger.recordOutput("Shooter/Setpoint/RobotPose", shooterSetpoint.robotPose);
-                              Logger.recordOutput("Shooter/Setpoint/RobotSpeeds", shooterSetpoint.robotSpeeds);
+                              Logger.recordOutput(
+                                  "Shooter/Setpoint/FlywheelSpeed",
+                                  shooterSetpoint.flywheelSpeed.in(RotationsPerSecond));
+                              Logger.recordOutput(
+                                  "Shooter/Setpoint/FlywheelCurrentSpeed",
+                                  shooter.getCurrentFlywheelSpeed().in(RotationsPerSecond));
+
+                              Logger.recordOutput(
+                                  "Shooter/Setpoint/HoodAngle", shooterSetpoint.hoodAngle);
+                              Logger.recordOutput(
+                                  "Shooter/Setpoint/RobotPose", shooterSetpoint.robotPose);
+                              Logger.recordOutput(
+                                  "Shooter/Setpoint/RobotSpeeds", shooterSetpoint.robotSpeeds);
 
                               // Check if within shot tolerance
                               AngularVelocity currentRPM = shooter.getCurrentFlywheelSpeed();
                               AngularVelocity targetRPM = shooterSetpoint.flywheelSpeed;
-                              double rpmError = Math.abs(currentRPM.in(RPM) - targetRPM.in(RPM));
+                              double rpmError =
+                                  Math.abs(
+                                      currentRPM.in(RevolutionsPerSecond)
+                                          - targetRPM.in(RevolutionsPerSecond));
                               boolean shooterRPMWithinTolerance =
                                   rpmError
-                                      < ShooterConstants.FLYWHEEL_TOLERANCE_BEFORE_SHOT.in(RPM);
+                                      < ShooterConstants.FLYWHEEL_TOLERANCE_BEFORE_SHOT.in(
+                                          RevolutionsPerSecond);
+                              Logger.recordOutput("oktoshoot", shooterRPMWithinTolerance);
 
-                            //   Check if within hub position and rotation tolerance
-                                Pose2d currentPose = drive.getPose();
-                                double positionError =
-                                    currentPose
-                                        .getTranslation()
-                              
-                              
-                              .getDistance(shooterSetpoint.robotPose.getTranslation());
-                                double rotationError =
-                                    Math.abs(
-                                        currentPose
-                                            .getRotation()
-                                            .minus(shooterSetpoint.robotPose.getRotation())
-                                            .getDegrees());
-                                boolean hubPositionWithinTolerance =
-                                    positionError
-                                        < ShooterConstants.HUB_POSITION_TOLERANCE.in(Meters);
-                                boolean hubRotationWithinTolerance =
-                                    rotationError
-                                        < ShooterConstants.HUB_ROTATION_TOLERANCE.in(Degrees);
+                              //   Check if within hub position and rotation tolerance
+                              //   Pose2d currentPose = drive.getPose();
+                              //   double positionError =
+                              //       currentPose
+                              //           .getTranslation()
+                              //           .getDistance(shooterSetpoint.robotPose.getTranslation());
+                              double rotationError =
+                                  Math.abs(
+                                      drive
+                                          .getPose()
+                                          .getRotation()
+                                          .minus(shooterSetpoint.robotPose.getRotation())
+                                          .getDegrees());
+                              //   boolean hubPositionWithinTolerance =
+                              //       positionError
+                              //           < ShooterConstants.HUB_POSITION_TOLERANCE.in(Meters);
+                              boolean hubRotationWithinTolerance =
+                                  rotationError
+                                      < ShooterConstants.HUB_ROTATION_TOLERANCE.in(Degrees);
+                              Logger.recordOutput("hubtoleranceok", hubRotationWithinTolerance);
 
-                                return shooterRPMWithinTolerance
-                                    && hubPositionWithinTolerance
-                                    && hubRotationWithinTolerance;
+                              return shooterRPMWithinTolerance && hubRotationWithinTolerance;
                             }))))
         .onFalse(
             Commands.sequence(
                 hopper.stopIndexer(),
-                Commands.waitSeconds(0.2),
+                shooter.setFlywheelRPM(() -> RPM.of(0)),
                 shooter.setFeederVoltage(() -> Volts.of(0))));
 
     controller

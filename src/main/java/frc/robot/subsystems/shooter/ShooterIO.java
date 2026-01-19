@@ -25,7 +25,7 @@ public interface ShooterIO {
     public Voltage feederAppliedVoltage = Volts.of(0);
   }
 
-  public default void setFlywheelRPM(AngularVelocity rpm) {}
+  public default void setFlywheelSpeed(AngularVelocity rpm) {}
 
   public default void setFlywheelVoltage(Voltage voltage) {}
 

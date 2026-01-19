@@ -128,8 +128,8 @@ public class ShooterIOTalonFX implements ShooterIO {
     inputs.feederAppliedVoltage = feederTalon.getSupplyVoltage().getValue();
   }
 
-  public void setFlywheelRPM(AngularVelocity rpm) {
-    flywheelTalon.setControl(flywheelVelocityVoltage.withVelocity(rpm));
+  public void setFlywheelSpeed(AngularVelocity speed) {
+    flywheelTalon.setControl(flywheelVelocityVoltage.withVelocity(speed));
   }
 
   public void setFlywheelVoltage(Voltage voltage) {

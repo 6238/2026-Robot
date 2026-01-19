@@ -26,7 +26,7 @@ import edu.wpi.first.math.geometry.Translation3d;
 public class VisionConstants {
   // AprilTag layout
   public static AprilTagFieldLayout aprilTagLayout =
-      AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
+      AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
 
   // Camera names, must match names configured on coprocessor
   public static String camera0Name = "FRONT";

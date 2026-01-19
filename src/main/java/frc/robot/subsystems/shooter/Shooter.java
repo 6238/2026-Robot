@@ -1,5 +1,8 @@
 package frc.robot.subsystems.shooter;
 
+import static edu.wpi.first.units.Units.RPM;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
+
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Alert;
@@ -27,14 +30,19 @@ public class Shooter extends SubsystemBase {
   public void periodic() {
     io.updateInputs(inputs);
     Logger.processInputs("Shooter", inputs);
+    Logger.recordOutput("shooterspeed", inputs.flywheelVelocity.in(RPM));
 
     // update alerts based on motor connection status
     AlertUtils.updateAlert(shooterMotorConnectedAlert, !inputs.flywheelTalonConnected);
     AlertUtils.updateAlert(feederMotorConnectedAlert, !inputs.feederTalonConnected);
   }
 
-  public Command setFlywheelRPM(Supplier<AngularVelocity> rpm) {
-    return runOnce(() -> io.setFlywheelRPM(rpm.get()));
+  public Command setFlywheelRPM(Supplier<AngularVelocity> speed) {
+    return runOnce(
+        () -> {
+          Logger.recordOutput("shooter_rpm", speed.get().in(RotationsPerSecond));
+          io.setFlywheelSpeed(speed.get());
+        });
   }
 
   public Command setFeederVoltage(Supplier<Voltage> voltage) {
