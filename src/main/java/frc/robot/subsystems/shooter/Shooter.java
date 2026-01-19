@@ -11,8 +11,8 @@ import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
 public class Shooter extends SubsystemBase {
-  private final ShooterIO io;
-  private final ShooterIOInputsAutoLogged inputs;
+  public ShooterIO io;
+  public ShooterIOInputsAutoLogged inputs;
 
   public Alert shooterMotorConnectedAlert =
       new Alert("Critical", "Shooter Flywheel Motor Disconnected", AlertType.kError);
@@ -24,7 +24,6 @@ public class Shooter extends SubsystemBase {
     this.inputs = new ShooterIOInputsAutoLogged();
   }
 
-  @Override
   public void periodic() {
     io.updateInputs(inputs);
     Logger.processInputs("Shooter", inputs);

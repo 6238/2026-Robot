@@ -43,7 +43,6 @@ import frc.robot.subsystems.objectdetection.ObjectDetectionIO;
 import frc.robot.subsystems.objectdetection.ObjectDetectionIOJetson;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.ShooterConstants;
-import frc.robot.subsystems.shooter.ShooterIO;
 import frc.robot.subsystems.shooter.ShooterIOTalonFX;
 import frc.robot.subsystems.shooter.ShooterSetpoint;
 import frc.robot.subsystems.vision.Vision;
@@ -52,7 +51,10 @@ import frc.robot.subsystems.vision.VisionIOPhotonVision;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.util.AutoPilotUtils;
 import frc.robot.util.RobotIdentity;
+
+import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -76,6 +78,8 @@ public class RobotContainer {
 
   private ShooterSetpoint shooterSetpoint =
       new ShooterSetpoint(RPM.of(0), Degrees.of(0), new Pose2d(), new ChassisSpeeds());
+
+  private LoggedNetworkNumber shooterSpeed = new LoggedNetworkNumber("shooterspeed", 90);
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
@@ -114,7 +118,7 @@ public class RobotContainer {
         objectDetection =
             new ObjectDetection(
                 new ObjectDetectionIO() {}, (timestamp) -> drive.getTimestampPose(timestamp));
-        shooter = new Shooter(new ShooterIO() {});
+        shooter = new Shooter(new ShooterIOTalonFX() {});
         hopper = new Hopper(new HopperIO() {});
         break;
 
@@ -130,7 +134,7 @@ public class RobotContainer {
         objectDetection =
             new ObjectDetection(
                 new ObjectDetectionIO() {}, (timestamp) -> drive.getTimestampPose(timestamp));
-        shooter = new Shooter(new ShooterIO() {});
+        shooter = new Shooter(new ShooterIOTalonFX() {});
         hopper = new Hopper(new HopperIO() {});
         break;
     }
@@ -184,10 +188,10 @@ public class RobotContainer {
    */
   private void configureButtonBindings() {
     drive.setDefaultCommand(
-        DriveCommands.joystickDriveRobotRelative(
+        DriveCommands.joystickDrive(
             drive,
-            () -> controller.getLeftY(),
-            () -> controller.getLeftX(),
+            () -> -controller.getLeftY(),
+            () -> -controller.getLeftX(),
             () -> -controller.getRightX()));
 
     controller
@@ -200,19 +204,6 @@ public class RobotContainer {
                     drive)
                 .ignoringDisable(true));
 
-    // controller
-    //     .rightTrigger()
-    //     .onTrue(shooter.setFlywheelRPM(() ->
-    // RPM.of(ShooterConstants.SPINUP_FLYWHEEL_SPEED.get())))
-    //     .onFalse(shooter.setFlywheelRPM(() -> RPM.of(0)));
-
-    // controller
-    //     .a()
-    //     .onTrue(shooter.setFeederVoltage(() -> Volts.of(ShooterConstants.FEEDER_VOLTAGE.get())))
-    //     .onFalse(shooter.setFeederVoltage(() -> Volts.of(0)));
-    // controller.b().onTrue(hopper.spinIndexer()).onFalse(hopper.stopIndexer());
-    // controller.x().onTrue(hopper.reverseIndexer()).onFalse(hopper.stopIndexer());
-
     controller
         .rightTrigger()
         .whileTrue(
@@ -223,7 +214,7 @@ public class RobotContainer {
                             ShooterSetpoint.generateNearestShooterSetpoint(
                                 drive.getPose(),
                                 drive
-                                    .getChassisSpeeds())), // Seconds.of(ShooterConstants.LEAD_TIME_SEC.get())
+                                    .getChassisSpeeds())),
                 DriveCommands.joystickDriveAtAngle(
                     drive,
                     () -> controller.getLeftY(),
@@ -238,6 +229,11 @@ public class RobotContainer {
                         .spinIndexer()
                         .onlyWhile(
                             () -> {
+                              Logger.recordOutput("Shooter/Setpoint/FlywheelSpeed", shooterSetpoint.flywheelSpeed);
+                              Logger.recordOutput("Shooter/Setpoint/HoodAngle", shooterSetpoint.hoodAngle);
+                              Logger.recordOutput("Shooter/Setpoint/RobotPose", shooterSetpoint.robotPose);
+                              Logger.recordOutput("Shooter/Setpoint/RobotSpeeds", shooterSetpoint.robotSpeeds);
+
                               // Check if within shot tolerance
                               AngularVelocity currentRPM = shooter.getCurrentFlywheelSpeed();
                               AngularVelocity targetRPM = shooterSetpoint.flywheelSpeed;
@@ -246,34 +242,42 @@ public class RobotContainer {
                                   rpmError
                                       < ShooterConstants.FLYWHEEL_TOLERANCE_BEFORE_SHOT.in(RPM);
 
-                              // Check if within hub position and rotation tolerance
-                              Pose2d currentPose = drive.getPose();
-                              double positionError =
-                                  currentPose
-                                      .getTranslation()
-                                      .getDistance(shooterSetpoint.robotPose.getTranslation());
-                              double rotationError =
-                                  Math.abs(
-                                      currentPose
-                                          .getRotation()
-                                          .minus(shooterSetpoint.robotPose.getRotation())
-                                          .getDegrees());
-                              boolean hubPositionWithinTolerance =
-                                  positionError
-                                      < ShooterConstants.HUB_POSITION_TOLERANCE.in(Meters);
-                              boolean hubRotationWithinTolerance =
-                                  rotationError
-                                      < ShooterConstants.HUB_ROTATION_TOLERANCE.in(Degrees);
+                            //   Check if within hub position and rotation tolerance
+                                Pose2d currentPose = drive.getPose();
+                                double positionError =
+                                    currentPose
+                                        .getTranslation()
+                              
+                              
+                              .getDistance(shooterSetpoint.robotPose.getTranslation());
+                                double rotationError =
+                                    Math.abs(
+                                        currentPose
+                                            .getRotation()
+                                            .minus(shooterSetpoint.robotPose.getRotation())
+                                            .getDegrees());
+                                boolean hubPositionWithinTolerance =
+                                    positionError
+                                        < ShooterConstants.HUB_POSITION_TOLERANCE.in(Meters);
+                                boolean hubRotationWithinTolerance =
+                                    rotationError
+                                        < ShooterConstants.HUB_ROTATION_TOLERANCE.in(Degrees);
 
-                              return shooterRPMWithinTolerance
-                                  && hubPositionWithinTolerance
-                                  && hubRotationWithinTolerance;
+                                return shooterRPMWithinTolerance
+                                    && hubPositionWithinTolerance
+                                    && hubRotationWithinTolerance;
                             }))))
         .onFalse(
             Commands.sequence(
                 hopper.stopIndexer(),
                 Commands.waitSeconds(0.2),
                 shooter.setFeederVoltage(() -> Volts.of(0))));
+
+    controller
+        .a()
+        .onTrue(shooter.setFeederVoltage(() -> Volts.of(-5)))
+        .onFalse(shooter.setFeederVoltage(() -> Volts.of(0)));
+    controller.b().onTrue(hopper.reverseIndexer()).onFalse(hopper.stopIndexer());
   }
 
   /**
@@ -289,9 +293,9 @@ public class RobotContainer {
     return drive;
   }
 
-  public Vision getVisionSubsystem() {
-    return vision;
-  }
+  //   public Vision getVisionSubsystem() {
+  //     return vision;
+  //   }
 
   public ObjectDetection getObjectDetectionSubsystem() {
     return objectDetection;

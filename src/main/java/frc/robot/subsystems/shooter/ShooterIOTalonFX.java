@@ -77,6 +77,16 @@ public class ShooterIOTalonFX implements ShooterIO {
       feederConfigAlert.set(true);
     }
 
+    flywheelVelocity = flywheelTalon.getVelocity();
+    flywheelAcceleration = flywheelTalon.getAcceleration();
+    flywheelAppliedCurent = flywheelTalon.getStatorCurrent();
+    flywheelAppliedVoltage = flywheelTalon.getMotorVoltage();
+
+    feederVelocity = feederTalon.getVelocity();
+    feederAcceleration = feederTalon.getAcceleration();
+    feederAppliedCurent = feederTalon.getStatorCurrent();
+    feederAppliedVoltage = feederTalon.getMotorVoltage();
+
     // Initialize Status Signals
     statusSignalCollector =
         new BetterStatusSignalCollection(
@@ -91,7 +101,7 @@ public class ShooterIOTalonFX implements ShooterIO {
     ParentDevice.optimizeBusUtilizationForAll(flywheelTalon, feederTalon);
   }
 
-  public void updateInputs(ShooterIOInputsAutoLogged inputs) {
+  public void updateInputs(ShooterIOInputs inputs) {
     statusSignalCollector.refreshAll();
 
     if (!statusSignalCollector.isAllGood()) {
@@ -113,7 +123,7 @@ public class ShooterIOTalonFX implements ShooterIO {
     inputs.flywheelAppliedVoltage = flywheelTalon.getSupplyVoltage().getValue();
 
     inputs.feederVelocity = feederTalon.getVelocity().getValue();
-    inputs.fAcceleration = feederTalon.getAcceleration().getValue();
+    inputs.feederAcceleration = feederTalon.getAcceleration().getValue();
     inputs.feederAppliedCurrent = feederTalon.getSupplyCurrent().getValue();
     inputs.feederAppliedVoltage = feederTalon.getSupplyVoltage().getValue();
   }

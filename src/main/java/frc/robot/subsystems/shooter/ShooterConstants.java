@@ -14,11 +14,11 @@ import frc.robot.util.LoggedNetworkPIDFeedforwardGains;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 public class ShooterConstants {
-  public static final int FLYWHEEL_MOTOR_ID = 40;
-  public static final int FEEDER_MOTOR_ID = 38;
+  public static final int FLYWHEEL_MOTOR_ID = 39;
+  public static final int FEEDER_MOTOR_ID = 40;
 
   public static final InvertedValue FLYWHEEL_INVERTED = InvertedValue.Clockwise_Positive;
-  public static final InvertedValue FEEDER_INVERTED = InvertedValue.Clockwise_Positive;
+  public static final InvertedValue FEEDER_INVERTED = InvertedValue.CounterClockwise_Positive;
 
   public static final CANBus CAN_BUS = CANBus.roboRIO();
 
@@ -30,12 +30,12 @@ public class ShooterConstants {
 
   public static final LoggedNetworkPIDFeedforwardGains FLYWHEEL_GAINS =
       new LoggedNetworkPIDFeedforwardGains(
-          0.1, // kP
+          0.07, // kP
           0.04, // kI
           0.0, // kD
           0.0, // kA
           0.08, // kV
-          0.13, // kS
+          0.0, // kS
           0.0, // kG
           "ShooterFlywheel");
 
@@ -51,36 +51,13 @@ public class ShooterConstants {
 
   // SHOT SETPOINTS
   public static final Angle FIXED_HOOD_ANGLE_DEGREES = Degrees.of(60.5);
-  public static final AngularVelocity FLYWHEEL_TOLERANCE_BEFORE_SHOT = RotationsPerSecond.of(4.0);
+  public static final AngularVelocity FLYWHEEL_TOLERANCE_BEFORE_SHOT = RotationsPerSecond.of(3.0);
   public static final Distance HUB_POSITION_TOLERANCE = Meters.of(0.05);
   public static final Angle HUB_ROTATION_TOLERANCE = Degrees.of(4.0);
 
-  public static final InterpolatingTreeMap<Distance, AngularVelocity> SHOOTER_LOOKUP_TABLE =
-      new InterpolatingTreeMap<Distance, AngularVelocity>(
-          (Distance start, Distance end, Distance q) -> {
-            double s = start.in(Meters);
-            double e = end.in(Meters);
-            double x = q.in(Meters);
+  public static final double FLYWHEEL_DIST_OFFSET = 46.28;
+  public static final double FLYWHEEL_DIST_SLOPE = 16.31;
 
-            if (e <= s) return 0.0; // avoid divide-by-zero / bad ordering
-            double t = (x - s) / (e - s);
-            return Math.max(0.0, Math.min(1.0, t)); // clamp to [0, 1]
-          },
-          // Interpolator<AngularVelocity>: blend angular velocities
-          (AngularVelocity start, AngularVelocity end, double t) -> {
-            double a = start.in(RadiansPerSecond);
-            double b = end.in(RadiansPerSecond);
-            return RadiansPerSecond.of(a + (b - a) * t);
-          });
-
-  static {
-    SHOOTER_LOOKUP_TABLE.put(Meters.of(2.679), RotationsPerSecond.of(90.0));
-  }
-
-  public static final InterpolatingDoubleTreeMap SHOOTER_LEAD_TIME_FROM_DIST =
-      new InterpolatingDoubleTreeMap();
-
-  static {
-    SHOOTER_LEAD_TIME_FROM_DIST.put(1.0, 1.0);
-  }
+  public static final double LEAD_TIME_DIST_OFFSET = 0.42; // 1.27 - 0.9125
+  public static final double LEAD_TIME_DIST_SLOPE = 0.38;
 }
