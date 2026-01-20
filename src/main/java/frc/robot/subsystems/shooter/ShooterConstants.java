@@ -51,11 +51,11 @@ public class ShooterConstants {
   public static final Angle FIXED_HOOD_ANGLE_DEGREES = Degrees.of(60.5);
   public static final AngularVelocity FLYWHEEL_TOLERANCE_BEFORE_SHOT = RotationsPerSecond.of(0.4);
   public static final Distance HUB_POSITION_TOLERANCE = Meters.of(0.04);
-  public static final Angle HUB_ROTATION_TOLERANCE = Degrees.of(4.0);
+  public static final Angle HUB_ROTATION_TOLERANCE = Degrees.of(4.5);
 
-  public static final double FLYWHEEL_DIST_OFFSET = 15.8;
-  public static final double FLYWHEEL_DIST_SLOPE = 8;
+  public static final double FLYWHEEL_DIST_OFFSET = 20.4;
+  public static final double FLYWHEEL_DIST_SLOPE = 6.8;
 
-  public static final double LEAD_TIME_DIST_OFFSET = 0.42; // 1.27 - 0.9125
-  public static final double LEAD_TIME_DIST_SLOPE = 0.38;
+  public static final double LEAD_TIME_DIST_OFFSET = 0.34; // 1.27 - 0.9125
+  public static final double LEAD_TIME_DIST_SLOPE = 0.3;
 }

@@ -13,6 +13,9 @@
 
 package frc.robot.commands;
 
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import com.pathplanner.lib.path.PathPlannerPath;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
@@ -38,10 +41,10 @@ import java.util.function.Supplier;
 
 public class DriveCommands {
   public static final double DEADBAND = 0.1;
-  public static final double ANGLE_KP = 9.3;
-  public static final double ANGLE_KD = 0.4;
+  public static final double ANGLE_KP = 4.2;
+  public static final double ANGLE_KD = 0.08;
   public static final double ANGLE_MAX_VELOCITY = 8.0;
-  public static final double ANGLE_MAX_ACCELERATION = 20.0;
+  public static final double ANGLE_MAX_ACCELERATION = 50.0;
   public static final double FF_START_DELAY = 2.0; // Secs
   public static final double FF_RAMP_RATE = 0.1; // Volts/Sec
   public static final double WHEEL_RADIUS_MAX_VELOCITY = 0.25; // Rad/Sec
@@ -188,6 +191,38 @@ public class DriveCommands {
             drive)
 
         // Reset PID controller when command starts
+        .beforeStarting(() -> angleController.reset(drive.getRotation().getRadians()));
+  }
+
+  public static Command followPathWhileAiming(
+      Drive drive, PathPlannerPath path, Supplier<Translation2d> targetFieldPos) {
+    ProfiledPIDController angleController =
+        new ProfiledPIDController(
+            ANGLE_KP,
+            0.0,
+            ANGLE_KD,
+            new TrapezoidProfile.Constraints(ANGLE_MAX_VELOCITY, ANGLE_MAX_ACCELERATION));
+    angleController.enableContinuousInput(-Math.PI, Math.PI);
+
+    DoubleSupplier omegaRadPerSec =
+        () -> {
+          Pose2d robotPose = drive.getPose();
+          Translation2d toTarget = targetFieldPos.get().minus(robotPose.getTranslation());
+          double targetYaw = toTarget.getAngle().getRadians();
+          double currentYaw = robotPose.getRotation().getRadians();
+          return angleController.calculate(currentYaw, targetYaw);
+        };
+
+    return Commands.sequence(
+            Commands.runOnce(
+                () ->
+                    PPHolonomicDriveController.overrideRotationFeedback(
+                        omegaRadPerSec)), // override rotation feedback [page:1]
+            AutoBuilder.followPath(path), // follow the path [page:2]
+            Commands.runOnce(
+                PPHolonomicDriveController
+                    ::clearRotationFeedbackOverride) // restore default [page:1]
+            )
         .beforeStarting(() -> angleController.reset(drive.getRotation().getRadians()));
   }
 

@@ -3,25 +3,25 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 2.962308673469388,
-        "y": 4.521205357142857
+        "x": 3.4573469387755096,
+        "y": 0.8198580301685887
       },
       "prevControl": null,
       "nextControl": {
-        "x": 3.5144770408163266,
-        "y": 5.603156887755102
+        "x": 2.0248181011535045,
+        "y": 2.2604347826086943
       },
       "isLocked": false,
       "linkedName": "DynamicPickupStart"
     },
     {
       "anchor": {
-        "x": 7.089,
-        "y": 6.416
+        "x": 3.4573469387755096,
+        "y": 7.1696628216504
       },
       "prevControl": {
-        "x": 4.962053571428572,
-        "y": 6.379177295918367
+        "x": 1.43732031943212,
+        "y": 4.570186335403726
       },
       "nextControl": null,
       "isLocked": false,
@@ -33,8 +33,8 @@
   "pointTowardsZones": [],
   "eventMarkers": [],
   "globalConstraints": {
-    "maxVelocity": 3.0,
-    "maxAcceleration": 3.0,
+    "maxVelocity": 1.5,
+    "maxAcceleration": 0.7,
     "maxAngularVelocity": 540.0,
     "maxAngularAcceleration": 720.0,
     "nominalVoltage": 12.0,
@@ -42,13 +42,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 180.0
+    "rotation": -62.24145939893998
   },
   "reversed": false,
   "folder": null,
   "idealStartingState": {
-    "velocity": 1.0,
-    "rotation": -149.3493320429471
+    "velocity": 0.0,
+    "rotation": 68.42869280874538
   },
-  "useDefaultConstraints": true
+  "useDefaultConstraints": false
 }
