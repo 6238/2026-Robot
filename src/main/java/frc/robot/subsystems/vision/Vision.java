@@ -28,6 +28,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Supplier;
+
 import org.littletonrobotics.junction.Logger;
 
 public class Vision extends SubsystemBase {
@@ -35,11 +36,13 @@ public class Vision extends SubsystemBase {
   private final VisionIO[] io;
   private final VisionIOInputsAutoLogged[] inputs;
   private final Alert[] disconnectedAlerts;
+  private final Supplier<Pose2d> currentPoseEstimateSupplier;
 
-  public Vision(VisionConsumer consumer, VisionIO... io) {
+  public Vision(VisionConsumer consumer, Supplier<Pose2d> currentPoseEstimateSupplier, VisionIO... io) {
     this.consumer = consumer;
     this.io = io;
-    
+    this.currentPoseEstimateSupplier = currentPoseEstimateSupplier;
+
     // Initialize inputs
     this.inputs = new VisionIOInputsAutoLogged[io.length];
     for (int i = 0; i < inputs.length; i++) {
@@ -67,7 +70,7 @@ public class Vision extends SubsystemBase {
   @Override
   public void periodic() {
     for (int i = 0; i < io.length; i++) {
-      io[i].updateInputs(inputs[i]);
+      io[i].updateInputs(inputs[i], currentPoseEstimateSupplier.get());
       Logger.processInputs("Vision/Camera" + Integer.toString(i), inputs[i]);
     }
 
@@ -105,7 +108,6 @@ public class Vision extends SubsystemBase {
                     && observation.ambiguity() > maxAmbiguity) // Cannot be high ambiguity
                 || Math.abs(observation.pose().getZ())
                     > maxZError // Must have realistic Z coordinate
-
                 // Must be within the field boundaries
                 || observation.pose().getX() < 0.0
                 || observation.pose().getX() > aprilTagLayout.getFieldLength()

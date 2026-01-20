@@ -15,9 +15,12 @@ package frc.robot.subsystems.vision;
 
 import static frc.robot.subsystems.vision.VisionConstants.*;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation3d;
+
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -41,7 +44,7 @@ public class VisionIOPhotonVision implements VisionIO {
   }
 
   @Override
-  public void updateInputs(VisionIOInputs inputs) {
+  public void updateInputs(VisionIOInputs inputs, Pose2d currentPoseEstimate) {
     inputs.connected = camera.isConnected();
 
     // Read new camera observations
@@ -62,30 +65,58 @@ public class VisionIOPhotonVision implements VisionIO {
       if (result.multitagResult.isPresent()) { // Multitag result
         var multitagResult = result.multitagResult.get();
 
-        // Calculate robot pose
-        Transform3d fieldToCamera = multitagResult.estimatedPose.best;
-        Transform3d fieldToRobot = fieldToCamera.plus(robotToCamera.inverse());
-        Pose3d robotPose = new Pose3d(fieldToRobot.getTranslation(), fieldToRobot.getRotation());
+        Transform3d fieldToRobotBest = multitagResult.estimatedPose.best.plus(robotToCamera.inverse());
+        Transform3d fieldToRobotWorst = multitagResult.estimatedPose.alt.plus(robotToCamera.inverse());
+        
+        double bestDistance = fieldToRobotBest.getTranslation().getDistance(new Translation3d(currentPoseEstimate.getX(), currentPoseEstimate.getY(), 0.0));
+        double worstDistance = fieldToRobotWorst.getTranslation().getDistance(new Translation3d(currentPoseEstimate.getX(), currentPoseEstimate.getY(), 0.0));
 
-        // Calculate average tag distance
-        double totalTagDistance = 0.0;
-        for (var target : result.targets) {
-          totalTagDistance += target.bestCameraToTarget.getTranslation().getNorm();
+        Pose3d robotPose;
+        double totalTagDistance;
+
+        if (bestDistance < worstDistance) {
+          robotPose = new Pose3d(fieldToRobotBest.getTranslation(), fieldToRobotBest.getRotation());
+      
+          // Calculate average tag distance
+          totalTagDistance = 0.0;
+          for (var target : result.targets) {
+            totalTagDistance += target.bestCameraToTarget.getTranslation().getNorm();
+          }
+
+          // Add tag IDs
+          tagIds.addAll(multitagResult.fiducialIDsUsed);
+
+          // Add observation
+          poseObservations.add(
+              new PoseObservation(
+                  result.getTimestampSeconds(), // Timestamp
+                  robotPose, // 3D pose estimate
+                  multitagResult.estimatedPose.ambiguity, // Ambiguity
+                  multitagResult.fiducialIDsUsed.size(), // Tag count
+                  totalTagDistance / result.targets.size(), // Average tag distance
+                  PoseObservationType.PHOTONVISION)); // Observation type
+        } else {
+          robotPose = new Pose3d(fieldToRobotBest.getTranslation(), fieldToRobotBest.getRotation());
+          
+          // Calculate average tag distance
+          totalTagDistance = 0.0;
+          for (var target : result.targets) {
+            totalTagDistance += target.altCameraToTarget.getTranslation().getNorm();
+          }
+
+          // Add tag IDs
+          tagIds.addAll(multitagResult.fiducialIDsUsed);
+
+          // Add observation
+          poseObservations.add(
+              new PoseObservation(
+                  result.getTimestampSeconds(), // Timestamp
+                  robotPose, // 3D pose estimate
+                  multitagResult.estimatedPose.ambiguity, // Ambiguity
+                  multitagResult.fiducialIDsUsed.size(), // Tag count
+                  totalTagDistance / result.targets.size(), // Average tag distance
+                  PoseObservationType.PHOTONVISION)); // Observation type
         }
-
-        // Add tag IDs
-        tagIds.addAll(multitagResult.fiducialIDsUsed);
-
-        // Add observation
-        poseObservations.add(
-            new PoseObservation(
-                result.getTimestampSeconds(), // Timestamp
-                robotPose, // 3D pose estimate
-                multitagResult.estimatedPose.ambiguity, // Ambiguity
-                multitagResult.fiducialIDsUsed.size(), // Tag count
-                totalTagDistance / result.targets.size(), // Average tag distance
-                PoseObservationType.PHOTONVISION)); // Observation type
-
       } else if (!result.targets.isEmpty()) { // Single tag result
         var target = result.targets.get(0);
 
@@ -94,23 +125,47 @@ public class VisionIOPhotonVision implements VisionIO {
         if (tagPose.isPresent()) {
           Transform3d fieldToTarget =
               new Transform3d(tagPose.get().getTranslation(), tagPose.get().getRotation());
-          Transform3d cameraToTarget = target.bestCameraToTarget;
-          Transform3d fieldToCamera = fieldToTarget.plus(cameraToTarget.inverse());
-          Transform3d fieldToRobot = fieldToCamera.plus(robotToCamera.inverse());
-          Pose3d robotPose = new Pose3d(fieldToRobot.getTranslation(), fieldToRobot.getRotation());
+          
+          Transform3d best_cameraToTarget = target.bestCameraToTarget;
+          Transform3d best_fieldToCamera = fieldToTarget.plus(best_cameraToTarget.inverse());
+          Transform3d best_fieldToRobot = best_fieldToCamera.plus(robotToCamera.inverse());
+          Pose3d best_robotPose = new Pose3d(best_fieldToRobot.getTranslation(), best_fieldToRobot.getRotation());
+          
+          Transform3d alt_cameraToTarget = target.bestCameraToTarget;
+          Transform3d alt_fieldToCamera = fieldToTarget.plus(alt_cameraToTarget.inverse());
+          Transform3d alt_fieldToRobot = alt_fieldToCamera.plus(robotToCamera.inverse());
+          Pose3d alt_robotPose = new Pose3d(alt_fieldToRobot.getTranslation(), alt_fieldToRobot.getRotation());
 
-          // Add tag ID
-          tagIds.add((short) target.fiducialId);
+          double bestDistance = best_fieldToRobot.getTranslation().getDistance(new Translation3d(currentPoseEstimate.getX(), currentPoseEstimate.getY(), 0.0));
+          double worstDistance = alt_fieldToRobot.getTranslation().getDistance(new Translation3d(currentPoseEstimate.getX(), currentPoseEstimate.getY(), 0.0));
 
-          // Add observation
-          poseObservations.add(
-              new PoseObservation(
-                  result.getTimestampSeconds(), // Timestamp
-                  robotPose, // 3D pose estimate
-                  target.poseAmbiguity, // Ambiguity
-                  1, // Tag count
-                  cameraToTarget.getTranslation().getNorm(), // Average tag distance
-                  PoseObservationType.PHOTONVISION)); // Observation type
+          if (bestDistance < worstDistance) {
+            // Add tag ID
+            tagIds.add((short) target.fiducialId);
+
+            // Add observation
+            poseObservations.add(
+                new PoseObservation(
+                    result.getTimestampSeconds(), // Timestamp
+                    best_robotPose, // 3D pose estimate
+                    target.poseAmbiguity, // Ambiguity
+                    1, // Tag count
+                    best_cameraToTarget.getTranslation().getNorm(), // Average tag distance
+                    PoseObservationType.PHOTONVISION)); // Observation type
+          } else  {
+            // Add tag ID
+            tagIds.add((short) target.fiducialId);
+
+            // Add observation
+            poseObservations.add(
+                new PoseObservation(
+                    result.getTimestampSeconds(), // Timestamp
+                    alt_robotPose, // 3D pose estimate
+                    target.poseAmbiguity, // Ambiguity
+                    1, // Tag count
+                    alt_cameraToTarget.getTranslation().getNorm(), // Average tag distance
+                    PoseObservationType.PHOTONVISION)); // Observation type
+          }
         }
       }
     }

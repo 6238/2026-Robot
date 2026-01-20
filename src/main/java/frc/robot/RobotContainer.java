@@ -98,7 +98,9 @@ public class RobotContainer {
                 new ModuleIOTalonFX(RobotIdentity.getTunerConstants().BackRight));
         vision =
             new Vision(
-                drive::addVisionMeasurement, new VisionIOPhotonVision(camera0Name, robotToCamera0));
+                drive::addVisionMeasurement, 
+                drive::getPose,
+                new VisionIOPhotonVision(camera0Name, robotToCamera0));
         objectDetection =
             new ObjectDetection(
                 new ObjectDetectionIOJetson(), (timestamp) -> drive.getTimestampPose(timestamp));
@@ -117,6 +119,7 @@ public class RobotContainer {
         vision =
             new Vision(
                 drive::addVisionMeasurement,
+                drive::getPose,
                 new VisionIOPhotonVisionSim(camera0Name, robotToCamera0, drive::getPose));
         objectDetection =
             new ObjectDetection(
@@ -133,7 +136,9 @@ public class RobotContainer {
                 new ModuleIO() {},
                 new ModuleIO() {},
                 new ModuleIO() {});
-        vision = new Vision(drive::addVisionMeasurement, new VisionIO() {});
+        vision = new Vision(drive::addVisionMeasurement,
+                drive::getPose,
+                new VisionIO() {});
         objectDetection =
             new ObjectDetection(
                 new ObjectDetectionIO() {}, (timestamp) -> drive.getTimestampPose(timestamp));
