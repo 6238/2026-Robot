@@ -89,17 +89,18 @@ public class Superstructure extends SubsystemBase {
   public void applyStates() {
     switch (currentSuperState) {
       case IDLE:
-        CommandScheduler.getInstance().schedule(hopper.stopIndexer());
-        CommandScheduler.getInstance()
-            .schedule(shooter.setFlywheelRPM(() -> RotationsPerSecond.of(0)));
-        CommandScheduler.getInstance().schedule(shooter.setFeederVoltage(() -> Volts.of(0)));
+        CommandScheduler.getInstance().schedule(
+            hopper.stopIndexer(),
+            shooter.setFlywheelRPM(() -> RotationsPerSecond.of(0)),
+            shooter.setFeederVoltage(() -> Volts.of(0))
+        );
         break;
       case SPINNING_UP:
-        CommandScheduler.getInstance().schedule(hopper.stopIndexer());
-        CommandScheduler.getInstance().schedule(shooter.setFeederVoltage(() -> Volts.of(0)));
-        CommandScheduler.getInstance()
-            .schedule(shooter.setFlywheelRPM(() -> shotSetpoint.flywheelSpeed));
-
+        CommandScheduler.getInstance().schedule(
+            hopper.stopIndexer(),
+            shooter.setFeederVoltage(() -> Volts.of(0)),
+            shooter.setFlywheelRPM(() -> shotSetpoint.flywheelSpeed)
+        );
         if (readyToShoot()) {
           currentSuperState = CurrentState.SHOOTING;
         }
@@ -113,10 +114,10 @@ public class Superstructure extends SubsystemBase {
         }
 
         simulateShot();
-        CommandScheduler.getInstance().schedule(hopper.spinIndexer());
-        CommandScheduler.getInstance()
-            .schedule(
-                shooter.setFeederVoltage(() -> Volts.of(ShooterConstants.FEEDER_VOLTAGE.get())));
+        CommandScheduler.getInstance().schedule(
+            hopper.spinIndexer(),
+            shooter.setFeederVoltage(() -> Volts.of(ShooterConstants.FEEDER_VOLTAGE.get()))
+        );
         break;
       default:
         break;
