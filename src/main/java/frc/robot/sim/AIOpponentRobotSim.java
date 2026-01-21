@@ -18,7 +18,7 @@ import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import frc.robot.subsystems.drive.MapleSimSwerve;
 import frc.robot.subsystems.shooter.ShooterConstants;
-import frc.robot.subsystems.shooter.ShooterSetpoint;
+import frc.robot.subsystems.superstructure.ShotPlanner.ShotSetpoint;
 import frc.robot.util.RobotIdentity;
 import org.ironmaple.simulation.IntakeSimulation;
 import org.ironmaple.simulation.SimulatedArena;
@@ -179,7 +179,7 @@ public class AIOpponentRobotSim extends SubsystemBase {
   }
 
   public Command shootFuelIntoAllianceArea(
-      ShooterSetpoint shooterSetpoint /* your type */, double fixedHoodDeg /* your constant */) {
+      ShotSetpoint shooterSetpoint /* your type */, double fixedHoodDeg /* your constant */) {
 
     return Commands.runOnce(
         () -> {

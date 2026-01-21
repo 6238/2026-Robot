@@ -17,6 +17,8 @@ public class Shooter extends SubsystemBase {
   public ShooterIO io;
   public ShooterIOInputsAutoLogged inputs;
 
+  public AngularVelocity targetFlywheelVelocity;
+
   public Alert shooterMotorConnectedAlert =
       new Alert("Critical", "Shooter Flywheel Motor Disconnected", AlertType.kError);
   public Alert feederMotorConnectedAlert =
@@ -25,6 +27,8 @@ public class Shooter extends SubsystemBase {
   public Shooter(ShooterIO io) {
     this.io = io;
     this.inputs = new ShooterIOInputsAutoLogged();
+
+    this.targetFlywheelVelocity = RotationsPerSecond.of(0);
   }
 
   public void periodic() {
@@ -41,12 +45,26 @@ public class Shooter extends SubsystemBase {
     return runOnce(
         () -> {
           Logger.recordOutput("shooter_rpm", speed.get().in(RotationsPerSecond));
-          io.setFlywheelSpeed(speed.get());
+          setFlywheelRPM(speed.get());
         });
   }
 
+  public void setFlywheelRPM(AngularVelocity speed) {
+    io.setFlywheelSpeed(speed);
+    this.targetFlywheelVelocity = speed;
+  }
+
   public Command setFeederVoltage(Supplier<Voltage> voltage) {
-    return runOnce(() -> io.setFeederVoltage(voltage.get()));
+    return runOnce(() -> setFeederVoltage(voltage.get()));
+  }
+
+  public void setFeederVoltage(Voltage voltage) {
+    io.setFeederVoltage(voltage);
+  }
+
+  public boolean flywheelUpToSpeed() {
+    return inputs.flywheelVelocity.isNear(
+        this.targetFlywheelVelocity, ShooterConstants.FLYWHEEL_TOLERANCE_BEFORE_SHOT);
   }
 
   public AngularVelocity getCurrentFlywheelSpeed() {

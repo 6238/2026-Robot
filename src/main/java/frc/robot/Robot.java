@@ -28,7 +28,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.sim.AIOpponentRobotSim;
 import frc.robot.subsystems.shooter.ShooterConstants;
-import frc.robot.subsystems.shooter.ShooterSetpoint;
+import frc.robot.subsystems.superstructure.ShotPlanner.ShotSetpoint;
 import frc.robot.util.RobotIdentity;
 import org.ironmaple.simulation.SimulatedArena;
 import org.littletonrobotics.junction.LogFileUtil;
@@ -192,7 +192,7 @@ public class Robot extends LoggedRobot {
       opp0.buildChooser(
           path,
           opp0.shootFuelIntoAllianceArea(
-              new ShooterSetpoint(
+              new ShotSetpoint(
                   RotationsPerSecond.of(50),
                   Degrees.of(0),
                   Pose2d.kZero,
