@@ -20,7 +20,6 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
-
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -65,18 +64,28 @@ public class VisionIOPhotonVision implements VisionIO {
       if (result.multitagResult.isPresent()) { // Multitag result
         var multitagResult = result.multitagResult.get();
 
-        Transform3d fieldToRobotBest = multitagResult.estimatedPose.best.plus(robotToCamera.inverse());
-        Transform3d fieldToRobotWorst = multitagResult.estimatedPose.alt.plus(robotToCamera.inverse());
-        
-        double bestDistance = fieldToRobotBest.getTranslation().getDistance(new Translation3d(currentPoseEstimate.getX(), currentPoseEstimate.getY(), 0.0));
-        double worstDistance = fieldToRobotWorst.getTranslation().getDistance(new Translation3d(currentPoseEstimate.getX(), currentPoseEstimate.getY(), 0.0));
+        Transform3d fieldToRobotBest =
+            multitagResult.estimatedPose.best.plus(robotToCamera.inverse());
+        Transform3d fieldToRobotWorst =
+            multitagResult.estimatedPose.alt.plus(robotToCamera.inverse());
+
+        double bestDistance =
+            fieldToRobotBest
+                .getTranslation()
+                .getDistance(
+                    new Translation3d(currentPoseEstimate.getX(), currentPoseEstimate.getY(), 0.0));
+        double worstDistance =
+            fieldToRobotWorst
+                .getTranslation()
+                .getDistance(
+                    new Translation3d(currentPoseEstimate.getX(), currentPoseEstimate.getY(), 0.0));
 
         Pose3d robotPose;
         double totalTagDistance;
 
         if (bestDistance < worstDistance) {
           robotPose = new Pose3d(fieldToRobotBest.getTranslation(), fieldToRobotBest.getRotation());
-      
+
           // Calculate average tag distance
           totalTagDistance = 0.0;
           for (var target : result.targets) {
@@ -97,7 +106,7 @@ public class VisionIOPhotonVision implements VisionIO {
                   PoseObservationType.PHOTONVISION)); // Observation type
         } else {
           robotPose = new Pose3d(fieldToRobotBest.getTranslation(), fieldToRobotBest.getRotation());
-          
+
           // Calculate average tag distance
           totalTagDistance = 0.0;
           for (var target : result.targets) {
@@ -125,19 +134,31 @@ public class VisionIOPhotonVision implements VisionIO {
         if (tagPose.isPresent()) {
           Transform3d fieldToTarget =
               new Transform3d(tagPose.get().getTranslation(), tagPose.get().getRotation());
-          
+
           Transform3d best_cameraToTarget = target.bestCameraToTarget;
           Transform3d best_fieldToCamera = fieldToTarget.plus(best_cameraToTarget.inverse());
           Transform3d best_fieldToRobot = best_fieldToCamera.plus(robotToCamera.inverse());
-          Pose3d best_robotPose = new Pose3d(best_fieldToRobot.getTranslation(), best_fieldToRobot.getRotation());
-          
+          Pose3d best_robotPose =
+              new Pose3d(best_fieldToRobot.getTranslation(), best_fieldToRobot.getRotation());
+
           Transform3d alt_cameraToTarget = target.bestCameraToTarget;
           Transform3d alt_fieldToCamera = fieldToTarget.plus(alt_cameraToTarget.inverse());
           Transform3d alt_fieldToRobot = alt_fieldToCamera.plus(robotToCamera.inverse());
-          Pose3d alt_robotPose = new Pose3d(alt_fieldToRobot.getTranslation(), alt_fieldToRobot.getRotation());
+          Pose3d alt_robotPose =
+              new Pose3d(alt_fieldToRobot.getTranslation(), alt_fieldToRobot.getRotation());
 
-          double bestDistance = best_fieldToRobot.getTranslation().getDistance(new Translation3d(currentPoseEstimate.getX(), currentPoseEstimate.getY(), 0.0));
-          double worstDistance = alt_fieldToRobot.getTranslation().getDistance(new Translation3d(currentPoseEstimate.getX(), currentPoseEstimate.getY(), 0.0));
+          double bestDistance =
+              best_fieldToRobot
+                  .getTranslation()
+                  .getDistance(
+                      new Translation3d(
+                          currentPoseEstimate.getX(), currentPoseEstimate.getY(), 0.0));
+          double worstDistance =
+              alt_fieldToRobot
+                  .getTranslation()
+                  .getDistance(
+                      new Translation3d(
+                          currentPoseEstimate.getX(), currentPoseEstimate.getY(), 0.0));
 
           if (bestDistance < worstDistance) {
             // Add tag ID
@@ -152,7 +173,7 @@ public class VisionIOPhotonVision implements VisionIO {
                     1, // Tag count
                     best_cameraToTarget.getTranslation().getNorm(), // Average tag distance
                     PoseObservationType.PHOTONVISION)); // Observation type
-          } else  {
+          } else {
             // Add tag ID
             tagIds.add((short) target.fiducialId);
 

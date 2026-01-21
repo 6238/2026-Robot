@@ -37,6 +37,17 @@ public class ShooterConstants {
           0.0, // kG
           "ShooterFlywheel");
 
+  public static final LoggedNetworkPIDFeedforwardGains SIM_FLYWHEEL_GAINS =
+      new LoggedNetworkPIDFeedforwardGains(
+          0.2, // kP
+          0.0, // kI
+          0.0, // kD
+          0.0, // kA
+          0.24, // kV
+          0, // kS // 6000rpm 100rps 6v
+          0.0, // kG
+          "ShooterFlywheel");
+
   public static final MotionMagicConfigs FLYWHEEL_MOTION_MAGIC_CONFIGS =
       new MotionMagicConfigs().withMotionMagicCruiseVelocity(60).withMotionMagicAcceleration(120);
 
@@ -51,11 +62,11 @@ public class ShooterConstants {
   public static final Angle FIXED_HOOD_ANGLE_DEGREES = Degrees.of(60.5);
   public static final AngularVelocity FLYWHEEL_TOLERANCE_BEFORE_SHOT = RotationsPerSecond.of(0.4);
   public static final Distance HUB_POSITION_TOLERANCE = Meters.of(0.04);
-  public static final Angle HUB_ROTATION_TOLERANCE = Degrees.of(4.5);
+  public static final Angle HUB_ROTATION_TOLERANCE = Degrees.of(3);
 
   public static final double FLYWHEEL_DIST_OFFSET = 20.4;
   public static final double FLYWHEEL_DIST_SLOPE = 6.8;
 
-  public static final double LEAD_TIME_DIST_OFFSET = 0.34; // 1.27 - 0.9125
-  public static final double LEAD_TIME_DIST_SLOPE = 0.3;
+  public static final double LEAD_TIME_DIST_OFFSET = 0.2; // 1.27 - 0.9125
+  public static final double LEAD_TIME_DIST_SLOPE = 0.15;
 }

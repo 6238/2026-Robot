@@ -50,7 +50,7 @@ public class ObjectDetectionIOJetson implements ObjectDetectionIO {
 
   private boolean isConnected() {
     long cur = heartbeat.get();
-    double now = Timer.getFPGATimestamp();
+    double now = Timer.getTimestamp();
 
     if (cur <= ObjectDetectionConstants.UNCONNECTED_HEARTBEAT_VALUE) {
       return false;

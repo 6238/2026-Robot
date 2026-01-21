@@ -3,6 +3,7 @@ package frc.robot.subsystems.shooter;
 import static edu.wpi.first.units.Units.*;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.measure.Angle;
@@ -81,7 +82,7 @@ public class ShooterSetpoint {
                 fieldSpeeds.vxMetersPerSecond * -leadTimeSec,
                 fieldSpeeds.vyMetersPerSecond * -leadTimeSec));
 
-    Logger.recordOutput("predictedTranslation", predictedTranslation);
+    Logger.recordOutput("predictedTranslation", new Pose2d(predictedTranslation, Rotation2d.kZero));
 
     Logger.recordOutput("leadTime", leadTimeSec);
 

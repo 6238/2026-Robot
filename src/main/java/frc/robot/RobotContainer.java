@@ -20,9 +20,12 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.path.PathPlannerPath;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.GenericHID;
@@ -31,10 +34,12 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.Constants.Mode;
 import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
+import frc.robot.subsystems.drive.MapleSimSwerve;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
@@ -46,6 +51,7 @@ import frc.robot.subsystems.objectdetection.ObjectDetectionIO;
 import frc.robot.subsystems.objectdetection.ObjectDetectionIOJetson;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.ShooterConstants;
+import frc.robot.subsystems.shooter.ShooterIOSim;
 import frc.robot.subsystems.shooter.ShooterIOTalonFX;
 import frc.robot.subsystems.shooter.ShooterSetpoint;
 import frc.robot.subsystems.vision.Vision;
@@ -54,6 +60,10 @@ import frc.robot.subsystems.vision.VisionIOPhotonVision;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.util.AutoPilotUtils;
 import frc.robot.util.RobotIdentity;
+import org.ironmaple.simulation.SimulatedArena;
+import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
+import org.ironmaple.simulation.seasonspecific.rebuilt2026.*;
+import org.ironmaple.utils.FieldMirroringUtils;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
@@ -84,8 +94,12 @@ public class RobotContainer {
 
   private LoggedNetworkNumber shooterSpeed = new LoggedNetworkNumber("shooterspeed", 90);
 
+  private SwerveDriveSimulation swerveDriveSimulation;
+
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
+
+    swerveDriveSimulation = MapleSimSwerve.createSimulationDrive(RobotIdentity.getTunerConstants());
     switch (Constants.currentMode) {
       case REAL:
         // Real robot, instantiate hardware IO implementations
@@ -95,10 +109,11 @@ public class RobotContainer {
                 new ModuleIOTalonFX(RobotIdentity.getTunerConstants().FrontLeft),
                 new ModuleIOTalonFX(RobotIdentity.getTunerConstants().FrontRight),
                 new ModuleIOTalonFX(RobotIdentity.getTunerConstants().BackLeft),
-                new ModuleIOTalonFX(RobotIdentity.getTunerConstants().BackRight));
+                new ModuleIOTalonFX(RobotIdentity.getTunerConstants().BackRight),
+                swerveDriveSimulation);
         vision =
             new Vision(
-                drive::addVisionMeasurement, 
+                drive::addVisionMeasurement,
                 drive::getPose,
                 new VisionIOPhotonVision(camera0Name, robotToCamera0));
         objectDetection =
@@ -112,19 +127,23 @@ public class RobotContainer {
         drive =
             new Drive(
                 new GyroIO() {},
-                new ModuleIOSim(RobotIdentity.getTunerConstants().FrontLeft),
-                new ModuleIOSim(RobotIdentity.getTunerConstants().FrontRight),
-                new ModuleIOSim(RobotIdentity.getTunerConstants().BackLeft),
-                new ModuleIOSim(RobotIdentity.getTunerConstants().BackRight));
+                new ModuleIOSim(swerveDriveSimulation.getModules()[0]),
+                new ModuleIOSim(swerveDriveSimulation.getModules()[1]),
+                new ModuleIOSim(swerveDriveSimulation.getModules()[2]),
+                new ModuleIOSim(swerveDriveSimulation.getModules()[3]),
+                swerveDriveSimulation);
         vision =
             new Vision(
                 drive::addVisionMeasurement,
                 drive::getPose,
-                new VisionIOPhotonVisionSim(camera0Name, robotToCamera0, drive::getPose));
+                new VisionIOPhotonVisionSim(
+                    camera0Name,
+                    robotToCamera0,
+                    swerveDriveSimulation::getSimulatedDriveTrainPose));
         objectDetection =
             new ObjectDetection(
                 new ObjectDetectionIO() {}, (timestamp) -> drive.getTimestampPose(timestamp));
-        shooter = new Shooter(new ShooterIOTalonFX() {});
+        shooter = new Shooter(new ShooterIOSim() {});
         hopper = new Hopper(new HopperIO() {});
         break;
 
@@ -135,10 +154,9 @@ public class RobotContainer {
                 new ModuleIO() {},
                 new ModuleIO() {},
                 new ModuleIO() {},
-                new ModuleIO() {});
-        vision = new Vision(drive::addVisionMeasurement,
-                drive::getPose,
-                new VisionIO() {});
+                new ModuleIO() {},
+                swerveDriveSimulation);
+        vision = new Vision(drive::addVisionMeasurement, drive::getPose, new VisionIO() {});
         objectDetection =
             new ObjectDetection(
                 new ObjectDetectionIO() {}, (timestamp) -> drive.getTimestampPose(timestamp));
@@ -262,12 +280,12 @@ public class RobotContainer {
                                           RevolutionsPerSecond);
                               Logger.recordOutput("oktoshoot", shooterRPMWithinTolerance);
 
-                              //   Check if within hub position and rotation tolerance
-                              //   Pose2d currentPose = drive.getPose();
-                              //   double positionError =
-                              //       currentPose
-                              //           .getTranslation()
-                              //           .getDistance(shooterSetpoint.robotPose.getTranslation());
+                              // Check if within hub position and rotation tolerance
+                              // Pose2d currentPose = drive.getPose();
+                              // double positionError =
+                              // currentPose
+                              // .getTranslation()
+                              // .getDistance(shooterSetpoint.robotPose.getTranslation());
                               double rotationError =
                                   Math.abs(
                                       drive
@@ -275,9 +293,9 @@ public class RobotContainer {
                                           .getRotation()
                                           .minus(shooterSetpoint.robotPose.getRotation())
                                           .getDegrees());
-                              //   boolean hubPositionWithinTolerance =
-                              //       positionError
-                              //           < ShooterConstants.HUB_POSITION_TOLERANCE.in(Meters);
+                              // boolean hubPositionWithinTolerance =
+                              // positionError
+                              // < ShooterConstants.HUB_POSITION_TOLERANCE.in(Meters);
                               boolean hubRotationWithinTolerance =
                                   Math.abs(rotationError)
                                       < ShooterConstants.HUB_ROTATION_TOLERANCE.in(Degrees);
@@ -311,8 +329,11 @@ public class RobotContainer {
       DataLogManager.log(e.getMessage());
       path = new PathPlannerPath(null, null, null, null);
     }
+    Pose2d startPose2d = path.getStartingHolonomicPose().orElse(new Pose2d(0, 0, Rotation2d.kZero));
+    Logger.recordOutput("startpose", startPose2d);
 
     return Commands.sequence(
+        Commands.runOnce(() -> drive.setPose(startPose2d), drive),
         Commands.parallel(
             Commands.run(
                 () ->
@@ -330,8 +351,63 @@ public class RobotContainer {
                 Commands.repeatingSequence(
                     shooter.setFlywheelRPM(() -> shooterSetpoint.flywheelSpeed))),
             Commands.repeatingSequence(
-                hopper
-                    .spinIndexer()
+                Commands.parallel(
+                        hopper.spinIndexer(),
+                        Commands.runOnce(
+                                () -> {
+                                  SimulatedArena.getInstance()
+                                      .addGamePieceProjectile(
+                                          new RebuiltFuelOnFly(
+                                                  swerveDriveSimulation
+                                                      .getSimulatedDriveTrainPose()
+                                                      .getTranslation(),
+                                                  new Translation2d(Units.inchesToMeters(12), 0),
+                                                  swerveDriveSimulation
+                                                      .getDriveTrainSimulatedChassisSpeedsFieldRelative(),
+                                                  swerveDriveSimulation
+                                                      .getSimulatedDriveTrainPose()
+                                                      .getRotation(),
+                                                  Inches.of(21),
+                                                  MetersPerSecond.of(
+                                                      shooterSetpoint.flywheelSpeed.in(
+                                                              RotationsPerSecond)
+                                                          * 2
+                                                          * 0.0508
+                                                          * Math.PI
+                                                          / 1.9),
+                                                  ShooterConstants.FIXED_HOOD_ANGLE_DEGREES)
+                                              .withProjectileTrajectoryDisplayCallBack(
+                                                  // Callback for when the note will eventually hit
+                                                  // the
+                                                  // target (if configured)
+                                                  (pose3ds) ->
+                                                      Logger.recordOutput(
+                                                          "Flywheel/NoteProjectileSuccessfulShot",
+                                                          pose3ds.toArray(Pose3d[]::new)),
+                                                  // Callback for when the note will eventually miss
+                                                  // the
+                                                  // target, or if no target is configured
+                                                  (pose3ds) ->
+                                                      Logger.recordOutput(
+                                                          "Flywheel/NoteProjectileUnsuccessfulShot",
+                                                          pose3ds.toArray(Pose3d[]::new)))
+                                              .withTargetPosition(
+                                                  () ->
+                                                      FieldMirroringUtils
+                                                          .toCurrentAllianceTranslation(
+                                                              new Translation3d(1.52, 4.11, 1.83)))
+                                              // Set the tolerance: x: ±0.52m, y: ±0.52m, z: ±0.25m
+                                              // (hexagonal funnel opening ~41 inches wide)
+                                              .withTargetTolerance(
+                                                  new Translation3d(0.52, 0.52, 0.25))
+                                              // Set a callback to run when fuel hits the target
+                                              .withHitTargetCallBack(
+                                                  () ->
+                                                      System.out.println(
+                                                          "Scored fuel in Hub, +1 point!")));
+                                })
+                            .onlyIf(
+                                () -> (Constants.currentMode == Mode.SIM) && Math.random() < 0.10))
                     .onlyIf(
                         () -> {
                           Logger.recordOutput(
@@ -361,12 +437,12 @@ public class RobotContainer {
                                       RevolutionsPerSecond);
                           Logger.recordOutput("oktoshoot", shooterRPMWithinTolerance);
 
-                          //   Check if within hub position and rotation tolerance
-                          //   Pose2d currentPose = drive.getPose();
-                          //   double positionError =
-                          //       currentPose
-                          //           .getTranslation()
-                          //           .getDistance(shooterSetpoint.robotPose.getTranslation());
+                          // Check if within hub position and rotation tolerance
+                          // Pose2d currentPose = drive.getPose();
+                          // double positionError =
+                          // currentPose
+                          // .getTranslation()
+                          // .getDistance(shooterSetpoint.robotPose.getTranslation());
                           double rotationError =
                               Math.abs(
                                   drive
@@ -374,14 +450,14 @@ public class RobotContainer {
                                       .getRotation()
                                       .minus(shooterSetpoint.robotPose.getRotation())
                                       .getDegrees());
-                          //   boolean hubPositionWithinTolerance =
-                          //       positionError
-                          //           < ShooterConstants.HUB_POSITION_TOLERANCE.in(Meters);
+                          // boolean hubPositionWithinTolerance =
+                          // positionError
+                          // < ShooterConstants.HUB_POSITION_TOLERANCE.in(Meters);
                           boolean hubRotationWithinTolerance =
                               rotationError < ShooterConstants.HUB_ROTATION_TOLERANCE.in(Degrees);
                           Logger.recordOutput("HUBERROR", rotationError);
 
-                          return shooterRPMWithinTolerance && hubRotationWithinTolerance;
+                          return shooterRPMWithinTolerance; // && hubRotationWithinTolerance;
                         }))),
         Commands.sequence(
             hopper.stopIndexer(),
@@ -393,11 +469,21 @@ public class RobotContainer {
     return drive;
   }
 
-  //   public Vision getVisionSubsystem() {
-  //     return vision;
-  //   }
+  // public Vision getVisionSubsystem() {
+  // return vision;
+  // }
 
   public ObjectDetection getObjectDetectionSubsystem() {
     return objectDetection;
+  }
+
+  public void updateSimulation() {
+    if (Constants.currentMode != Constants.Mode.SIM) return;
+
+    SimulatedArena.getInstance().simulationPeriodic();
+    Logger.recordOutput(
+        "FieldSimulation/RobotPosition", swerveDriveSimulation.getSimulatedDriveTrainPose());
+    Logger.recordOutput(
+        "FieldSimulation/Fuel", SimulatedArena.getInstance().getGamePiecesArrayByType("Fuel"));
   }
 }

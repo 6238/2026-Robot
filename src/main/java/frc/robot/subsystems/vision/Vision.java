@@ -28,7 +28,6 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Supplier;
-
 import org.littletonrobotics.junction.Logger;
 
 public class Vision extends SubsystemBase {
@@ -38,7 +37,8 @@ public class Vision extends SubsystemBase {
   private final Alert[] disconnectedAlerts;
   private final Supplier<Pose2d> currentPoseEstimateSupplier;
 
-  public Vision(VisionConsumer consumer, Supplier<Pose2d> currentPoseEstimateSupplier, VisionIO... io) {
+  public Vision(
+      VisionConsumer consumer, Supplier<Pose2d> currentPoseEstimateSupplier, VisionIO... io) {
     this.consumer = consumer;
     this.io = io;
     this.currentPoseEstimateSupplier = currentPoseEstimateSupplier;

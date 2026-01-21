@@ -64,6 +64,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
+import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -130,13 +131,16 @@ public class Drive extends SubsystemBase {
 
   private final SwerveSetpointGenerator setpointGenerator;
   private SwerveSetpoint previousSetpoint;
+  private SwerveDriveSimulation sim;
 
   public Drive(
       GyroIO gyroIO,
       ModuleIO flModuleIO,
       ModuleIO frModuleIO,
       ModuleIO blModuleIO,
-      ModuleIO brModuleIO) {
+      ModuleIO brModuleIO,
+      SwerveDriveSimulation sim) {
+    this.sim = sim;
     this.gyroIO = gyroIO;
     modules[0] = new Module(flModuleIO, 0, RobotIdentity.getTunerConstants().FrontLeft);
     modules[1] = new Module(frModuleIO, 1, RobotIdentity.getTunerConstants().FrontRight);
@@ -371,6 +375,10 @@ public class Drive extends SubsystemBase {
   /** Resets the current odometry pose. */
   public void setPose(Pose2d pose) {
     poseEstimator.resetPosition(rawGyroRotation, getModulePositions(), pose);
+
+    if (Constants.currentMode == Mode.SIM) {
+      sim.setSimulationWorldPose(pose);
+    }
   }
 
   /** Adds a new timestamped vision measurement. */

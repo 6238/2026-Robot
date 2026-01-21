@@ -13,13 +13,24 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
+
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants.DriveMotorArrangement;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants.SteerMotorArrangement;
+import com.pathplanner.lib.path.PathPlannerPath;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.sim.AIOpponentRobotSim;
+import frc.robot.subsystems.shooter.ShooterConstants;
+import frc.robot.subsystems.shooter.ShooterSetpoint;
 import frc.robot.util.RobotIdentity;
+import org.ironmaple.simulation.SimulatedArena;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -133,6 +144,7 @@ public class Robot extends LoggedRobot {
   @Override
   public void autonomousInit() {
     autonomousCommand = robotContainer.getAutonomousCommand();
+    SimulatedArena.getInstance().resetFieldForAuto();
 
     // schedule the autonomous command (example)
     if (autonomousCommand != null) {
@@ -173,9 +185,29 @@ public class Robot extends LoggedRobot {
 
   /** This function is caled once when the robot is first started up. */
   @Override
-  public void simulationInit() {}
+  public void simulationInit() {
+    try {
+      PathPlannerPath path = PathPlannerPath.fromPathFile("opponent_neutral_fuel_cycle");
+      var opp0 = new AIOpponentRobotSim(0);
+      opp0.buildChooser(
+          path,
+          opp0.shootFuelIntoAllianceArea(
+              new ShooterSetpoint(
+                  RotationsPerSecond.of(50),
+                  Degrees.of(0),
+                  Pose2d.kZero,
+                  new ChassisSpeeds(),
+                  Pose2d.kZero.getTranslation()),
+              ShooterConstants.FIXED_HOOD_ANGLE_DEGREES.in(Degrees)));
+    } catch (Exception e) {
+      DriverStation.reportError(
+          "Failed to init opponent sim: " + e.getMessage(), e.getStackTrace());
+    }
+  }
 
   /** This function is called periodically whilst in simulation. */
   @Override
-  public void simulationPeriodic() {}
+  public void simulationPeriodic() {
+    robotContainer.updateSimulation();
+  }
 }

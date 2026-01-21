@@ -191,7 +191,7 @@ public class AutoPilotUtils {
 
     // Mutable state local to the command
     AtomicReference<Pose2d> previousStandoffPose = new AtomicReference<>();
-    AtomicReference<Double> lastSeenTargetTime = new AtomicReference<>(Timer.getFPGATimestamp());
+    AtomicReference<Double> lastSeenTargetTime = new AtomicReference<>(Timer.getTimestamp());
     AtomicReference<Boolean> targetReached = new AtomicReference<>(false);
 
     Command oneSegment =
@@ -206,7 +206,7 @@ public class AutoPilotUtils {
               Pose2d standoffPose = computeStandoffPose(drivetrain, trackedObject);
 
               previousStandoffPose.set(standoffPose);
-              lastSeenTargetTime.set(Timer.getFPGATimestamp());
+              lastSeenTargetTime.set(Timer.getTimestamp());
 
               return generateNotePickupMoveCommand(drivetrain, standoffPose)
                   .until(
@@ -216,7 +216,7 @@ public class AutoPilotUtils {
                         Optional<TrackedObject> currentOpt =
                             getCurrentTarget(drivetrain, objectDetection);
 
-                        double now = Timer.getFPGATimestamp();
+                        double now = Timer.getTimestamp();
 
                         if (currentOpt.isEmpty()) {
                           return (now - lastSeenTargetTime.get()) > MAX_TARGET_LOST_TIME;
@@ -279,7 +279,7 @@ public class AutoPilotUtils {
               }
 
               // Stop if target lost for too long
-              double now = Timer.getFPGATimestamp();
+              double now = Timer.getTimestamp();
               boolean targetLost = (now - lastSeenTargetTime.get()) > MAX_TARGET_LOST_TIME;
 
               if (targetLost) {
