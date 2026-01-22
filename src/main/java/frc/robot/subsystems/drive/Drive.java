@@ -92,9 +92,9 @@ public class Drive extends SubsystemBase {
                   RobotIdentity.getTunerConstants().BackRight.LocationY)));
 
   // PathPlanner config constants
-  private static final double ROBOT_MASS_KG = 31.175;
+  private static final double ROBOT_MASS_KG = 25.175;
   private static final double ROBOT_MOI = 2.15;
-  private static final double WHEEL_COF = 1.2;
+  private static final double WHEEL_COF = 1.3;
   private static final RobotConfig PP_CONFIG =
       new RobotConfig(
           ROBOT_MASS_KG,
@@ -160,7 +160,7 @@ public class Drive extends SubsystemBase {
         this::getChassisSpeeds,
         this::runVelocity,
         new PPHolonomicDriveController(
-            new PIDConstants(4.5, 0.02, 0.1), new PIDConstants(4.5, 0.02, 0.1)),
+            new PIDConstants(4.2, 0.02, 0.1), new PIDConstants(5.2, 0.02, 0.1)),
         PP_CONFIG,
         () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
         this);

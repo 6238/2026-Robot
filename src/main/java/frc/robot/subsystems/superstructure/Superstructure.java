@@ -34,13 +34,15 @@ public class Superstructure extends SubsystemBase {
 
   public enum WantedState {
     IDLE,
-    SHOOTING
+    SHOOTING,
+    PASSING
   }
 
   public enum CurrentState {
     IDLE,
     SPINNING_UP,
-    SHOOTING
+    SHOOTING,
+    PASSING
   }
 
   public WantedState wantedSuperState = WantedState.IDLE;
@@ -80,6 +82,10 @@ public class Superstructure extends SubsystemBase {
         if (currentSuperState != CurrentState.SHOOTING)
           currentSuperState = CurrentState.SPINNING_UP;
         break;
+      case PASSING:
+        if (currentSuperState != CurrentState.PASSING)
+          currentSuperState = CurrentState.SPINNING_UP;
+        break;
       default:
         currentSuperState = CurrentState.IDLE;
         break;
@@ -89,35 +95,40 @@ public class Superstructure extends SubsystemBase {
   public void applyStates() {
     switch (currentSuperState) {
       case IDLE:
-        CommandScheduler.getInstance().schedule(
-            hopper.stopIndexer(),
-            shooter.setFlywheelRPM(() -> RotationsPerSecond.of(0)),
-            shooter.setFeederVoltage(() -> Volts.of(0))
-        );
+        CommandScheduler.getInstance()
+            .schedule(
+                hopper.stopIndexer(),
+                shooter.setFlywheelVoltage(() -> Volts.of(0)),
+                shooter.setFeederVoltage(() -> Volts.of(0)));
         break;
       case SPINNING_UP:
-        CommandScheduler.getInstance().schedule(
-            hopper.stopIndexer(),
-            shooter.setFeederVoltage(() -> Volts.of(0)),
-            shooter.setFlywheelRPM(() -> shotSetpoint.flywheelSpeed)
-        );
-        if (readyToShoot()) {
+        CommandScheduler.getInstance()
+            .schedule(
+                hopper.stopIndexer(),
+                shooter.setFeederVoltage(() -> Volts.of(ShooterConstants.FEEDER_VOLTAGE.get())),
+                shooter.setFlywheelRPM(() -> shotSetpoint.flywheelSpeed));
+        if (!readyToShoot()) {
+          break;
+        }
+        if (wantedSuperState == WantedState.SHOOTING) {
           currentSuperState = CurrentState.SHOOTING;
+        } else if (wantedSuperState == WantedState.PASSING) {
+          currentSuperState = CurrentState.PASSING;
         }
         break;
+      case PASSING:
       case SHOOTING:
         CommandScheduler.getInstance()
-            .schedule(shooter.setFlywheelRPM(() -> shotSetpoint.flywheelSpeed));
+            .schedule(
+                shooter.setFlywheelRPM(() -> shotSetpoint.flywheelSpeed),
+                shooter.setFeederVoltage(() -> Volts.of(ShooterConstants.FEEDER_VOLTAGE.get())));
         if (!readyToShoot()) {
           currentSuperState = CurrentState.SPINNING_UP;
           break;
         }
 
         simulateShot();
-        CommandScheduler.getInstance().schedule(
-            hopper.spinIndexer(),
-            shooter.setFeederVoltage(() -> Volts.of(ShooterConstants.FEEDER_VOLTAGE.get()))
-        );
+        CommandScheduler.getInstance().schedule(hopper.spinIndexer());
         break;
       default:
         break;
@@ -181,6 +192,16 @@ public class Superstructure extends SubsystemBase {
 
     Logger.recordOutput("Superstructure/ShooterSpeedSetpoint", shooterSpeedSetpoint);
     Logger.recordOutput("Superstructure/HubRotationSetpoint", hubSetpoint);
+    Logger.recordOutput("Superstructure/HubRotationTarget", shotSetpoint.robotPose.getRotation());
+    Logger.recordOutput("Superstructure/HubRotationCurrent", drive.getPose().getRotation());
+    Logger.recordOutput(
+        "Superstructure/HubRotationError",
+        Math.abs(
+            drive
+                .getPose()
+                .getRotation()
+                .minus(shotSetpoint.robotPose.getRotation())
+                .getDegrees()));
 
     return shooterSpeedSetpoint && hubSetpoint;
   }
@@ -191,7 +212,14 @@ public class Superstructure extends SubsystemBase {
 
   @Override
   public void periodic() {
-    shotSetpoint = ShotPlanner.createShotSetpoint(drive.getPose(), drive.getChassisSpeeds());
+    if (wantedSuperState == WantedState.SHOOTING)
+      shotSetpoint = ShotPlanner.createShotSetpoint(drive.getPose(), drive.getChassisSpeeds());
+    else if (wantedSuperState == WantedState.PASSING)
+      shotSetpoint = ShotPlanner.createPassSetpoint(
+        drive.getPose().getY() > ShooterConstants.LEFT_RIGHT_SPLIT ? ShooterConstants.LEFT_TARGET_PASS_POSE2D : ShooterConstants.RIGHT_TARGET_PASS_POSE2D,
+        drive.getPose(),
+        drive.getChassisSpeeds()
+      );
 
     handleWantedState();
     applyStates();

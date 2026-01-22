@@ -87,6 +87,7 @@ public class HopperIOTalonFX implements HopperIO {
             indexerCurrent,
             indexerVoltage); // , topIndexerVelocity, topIndexerAcceleration, topIndexerCurrent,
     // topIndexerVoltage);
+    statusSignalCollector.setUpdateFrequencyForAll(50);
     ParentDevice.optimizeBusUtilizationForAll(indexerTalon); // , topIndexerTalon);
   }
 

@@ -72,11 +72,10 @@ public class RobotContainer {
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
 
-  private SwerveDriveSimulation swerveDriveSimulation;
+  private SwerveDriveSimulation swerveDriveSimulation = null;
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
-    swerveDriveSimulation = MapleSimSwerve.createSimulationDrive(RobotIdentity.getTunerConstants());
     switch (Constants.currentMode) {
       case REAL:
         // Real robot, instantiate hardware IO implementations
@@ -98,6 +97,8 @@ public class RobotContainer {
         break;
 
       case SIM:
+        swerveDriveSimulation =
+            MapleSimSwerve.createSimulationDrive(RobotIdentity.getTunerConstants());
         drive =
             new Drive(
                 new GyroIO() {},
@@ -168,6 +169,7 @@ public class RobotContainer {
    * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
    */
   private void configureButtonBindings() {
+
     drive.setDefaultCommand(
         DriveCommands.joystickDrive(
             drive,
