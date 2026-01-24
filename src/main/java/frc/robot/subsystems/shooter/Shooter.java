@@ -78,8 +78,7 @@ public class Shooter extends SubsystemBase {
   }
 
   public boolean flywheelUpToSpeed(AngularVelocity tolerance) {
-    return inputs.flywheelVelocity.isNear(
-        this.targetFlywheelVelocity, tolerance);
+    return inputs.flywheelVelocity.isNear(this.targetFlywheelVelocity, tolerance);
   }
 
   public AngularVelocity getCurrentFlywheelSpeed() {

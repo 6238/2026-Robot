@@ -62,8 +62,8 @@ public class HopperIOTalonFX implements HopperIO {
     topIndexerConfig.MotorOutput.Inverted = HopperConstants.TOP_INDEXER_MOTOR_DIRECTION;
 
     if (tryUntilOk(
-        Constants.MAX_PHEONIX_RETRIES, () ->
-    topIndexerTalon.getConfigurator().apply(topIndexerConfig))) {
+        Constants.MAX_PHEONIX_RETRIES,
+        () -> topIndexerTalon.getConfigurator().apply(topIndexerConfig))) {
       indexerConfigAlert.set(false);
     } else {
       indexerConfigAlert.set(true);
@@ -85,8 +85,11 @@ public class HopperIOTalonFX implements HopperIO {
             indexerVelocity,
             indexerAcceleration,
             indexerCurrent,
-            indexerVoltage, topIndexerVelocity, topIndexerAcceleration, topIndexerCurrent,
-    topIndexerVoltage);
+            indexerVoltage,
+            topIndexerVelocity,
+            topIndexerAcceleration,
+            topIndexerCurrent,
+            topIndexerVoltage);
     statusSignalCollector.setUpdateFrequencyForAll(50);
     ParentDevice.optimizeBusUtilizationForAll(indexerTalon, topIndexerTalon);
   }

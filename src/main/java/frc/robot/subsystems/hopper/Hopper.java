@@ -58,17 +58,18 @@ public class Hopper extends SubsystemBase {
   }
 
   public Command spinFullIndexer() {
-    return runOnce(() -> {
-      io.setIndexerVoltage(Volts.of(HopperConstants.INDEXER_VOLTAGE.get()));
-      io.setTopIndexerVoltage(Volts.of(HopperConstants.TOP_INDEXER_VOLTAGE.get()));
-    });
+    return runOnce(
+        () -> {
+          io.setIndexerVoltage(Volts.of(HopperConstants.INDEXER_VOLTAGE.get()));
+          io.setTopIndexerVoltage(Volts.of(HopperConstants.TOP_INDEXER_VOLTAGE.get()));
+        });
   }
 
   public Command stopFullIndexer() {
     return runOnce(
         () -> {
           io.setIndexerVoltage(Volts.of(0));
-      io.setTopIndexerVoltage(Volts.of(0));
+          io.setTopIndexerVoltage(Volts.of(0));
         });
   }
 }

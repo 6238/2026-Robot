@@ -106,7 +106,7 @@ public class Superstructure extends SubsystemBase {
                 hopper.stopIndexer(),
                 shooter.setFeederVoltage(() -> Volts.of(ShooterConstants.FEEDER_VOLTAGE.get())),
                 shooter.setFlywheelRPM(() -> shotSetpoint.flywheelSpeed));
-        
+
         if (!readyToSpinTopIndexer()) {
           CommandScheduler.getInstance().schedule(hopper.stopTopIndexer());
           break;

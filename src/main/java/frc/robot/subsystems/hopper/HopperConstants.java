@@ -1,12 +1,10 @@
 package frc.robot.subsystems.hopper;
 
-import com.ctre.phoenix6.CANBus;
-import com.ctre.phoenix6.signals.InvertedValue;
-
-import edu.wpi.first.units.measure.AngularVelocity;
-
 import static edu.wpi.first.units.Units.*;
 
+import com.ctre.phoenix6.CANBus;
+import com.ctre.phoenix6.signals.InvertedValue;
+import edu.wpi.first.units.measure.AngularVelocity;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 public class HopperConstants {

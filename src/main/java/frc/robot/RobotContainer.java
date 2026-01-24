@@ -38,6 +38,9 @@ import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.hopper.Hopper;
 import frc.robot.subsystems.hopper.HopperIO;
 import frc.robot.subsystems.hopper.HopperIOTalonFX;
+import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intake.IntakeIO;
+import frc.robot.subsystems.intake.IntakeIOTalonFX;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.ShooterIOSim;
 import frc.robot.subsystems.shooter.ShooterIOTalonFX;
@@ -64,6 +67,7 @@ public class RobotContainer {
   private final Vision vision;
   private final Shooter shooter;
   private final Hopper hopper;
+  private final Intake intake;
   private final Superstructure superstructure;
 
   // Controller
@@ -94,6 +98,7 @@ public class RobotContainer {
                 new VisionIOPhotonVision(camera0Name, robotToCamera0));
         shooter = new Shooter(new ShooterIOTalonFX());
         hopper = new Hopper(new HopperIOTalonFX());
+        intake = new Intake(new IntakeIOTalonFX());
         break;
 
       case SIM:
@@ -117,6 +122,7 @@ public class RobotContainer {
                     swerveDriveSimulation::getSimulatedDriveTrainPose));
         shooter = new Shooter(new ShooterIOSim() {});
         hopper = new Hopper(new HopperIO() {});
+        intake = new Intake(new IntakeIO() {});
         break;
 
       default:
@@ -131,6 +137,7 @@ public class RobotContainer {
         vision = new Vision(drive::addVisionMeasurement, drive::getPose, new VisionIO() {});
         shooter = new Shooter(new ShooterIOTalonFX() {});
         hopper = new Hopper(new HopperIO() {});
+        intake = new Intake(new IntakeIO() {});
         break;
     }
 
@@ -199,6 +206,8 @@ public class RobotContainer {
                 superstructure.setWantedSuperStateCommand(
                     () -> Superstructure.WantedState.SHOOTING)))
         .onFalse(superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.IDLE));
+
+    controller.leftTrigger().onTrue(intake.spinIntake()).onFalse(intake.stopIntake());
   }
 
   /**
