@@ -83,8 +83,7 @@ public class Superstructure extends SubsystemBase {
           currentSuperState = CurrentState.SPINNING_UP;
         break;
       case PASSING:
-        if (currentSuperState != CurrentState.PASSING)
-          currentSuperState = CurrentState.SPINNING_UP;
+        if (currentSuperState != CurrentState.PASSING) currentSuperState = CurrentState.SPINNING_UP;
         break;
       default:
         currentSuperState = CurrentState.IDLE;
@@ -97,7 +96,7 @@ public class Superstructure extends SubsystemBase {
       case IDLE:
         CommandScheduler.getInstance()
             .schedule(
-                hopper.stopIndexer(),
+                hopper.stopFullIndexer(),
                 shooter.setFlywheelVoltage(() -> Volts.of(0)),
                 shooter.setFeederVoltage(() -> Volts.of(0)));
         break;
@@ -107,6 +106,13 @@ public class Superstructure extends SubsystemBase {
                 hopper.stopIndexer(),
                 shooter.setFeederVoltage(() -> Volts.of(ShooterConstants.FEEDER_VOLTAGE.get())),
                 shooter.setFlywheelRPM(() -> shotSetpoint.flywheelSpeed));
+        
+        if (!readyToSpinTopIndexer()) {
+          CommandScheduler.getInstance().schedule(hopper.stopTopIndexer());
+          break;
+        }
+        CommandScheduler.getInstance().schedule(hopper.spinTopIndexer());
+
         if (!readyToShoot()) {
           break;
         }
@@ -128,7 +134,7 @@ public class Superstructure extends SubsystemBase {
         }
 
         simulateShot();
-        CommandScheduler.getInstance().schedule(hopper.spinIndexer());
+        CommandScheduler.getInstance().schedule(hopper.spinFullIndexer());
         break;
       default:
         break;
@@ -177,10 +183,13 @@ public class Superstructure extends SubsystemBase {
                 .withHitTargetCallBack(() -> System.out.println("Scored fuel in Hub, +1 point!")));
   }
 
+  public boolean readyToSpinTopIndexer() {
+    return shooter.flywheelUpToSpeed(HopperConstants.HOPPER_TOLERANCE_BEFORE_SHOT);
+  }
+
   public boolean checkHubTolerance() {
     double rotationError =
-        Math.abs(
-            drive.getPose().getRotation().minus(shotSetpoint.robotPose.getRotation()).getDegrees());
+        Math.abs(drive.getRotation().minus(shotSetpoint.robotPose.getRotation()).getDegrees());
     boolean hubRotationWithinTolerance =
         Math.abs(rotationError) < ShooterConstants.HUB_ROTATION_TOLERANCE.in(Degrees);
     return hubRotationWithinTolerance;
@@ -215,11 +224,13 @@ public class Superstructure extends SubsystemBase {
     if (wantedSuperState == WantedState.SHOOTING)
       shotSetpoint = ShotPlanner.createShotSetpoint(drive.getPose(), drive.getChassisSpeeds());
     else if (wantedSuperState == WantedState.PASSING)
-      shotSetpoint = ShotPlanner.createPassSetpoint(
-        drive.getPose().getY() > ShooterConstants.LEFT_RIGHT_SPLIT ? ShooterConstants.LEFT_TARGET_PASS_POSE2D : ShooterConstants.RIGHT_TARGET_PASS_POSE2D,
-        drive.getPose(),
-        drive.getChassisSpeeds()
-      );
+      shotSetpoint =
+          ShotPlanner.createPassSetpoint(
+              drive.getPose().getY() > ShooterConstants.LEFT_RIGHT_SPLIT
+                  ? ShooterConstants.LEFT_TARGET_PASS_POSE2D
+                  : ShooterConstants.RIGHT_TARGET_PASS_POSE2D,
+              drive.getPose(),
+              drive.getChassisSpeeds());
 
     handleWantedState();
     applyStates();

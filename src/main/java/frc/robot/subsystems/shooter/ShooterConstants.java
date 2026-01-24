@@ -2,12 +2,9 @@ package frc.robot.subsystems.shooter;
 
 import static edu.wpi.first.units.Units.*;
 
-import java.io.Console;
-
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.signals.InvertedValue;
-
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -34,10 +31,10 @@ public class ShooterConstants {
   public static final LoggedNetworkPIDFeedforwardGains FLYWHEEL_GAINS =
       new LoggedNetworkPIDFeedforwardGains(
           0.18, // kP
-          0.0, // kI
+          0.01, // kI
           0.03, // kD
           0.0, // kA
-          0.20, // kV
+          0.19, // kV
           0, // kS // 6000rpm 100rps 6v
           0.0, // kG
           "ShooterFlywheel");
@@ -75,11 +72,11 @@ public class ShooterConstants {
   public static final double LEAD_TIME_DIST_OFFSET = 0.35; // 1.27 - 0.9125
   public static final double LEAD_TIME_DIST_SLOPE = 0.14;
 
-  public static final double PASSING_FLYWHEEL_DIST_OFFSET = 21;
-  public static final double PASSING_FLYWHEEL_DIST_SLOPE = 6.5;
+  public static final double PASSING_FLYWHEEL_DIST_OFFSET = 16.5;
+  public static final double PASSING_FLYWHEEL_DIST_SLOPE = 6;
 
-  public static final double PASSING_LEAD_TIME_DIST_OFFSET = 0.35; // 1.27 - 0.9125
-  public static final double PASSING_LEAD_TIME_DIST_SLOPE = 0.14;
+  public static final double PASSING_LEAD_TIME_DIST_OFFSET = 0.45; // 1.27 - 0.9125
+  public static final double PASSING_LEAD_TIME_DIST_SLOPE = 0.2;
 
   public static final Pose2d LEFT_TARGET_PASS_POSE2D = new Pose2d();
   public static final Pose2d RIGHT_TARGET_PASS_POSE2D = new Pose2d();

@@ -33,7 +33,7 @@ public class Shooter extends SubsystemBase {
   public void periodic() {
     io.updateInputs(inputs);
     Logger.processInputs("Shooter", inputs);
-    Logger.recordOutput("shooterspeed_rps", inputs.flywheelVelocity.in(RotationsPerSecond));
+    Logger.recordOutput("Shooter/targetVelocity", targetFlywheelVelocity);
 
     // update alerts based on motor connection status
     AlertUtils.updateAlert(shooterMotorConnectedAlert, !inputs.flywheelTalonConnected);
@@ -43,7 +43,6 @@ public class Shooter extends SubsystemBase {
   public Command setFlywheelRPM(Supplier<AngularVelocity> speed) {
     return runOnce(
         () -> {
-          Logger.recordOutput("shooter_rps", speed.get().in(RotationsPerSecond));
           setFlywheelRPM(speed.get());
         });
   }
@@ -56,7 +55,6 @@ public class Shooter extends SubsystemBase {
   public Command setFlywheelVoltage(Supplier<Voltage> voltage) {
     return runOnce(
         () -> {
-          Logger.recordOutput("shooter_rps", voltage.get());
           setFlywheelVoltage(voltage.get());
         });
   }
@@ -77,6 +75,11 @@ public class Shooter extends SubsystemBase {
   public boolean flywheelUpToSpeed() {
     return inputs.flywheelVelocity.isNear(
         this.targetFlywheelVelocity, ShooterConstants.FLYWHEEL_TOLERANCE_BEFORE_SHOT);
+  }
+
+  public boolean flywheelUpToSpeed(AngularVelocity tolerance) {
+    return inputs.flywheelVelocity.isNear(
+        this.targetFlywheelVelocity, tolerance);
   }
 
   public AngularVelocity getCurrentFlywheelSpeed() {

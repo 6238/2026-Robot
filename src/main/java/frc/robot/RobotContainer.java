@@ -225,7 +225,11 @@ public class RobotContainer {
                 () -> {
                   return superstructure.getShotSetpoint().target;
                 }),
-            superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.SHOOTING)),
+            superstructure.setWantedSuperStateCommand(
+                () ->
+                    drive.getPose().getX() > Constants.FIELD_PASSING_SHOOTING_SPLIT
+                        ? Superstructure.WantedState.PASSING
+                        : Superstructure.WantedState.SHOOTING)),
         superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.IDLE));
   }
 

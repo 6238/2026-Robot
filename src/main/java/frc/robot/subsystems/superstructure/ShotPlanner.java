@@ -33,7 +33,8 @@ public class ShotPlanner {
                 fieldSpeeds.vxMetersPerSecond * -leadTimeSec,
                 fieldSpeeds.vyMetersPerSecond * -leadTimeSec));
 
-    Logger.recordOutput("ShotPlanner/predictedTranslation", new Pose2d(predictedTranslation, Rotation2d.kZero));
+    Logger.recordOutput(
+        "ShotPlanner/predictedTranslation", new Pose2d(predictedTranslation, Rotation2d.kZero));
     Logger.recordOutput("ShotPlanner/leadTime", leadTimeSec);
 
     double predictedDistanceM = drivePose.getTranslation().getDistance(predictedTranslation);
@@ -56,8 +57,7 @@ public class ShotPlanner {
   }
 
   public static ShotSetpoint createPassSetpoint(
-      Pose2d targetPassPoint,
-      Pose2d drivePose, ChassisSpeeds driveChassisSpeeds) {
+      Pose2d targetPassPoint, Pose2d drivePose, ChassisSpeeds driveChassisSpeeds) {
     ChassisSpeeds fieldSpeeds =
         ChassisSpeeds.fromRobotRelativeSpeeds(
             driveChassisSpeeds.vxMetersPerSecond,
@@ -76,7 +76,8 @@ public class ShotPlanner {
                 fieldSpeeds.vxMetersPerSecond * -leadTimeSec,
                 fieldSpeeds.vyMetersPerSecond * -leadTimeSec));
 
-    Logger.recordOutput("ShotPlanner/predictedTranslation", new Pose2d(predictedTranslation, Rotation2d.kZero));
+    Logger.recordOutput(
+        "ShotPlanner/predictedTranslation", new Pose2d(predictedTranslation, Rotation2d.kZero));
     Logger.recordOutput("ShotPlanner/leadTime", leadTimeSec);
 
     double predictedDistanceM = drivePose.getTranslation().getDistance(predictedTranslation);

@@ -33,15 +33,6 @@ public class Hopper extends SubsystemBase {
     return runOnce(
         () -> {
           io.setIndexerVoltage(Volts.of(HopperConstants.INDEXER_VOLTAGE.get()));
-          // io.setTopIndexerVoltage(Volts.of(HopperConstants.TOP_INDEXER_VOLTAGE.get()));
-        });
-  }
-
-  public Command reverseIndexer() {
-    return runOnce(
-        () -> {
-          io.setIndexerVoltage(Volts.of(HopperConstants.REVERSE_INDEXER_VOLTAGE.get()));
-          // io.setTopIndexerVoltage(Volts.of(HopperConstants.REVERSE_TOP_INDEXER_VOLTAGE.get()));
         });
   }
 
@@ -49,7 +40,35 @@ public class Hopper extends SubsystemBase {
     return runOnce(
         () -> {
           io.setIndexerVoltage(Volts.of(0));
-          // io.setTopIndexerVoltage(Volts.of(0));
+        });
+  }
+
+  public Command spinTopIndexer() {
+    return runOnce(
+        () -> {
+          io.setTopIndexerVoltage(Volts.of(HopperConstants.TOP_INDEXER_VOLTAGE.get()));
+        });
+  }
+
+  public Command stopTopIndexer() {
+    return runOnce(
+        () -> {
+          io.setTopIndexerVoltage(Volts.of(0));
+        });
+  }
+
+  public Command spinFullIndexer() {
+    return runOnce(() -> {
+      io.setIndexerVoltage(Volts.of(HopperConstants.INDEXER_VOLTAGE.get()));
+      io.setTopIndexerVoltage(Volts.of(HopperConstants.TOP_INDEXER_VOLTAGE.get()));
+    });
+  }
+
+  public Command stopFullIndexer() {
+    return runOnce(
+        () -> {
+          io.setIndexerVoltage(Volts.of(0));
+      io.setTopIndexerVoltage(Volts.of(0));
         });
   }
 }
