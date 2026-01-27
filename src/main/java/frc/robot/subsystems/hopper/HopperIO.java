@@ -19,10 +19,10 @@ public interface HopperIO {
     public Current indexerAppliedCurrent = Amps.of(0.0);
     public Voltage indexerAppliedVoltage = Volts.of(0.0);
 
-    // public AngularVelocity topIndexerVelocity = RotationsPerSecond.of(0.0);
-    // public AngularAcceleration topIndexerAcceleration = RotationsPerSecondPerSecond.of(0.0);
-    // public Current topIndexerAppliedCurrent = Amps.of(0.0);
-    // public Voltage topIndexerAppliedVoltage = Volts.of(0.0);
+    public AngularVelocity topIndexerVelocity = RotationsPerSecond.of(0.0);
+    public AngularAcceleration topIndexerAcceleration = RotationsPerSecondPerSecond.of(0.0);
+    public Current topIndexerAppliedCurrent = Amps.of(0.0);
+    public Voltage topIndexerAppliedVoltage = Volts.of(0.0);
   }
 
   public default void updateInputs(HopperIOInputs inputs) {}
@@ -31,6 +31,6 @@ public interface HopperIO {
   public default void setIndexerVoltage(Voltage voltage) {}
   ;
 
-  // public default void setTopIndexerVoltage(Voltage voltage) {}
-  // ;
+  public default void setTopIndexerVoltage(Voltage voltage) {}
+  ;
 }

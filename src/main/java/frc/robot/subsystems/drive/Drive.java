@@ -64,6 +64,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
+import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -91,9 +92,9 @@ public class Drive extends SubsystemBase {
                   RobotIdentity.getTunerConstants().BackRight.LocationY)));
 
   // PathPlanner config constants
-  private static final double ROBOT_MASS_KG = 31.175;
+  private static final double ROBOT_MASS_KG = 25.175;
   private static final double ROBOT_MOI = 2.15;
-  private static final double WHEEL_COF = 1.2;
+  private static final double WHEEL_COF = 1.3;
   private static final RobotConfig PP_CONFIG =
       new RobotConfig(
           ROBOT_MASS_KG,
@@ -130,13 +131,16 @@ public class Drive extends SubsystemBase {
 
   private final SwerveSetpointGenerator setpointGenerator;
   private SwerveSetpoint previousSetpoint;
+  private SwerveDriveSimulation sim;
 
   public Drive(
       GyroIO gyroIO,
       ModuleIO flModuleIO,
       ModuleIO frModuleIO,
       ModuleIO blModuleIO,
-      ModuleIO brModuleIO) {
+      ModuleIO brModuleIO,
+      SwerveDriveSimulation sim) {
+    this.sim = sim;
     this.gyroIO = gyroIO;
     modules[0] = new Module(flModuleIO, 0, RobotIdentity.getTunerConstants().FrontLeft);
     modules[1] = new Module(frModuleIO, 1, RobotIdentity.getTunerConstants().FrontRight);
@@ -156,7 +160,7 @@ public class Drive extends SubsystemBase {
         this::getChassisSpeeds,
         this::runVelocity,
         new PPHolonomicDriveController(
-            new PIDConstants(4.5, 0.02, 0.1), new PIDConstants(4.5, 0.02, 0.1)),
+            new PIDConstants(4.2, 0.02, 0.1), new PIDConstants(5.2, 0.02, 0.1)),
         PP_CONFIG,
         () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
         this);
@@ -371,6 +375,10 @@ public class Drive extends SubsystemBase {
   /** Resets the current odometry pose. */
   public void setPose(Pose2d pose) {
     poseEstimator.resetPosition(rawGyroRotation, getModulePositions(), pose);
+
+    if (Constants.currentMode == Mode.SIM) {
+      sim.setSimulationWorldPose(pose);
+    }
   }
 
   /** Adds a new timestamped vision measurement. */

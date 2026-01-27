@@ -18,15 +18,11 @@ import static frc.robot.subsystems.vision.VisionConstants.*;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
-import com.pathplanner.lib.path.PathPlannerPath;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -35,28 +31,30 @@ import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
+import frc.robot.subsystems.drive.MapleSimSwerve;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.hopper.Hopper;
 import frc.robot.subsystems.hopper.HopperIO;
 import frc.robot.subsystems.hopper.HopperIOTalonFX;
-import frc.robot.subsystems.objectdetection.ObjectDetection;
-import frc.robot.subsystems.objectdetection.ObjectDetectionIO;
-import frc.robot.subsystems.objectdetection.ObjectDetectionIOJetson;
+import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intake.IntakeIO;
+import frc.robot.subsystems.intake.IntakeIOTalonFX;
 import frc.robot.subsystems.shooter.Shooter;
-import frc.robot.subsystems.shooter.ShooterConstants;
+import frc.robot.subsystems.shooter.ShooterIOSim;
 import frc.robot.subsystems.shooter.ShooterIOTalonFX;
-import frc.robot.subsystems.shooter.ShooterSetpoint;
+import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOPhotonVision;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
-import frc.robot.util.AutoPilotUtils;
+import frc.robot.util.AlertUtils;
 import frc.robot.util.RobotIdentity;
+import org.ironmaple.simulation.SimulatedArena;
+import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
-import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -68,9 +66,10 @@ public class RobotContainer {
   // Subsystems
   private final Drive drive;
   private final Vision vision;
-  private final ObjectDetection objectDetection;
   private final Shooter shooter;
   private final Hopper hopper;
+  private final Intake intake;
+  private final Superstructure superstructure;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -78,14 +77,15 @@ public class RobotContainer {
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
 
-  private ShooterSetpoint shooterSetpoint =
-      new ShooterSetpoint(
-          RPM.of(0), Degrees.of(0), new Pose2d(), new ChassisSpeeds(), new Translation2d());
-
-  private LoggedNetworkNumber shooterSpeed = new LoggedNetworkNumber("shooterspeed", 90);
+  private SwerveDriveSimulation swerveDriveSimulation = null;
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
+    AlertUtils.criticalErrorRumbleFunction = () -> controller.setRumble(RumbleType.kBothRumble, 1.0);
+    AlertUtils.stopRumbleFunction = () -> controller.setRumble(RumbleType.kBothRumble, 0.0);
+
+    AlertUtils.clearCriticalAlerts();
+
     switch (Constants.currentMode) {
       case REAL:
         // Real robot, instantiate hardware IO implementations
@@ -95,37 +95,40 @@ public class RobotContainer {
                 new ModuleIOTalonFX(RobotIdentity.getTunerConstants().FrontLeft),
                 new ModuleIOTalonFX(RobotIdentity.getTunerConstants().FrontRight),
                 new ModuleIOTalonFX(RobotIdentity.getTunerConstants().BackLeft),
-                new ModuleIOTalonFX(RobotIdentity.getTunerConstants().BackRight));
-        vision =
-            new Vision(
-                drive::addVisionMeasurement, 
-                drive::getPose,
-                new VisionIOPhotonVision(camera0Name, robotToCamera0));
-        objectDetection =
-            new ObjectDetection(
-                new ObjectDetectionIOJetson(), (timestamp) -> drive.getTimestampPose(timestamp));
-        shooter = new Shooter(new ShooterIOTalonFX());
-        hopper = new Hopper(new HopperIOTalonFX());
-        break;
-
-      case SIM:
-        drive =
-            new Drive(
-                new GyroIO() {},
-                new ModuleIOSim(RobotIdentity.getTunerConstants().FrontLeft),
-                new ModuleIOSim(RobotIdentity.getTunerConstants().FrontRight),
-                new ModuleIOSim(RobotIdentity.getTunerConstants().BackLeft),
-                new ModuleIOSim(RobotIdentity.getTunerConstants().BackRight));
+                new ModuleIOTalonFX(RobotIdentity.getTunerConstants().BackRight),
+                swerveDriveSimulation);
         vision =
             new Vision(
                 drive::addVisionMeasurement,
                 drive::getPose,
-                new VisionIOPhotonVisionSim(camera0Name, robotToCamera0, drive::getPose));
-        objectDetection =
-            new ObjectDetection(
-                new ObjectDetectionIO() {}, (timestamp) -> drive.getTimestampPose(timestamp));
-        shooter = new Shooter(new ShooterIOTalonFX() {});
+                new VisionIOPhotonVision(camera0Name, robotToCamera0));
+        shooter = new Shooter(new ShooterIOTalonFX());
+        hopper = new Hopper(new HopperIOTalonFX());
+        intake = new Intake(new IntakeIOTalonFX());
+        break;
+
+      case SIM:
+        swerveDriveSimulation =
+            MapleSimSwerve.createSimulationDrive(RobotIdentity.getTunerConstants());
+        drive =
+            new Drive(
+                new GyroIO() {},
+                new ModuleIOSim(swerveDriveSimulation.getModules()[0]),
+                new ModuleIOSim(swerveDriveSimulation.getModules()[1]),
+                new ModuleIOSim(swerveDriveSimulation.getModules()[2]),
+                new ModuleIOSim(swerveDriveSimulation.getModules()[3]),
+                swerveDriveSimulation);
+        vision =
+            new Vision(
+                drive::addVisionMeasurement,
+                drive::getPose,
+                new VisionIOPhotonVisionSim(
+                    camera0Name,
+                    robotToCamera0,
+                    swerveDriveSimulation::getSimulatedDriveTrainPose));
+        shooter = new Shooter(new ShooterIOSim() {});
         hopper = new Hopper(new HopperIO() {});
+        intake = new Intake(new IntakeIO() {});
         break;
 
       default:
@@ -135,17 +138,16 @@ public class RobotContainer {
                 new ModuleIO() {},
                 new ModuleIO() {},
                 new ModuleIO() {},
-                new ModuleIO() {});
-        vision = new Vision(drive::addVisionMeasurement,
-                drive::getPose,
-                new VisionIO() {});
-        objectDetection =
-            new ObjectDetection(
-                new ObjectDetectionIO() {}, (timestamp) -> drive.getTimestampPose(timestamp));
+                new ModuleIO() {},
+                swerveDriveSimulation);
+        vision = new Vision(drive::addVisionMeasurement, drive::getPose, new VisionIO() {});
         shooter = new Shooter(new ShooterIOTalonFX() {});
         hopper = new Hopper(new HopperIO() {});
+        intake = new Intake(new IntakeIO() {});
         break;
     }
+
+    superstructure = new Superstructure(drive, shooter, hopper, swerveDriveSimulation);
 
     configureNamedCommands();
 
@@ -172,20 +174,17 @@ public class RobotContainer {
   }
 
   private void configureNamedCommands() {
-    AutoPilotUtils.initializeAutoPilot();
-
+    NamedCommands.registerCommand("StartIntake", intake.spinIntake());
+    NamedCommands.registerCommand("StopIntake", intake.stopIntake());
     NamedCommands.registerCommand(
-        "DynamicPickup",
-        Commands.either(
-            AutoPilotUtils.generateIterativePickupCommand(drive, objectDetection, controller),
-            Commands.sequence(
-                Commands.waitSeconds(0.3),
-                Commands.either(
-                    AutoPilotUtils.generateIterativePickupCommand(
-                        drive, objectDetection, controller),
-                    Commands.none(),
-                    () -> objectDetection.getTrackedObjects().length > 0)),
-            () -> objectDetection.getTrackedObjects().length > 0));
+        "Shoot",
+        Commands.parallel(
+            DriveCommands.joystickDriveAtAngle(
+                drive,
+                () -> 0,
+                () -> 0,
+                () -> superstructure.getShotSetpoint().robotPose.getRotation()),
+            superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.SHOOTING)));
   }
 
   /**
@@ -195,11 +194,12 @@ public class RobotContainer {
    * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
    */
   private void configureButtonBindings() {
+
     drive.setDefaultCommand(
         DriveCommands.joystickDrive(
             drive,
-            () -> controller.getLeftY(),
             () -> controller.getLeftX(),
+            () -> -controller.getLeftY(),
             () -> -controller.getRightX()));
 
     controller
@@ -216,188 +216,68 @@ public class RobotContainer {
         .rightTrigger()
         .whileTrue(
             Commands.parallel(
-                Commands.run(
-                    () ->
-                        shooterSetpoint =
-                            ShooterSetpoint.generateNearestShooterSetpoint(
-                                drive.getPose(), drive.getChassisSpeeds())),
                 DriveCommands.joystickDriveAtAngle(
                     drive,
-                    () -> controller.getLeftY(),
                     () -> controller.getLeftX(),
-                    () -> shooterSetpoint.robotPose.getRotation()),
-                Commands.sequence(
-                    shooter.setFeederVoltage(() -> Volts.of(ShooterConstants.FEEDER_VOLTAGE.get())),
-                    Commands.repeatingSequence(
-                        shooter.setFlywheelRPM(() -> shooterSetpoint.flywheelSpeed))),
-                Commands.repeatingSequence(
-                    hopper
-                        .spinIndexer()
-                        .onlyIf(
-                            () -> {
-                              Logger.recordOutput(
-                                  "Shooter/Setpoint/FlywheelSpeed",
-                                  shooterSetpoint.flywheelSpeed.in(RotationsPerSecond));
-                              Logger.recordOutput(
-                                  "Shooter/Setpoint/FlywheelCurrentSpeed",
-                                  shooter.getCurrentFlywheelSpeed().in(RotationsPerSecond));
+                    () -> -controller.getLeftY(),
+                    () -> superstructure.getShotSetpoint().robotPose.getRotation()),
+                superstructure.setWantedSuperStateCommand(
+                    () -> Superstructure.WantedState.SHOOTING)))
+        .onFalse(superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.IDLE));
 
-                              Logger.recordOutput(
-                                  "Shooter/Setpoint/HoodAngle", shooterSetpoint.hoodAngle);
-                              Logger.recordOutput(
-                                  "Shooter/Setpoint/RobotPose", shooterSetpoint.robotPose);
-                              Logger.recordOutput(
-                                  "Shooter/Setpoint/RobotSpeeds", shooterSetpoint.robotSpeeds);
-
-                              // Check if within shot tolerance
-                              AngularVelocity currentRPM = shooter.getCurrentFlywheelSpeed();
-                              AngularVelocity targetRPM = shooterSetpoint.flywheelSpeed;
-                              double rpmError =
-                                  Math.abs(
-                                      currentRPM.in(RevolutionsPerSecond)
-                                          - targetRPM.in(RevolutionsPerSecond));
-                              boolean shooterRPMWithinTolerance =
-                                  rpmError
-                                      < ShooterConstants.FLYWHEEL_TOLERANCE_BEFORE_SHOT.in(
-                                          RevolutionsPerSecond);
-                              Logger.recordOutput("oktoshoot", shooterRPMWithinTolerance);
-
-                              //   Check if within hub position and rotation tolerance
-                              //   Pose2d currentPose = drive.getPose();
-                              //   double positionError =
-                              //       currentPose
-                              //           .getTranslation()
-                              //           .getDistance(shooterSetpoint.robotPose.getTranslation());
-                              double rotationError =
-                                  Math.abs(
-                                      drive
-                                          .getPose()
-                                          .getRotation()
-                                          .minus(shooterSetpoint.robotPose.getRotation())
-                                          .getDegrees());
-                              //   boolean hubPositionWithinTolerance =
-                              //       positionError
-                              //           < ShooterConstants.HUB_POSITION_TOLERANCE.in(Meters);
-                              boolean hubRotationWithinTolerance =
-                                  Math.abs(rotationError)
-                                      < ShooterConstants.HUB_ROTATION_TOLERANCE.in(Degrees);
-                              Logger.recordOutput("HUB_OK", hubRotationWithinTolerance);
-
-                              return shooterRPMWithinTolerance && hubRotationWithinTolerance;
-                            }))))
-        .onFalse(
-            Commands.sequence(
-                hopper.stopIndexer(),
-                shooter.setFlywheelRPM(() -> RPM.of(0)),
-                shooter.setFeederVoltage(() -> Volts.of(0))));
-
-    controller
-        .a()
-        .onTrue(shooter.setFeederVoltage(() -> Volts.of(-5)))
-        .onFalse(shooter.setFeederVoltage(() -> Volts.of(0)));
-    controller.b().onTrue(hopper.reverseIndexer()).onFalse(hopper.stopIndexer());
+    controller.leftTrigger().onTrue(intake.spinIntake()).onFalse(intake.stopIntake());
+    controller.leftBumper().onTrue(intake.reverseIntake()).onFalse(intake.stopIntake());
   }
 
   /**
-   * Use this to pass the autonomous command to the main {@link Robot} class.
+   * Use this to pass the autonomous command to the main {@link Robot} class. f
    *
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    PathPlannerPath path;
-    try {
-      path = PathPlannerPath.fromPathFile("test");
-    } catch (Exception e) {
-      DataLogManager.log(e.getMessage());
-      path = new PathPlannerPath(null, null, null, null);
-    }
+    return autoChooser.get();
+    // PathPlannerPath path;
+    // try {
+    //   path = PathPlannerPath.fromPathFile("test");
+    // } catch (Exception e) {
+    //   DataLogManager.log(e.getMessage());
+    //   path = new PathPlannerPath(null, null, null, null);
+    // }
+    // Pose2d startPose2d = path.getStartingHolonomicPose().orElse(new Pose2d(0, 0,
+    // Rotation2d.kZero));
 
-    return Commands.sequence(
-        Commands.parallel(
-            Commands.run(
-                () ->
-                    shooterSetpoint =
-                        ShooterSetpoint.generateNearestShooterSetpoint(
-                            drive.getPose(), drive.getChassisSpeeds())),
-            DriveCommands.followPathWhileAiming(
-                drive,
-                path,
-                () -> {
-                  return shooterSetpoint.target;
-                }),
-            Commands.sequence(
-                shooter.setFeederVoltage(() -> Volts.of(ShooterConstants.FEEDER_VOLTAGE.get())),
-                Commands.repeatingSequence(
-                    shooter.setFlywheelRPM(() -> shooterSetpoint.flywheelSpeed))),
-            Commands.repeatingSequence(
-                hopper
-                    .spinIndexer()
-                    .onlyIf(
-                        () -> {
-                          Logger.recordOutput(
-                              "Shooter/Setpoint/FlywheelSpeed",
-                              shooterSetpoint.flywheelSpeed.in(RotationsPerSecond));
-                          Logger.recordOutput(
-                              "Shooter/Setpoint/FlywheelCurrentSpeed",
-                              shooter.getCurrentFlywheelSpeed().in(RotationsPerSecond));
-
-                          Logger.recordOutput(
-                              "Shooter/Setpoint/HoodAngle", shooterSetpoint.hoodAngle);
-                          Logger.recordOutput(
-                              "Shooter/Setpoint/RobotPose", shooterSetpoint.robotPose);
-                          Logger.recordOutput(
-                              "Shooter/Setpoint/RobotSpeeds", shooterSetpoint.robotSpeeds);
-
-                          // Check if within shot tolerance
-                          AngularVelocity currentRPM = shooter.getCurrentFlywheelSpeed();
-                          AngularVelocity targetRPM = shooterSetpoint.flywheelSpeed;
-                          double rpmError =
-                              Math.abs(
-                                  currentRPM.in(RevolutionsPerSecond)
-                                      - targetRPM.in(RevolutionsPerSecond));
-                          boolean shooterRPMWithinTolerance =
-                              rpmError
-                                  < ShooterConstants.FLYWHEEL_TOLERANCE_BEFORE_SHOT.in(
-                                      RevolutionsPerSecond);
-                          Logger.recordOutput("oktoshoot", shooterRPMWithinTolerance);
-
-                          //   Check if within hub position and rotation tolerance
-                          //   Pose2d currentPose = drive.getPose();
-                          //   double positionError =
-                          //       currentPose
-                          //           .getTranslation()
-                          //           .getDistance(shooterSetpoint.robotPose.getTranslation());
-                          double rotationError =
-                              Math.abs(
-                                  drive
-                                      .getPose()
-                                      .getRotation()
-                                      .minus(shooterSetpoint.robotPose.getRotation())
-                                      .getDegrees());
-                          //   boolean hubPositionWithinTolerance =
-                          //       positionError
-                          //           < ShooterConstants.HUB_POSITION_TOLERANCE.in(Meters);
-                          boolean hubRotationWithinTolerance =
-                              rotationError < ShooterConstants.HUB_ROTATION_TOLERANCE.in(Degrees);
-                          Logger.recordOutput("HUBERROR", rotationError);
-
-                          return shooterRPMWithinTolerance && hubRotationWithinTolerance;
-                        }))),
-        Commands.sequence(
-            hopper.stopIndexer(),
-            shooter.setFlywheelRPM(() -> RPM.of(0)),
-            shooter.setFeederVoltage(() -> Volts.of(0))));
+    // return Commands.sequence(
+    //     Commands.runOnce(() -> drive.setPose(startPose2d), drive),
+    //     Commands.parallel(
+    //         DriveCommands.followPathWhileAiming(
+    //             drive,
+    //             path,
+    //             () -> {
+    //               return superstructure.getShotSetpoint().target;
+    //             }),
+    //         superstructure.setWantedSuperStateCommand(
+    //             () ->
+    //                 drive.getPose().getX() > Constants.FIELD_PASSING_SHOOTING_SPLIT
+    //                     ? Superstructure.WantedState.PASSING
+    //                     : Superstructure.WantedState.SHOOTING)),
+    //     superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.IDLE));
   }
 
   public Drive getDriveSubsystem() {
     return drive;
   }
 
-  //   public Vision getVisionSubsystem() {
-  //     return vision;
-  //   }
+  public Vision getVisionSubsystem() {
+    return vision;
+  }
 
-  public ObjectDetection getObjectDetectionSubsystem() {
-    return objectDetection;
+  public void updateSimulation() {
+    if (Constants.currentMode != Constants.Mode.SIM) return;
+
+    SimulatedArena.getInstance().simulationPeriodic();
+    Logger.recordOutput(
+        "FieldSimulation/RobotPosition", swerveDriveSimulation.getSimulatedDriveTrainPose());
+    Logger.recordOutput(
+        "FieldSimulation/Fuel", SimulatedArena.getInstance().getGamePiecesArrayByType("Fuel"));
   }
 }

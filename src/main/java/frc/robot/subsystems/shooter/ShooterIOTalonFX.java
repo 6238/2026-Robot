@@ -5,9 +5,11 @@ import static frc.robot.util.PhoenixUtil.tryUntilOk;
 
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
@@ -15,6 +17,7 @@ import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.robot.Constants;
+import frc.robot.util.AlertUtils;
 import frc.robot.util.BetterStatusSignalCollection;
 
 public class ShooterIOTalonFX implements ShooterIO {
@@ -58,24 +61,21 @@ public class ShooterIOTalonFX implements ShooterIO {
     flywheelConfig.MotionMagic = ShooterConstants.FLYWHEEL_MOTION_MAGIC_CONFIGS;
     flywheelConfig.MotorOutput.Inverted = ShooterConstants.FLYWHEEL_INVERTED;
 
+    TalonFX secondFlywheelMotor = new TalonFX(ShooterConstants.FLYWHEEL2_MOTOR_ID);
+    secondFlywheelMotor.setControl(
+        new Follower(ShooterConstants.FLYWHEEL_MOTOR_ID, MotorAlignmentValue.Opposed));
+
     TalonFXConfiguration feederConfig = new TalonFXConfiguration();
     feederConfig.Feedback.SensorToMechanismRatio = ShooterConstants.FEEDER_GEARING;
     feederConfig.MotorOutput.Inverted = ShooterConstants.FEEDER_INVERTED;
 
-    if (tryUntilOk(
+    AlertUtils.processCriticalAlert(flywheelConfigAlert, !tryUntilOk(
         Constants.MAX_PHEONIX_RETRIES,
-        () -> flywheelTalon.getConfigurator().apply(flywheelConfig))) {
-      flywheelConfigAlert.set(false);
-    } else {
-      flywheelConfigAlert.set(true);
-    }
-
-    if (tryUntilOk(
-        Constants.MAX_PHEONIX_RETRIES, () -> feederTalon.getConfigurator().apply(feederConfig))) {
-      feederConfigAlert.set(false);
-    } else {
-      feederConfigAlert.set(true);
-    }
+        () -> flywheelTalon.getConfigurator().apply(flywheelConfig)));
+    
+    AlertUtils.processCriticalAlert(feederConfigAlert, !tryUntilOk(
+        Constants.MAX_PHEONIX_RETRIES,
+        () -> feederTalon.getConfigurator().apply(feederConfig)));
 
     flywheelVelocity = flywheelTalon.getVelocity();
     flywheelAcceleration = flywheelTalon.getAcceleration();
@@ -98,6 +98,7 @@ public class ShooterIOTalonFX implements ShooterIO {
             feederAcceleration,
             feederAppliedCurent,
             feederAppliedVoltage);
+    statusSignalCollector.setUpdateFrequencyForAll(50);
     ParentDevice.optimizeBusUtilizationForAll(flywheelTalon, feederTalon);
   }
 
@@ -117,15 +118,15 @@ public class ShooterIOTalonFX implements ShooterIO {
     inputs.feederTalonConnected = feederTalon.isConnected();
 
     // Update Inputs
-    inputs.flywheelVelocity = flywheelTalon.getVelocity().getValue();
-    inputs.flywheelAcceleration = flywheelTalon.getAcceleration().getValue();
-    inputs.flywheelAppliedCurrent = flywheelTalon.getSupplyCurrent().getValue();
-    inputs.flywheelAppliedVoltage = flywheelTalon.getSupplyVoltage().getValue();
+    inputs.flywheelVelocity = flywheelVelocity.getValue();
+    inputs.flywheelAcceleration = flywheelAcceleration.getValue();
+    inputs.flywheelAppliedCurrent = flywheelAppliedCurent.getValue();
+    inputs.flywheelAppliedVoltage = flywheelAppliedVoltage.getValue();
 
-    inputs.feederVelocity = feederTalon.getVelocity().getValue();
-    inputs.feederAcceleration = feederTalon.getAcceleration().getValue();
-    inputs.feederAppliedCurrent = feederTalon.getSupplyCurrent().getValue();
-    inputs.feederAppliedVoltage = feederTalon.getSupplyVoltage().getValue();
+    inputs.feederVelocity = feederVelocity.getValue();
+    inputs.feederAcceleration = feederAcceleration.getValue();
+    inputs.feederAppliedCurrent = feederAppliedCurent.getValue();
+    inputs.feederAppliedVoltage = feederAppliedVoltage.getValue();
   }
 
   public void setFlywheelSpeed(AngularVelocity speed) {

@@ -46,5 +46,7 @@ public final class Constants {
     public static final double DRIVE_RESUME_DEADBAND = 0.2;
   }
 
-  public static final Pose3d HUB_POSE_3D = new Pose3d(4.608, 4.115, 0.0, Rotation3d.kZero);
+  public static final double FIELD_PASSING_SHOOTING_SPLIT = 4.0;
+
+  public static final Pose3d HUB_POSE_3D = new Pose3d(4.614, 4.045, 0.0, Rotation3d.kZero);
 }

@@ -41,9 +41,9 @@ import java.util.function.Supplier;
 
 public class DriveCommands {
   public static final double DEADBAND = 0.1;
-  public static final double ANGLE_KP = 4.2;
-  public static final double ANGLE_KD = 0.08;
-  public static final double ANGLE_MAX_VELOCITY = 8.0;
+  public static final double ANGLE_KP = 5.2;
+  public static final double ANGLE_KD = 0.1;
+  public static final double ANGLE_MAX_VELOCITY = 20.0;
   public static final double ANGLE_MAX_ACCELERATION = 50.0;
   public static final double FF_START_DELAY = 2.0; // Secs
   public static final double FF_RAMP_RATE = 0.1; // Volts/Sec
@@ -155,7 +155,7 @@ public class DriveCommands {
     ProfiledPIDController angleController =
         new ProfiledPIDController(
             ANGLE_KP,
-            0.0,
+            0.03,
             ANGLE_KD,
             new TrapezoidProfile.Constraints(ANGLE_MAX_VELOCITY, ANGLE_MAX_ACCELERATION));
     angleController.enableContinuousInput(-Math.PI, Math.PI);
@@ -210,20 +210,21 @@ public class DriveCommands {
           Translation2d toTarget = targetFieldPos.get().minus(robotPose.getTranslation());
           double targetYaw = toTarget.getAngle().getRadians();
           double currentYaw = robotPose.getRotation().getRadians();
-          return angleController.calculate(currentYaw, targetYaw);
+          return MathUtil.clamp(
+              angleController.calculate(currentYaw, targetYaw),
+              -ANGLE_MAX_VELOCITY,
+              ANGLE_MAX_VELOCITY);
         };
 
-    return Commands.sequence(
-            Commands.runOnce(
-                () ->
-                    PPHolonomicDriveController.overrideRotationFeedback(
-                        omegaRadPerSec)), // override rotation feedback [page:1]
-            AutoBuilder.followPath(path), // follow the path [page:2]
-            Commands.runOnce(
-                PPHolonomicDriveController
-                    ::clearRotationFeedbackOverride) // restore default [page:1]
-            )
-        .beforeStarting(() -> angleController.reset(drive.getRotation().getRadians()));
+    Command pathCmd = AutoBuilder.followPath(path);
+
+    return pathCmd
+        .beforeStarting(
+            () -> {
+              angleController.reset(drive.getPose().getRotation().getRadians());
+              PPHolonomicDriveController.overrideRotationFeedback(omegaRadPerSec);
+            })
+        .finallyDo(interrupted -> PPHolonomicDriveController.clearRotationFeedbackOverride());
   }
 
   /**
