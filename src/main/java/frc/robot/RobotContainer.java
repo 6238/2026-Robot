@@ -236,31 +236,6 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     return autoChooser.get();
-    // PathPlannerPath path;
-    // try {
-    //   path = PathPlannerPath.fromPathFile("test");
-    // } catch (Exception e) {
-    //   DataLogManager.log(e.getMessage());
-    //   path = new PathPlannerPath(null, null, null, null);
-    // }
-    // Pose2d startPose2d = path.getStartingHolonomicPose().orElse(new Pose2d(0, 0,
-    // Rotation2d.kZero));
-
-    // return Commands.sequence(
-    //     Commands.runOnce(() -> drive.setPose(startPose2d), drive),
-    //     Commands.parallel(
-    //         DriveCommands.followPathWhileAiming(
-    //             drive,
-    //             path,
-    //             () -> {
-    //               return superstructure.getShotSetpoint().target;
-    //             }),
-    //         superstructure.setWantedSuperStateCommand(
-    //             () ->
-    //                 drive.getPose().getX() > Constants.FIELD_PASSING_SHOOTING_SPLIT
-    //                     ? Superstructure.WantedState.PASSING
-    //                     : Superstructure.WantedState.SHOOTING)),
-    //     superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.IDLE));
   }
 
   public Drive getDriveSubsystem() {
