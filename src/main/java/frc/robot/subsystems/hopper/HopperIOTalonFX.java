@@ -14,6 +14,7 @@ import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.robot.Constants;
+import frc.robot.util.AlertUtils;
 import frc.robot.util.BetterStatusSignalCollection;
 
 public class HopperIOTalonFX implements HopperIO {
@@ -61,13 +62,9 @@ public class HopperIOTalonFX implements HopperIO {
     topIndexerConfig.Feedback.SensorToMechanismRatio = HopperConstants.TOP_INDEXER_GEARING;
     topIndexerConfig.MotorOutput.Inverted = HopperConstants.TOP_INDEXER_MOTOR_DIRECTION;
 
-    if (tryUntilOk(
+    AlertUtils.processCriticalAlert(indexerConfigAlert, !tryUntilOk(
         Constants.MAX_PHEONIX_RETRIES,
-        () -> topIndexerTalon.getConfigurator().apply(topIndexerConfig))) {
-      indexerConfigAlert.set(false);
-    } else {
-      indexerConfigAlert.set(true);
-    }
+        () -> topIndexerTalon.getConfigurator().apply(topIndexerConfig)));
 
     // Status Signals
     indexerVelocity = indexerTalon.getVelocity();

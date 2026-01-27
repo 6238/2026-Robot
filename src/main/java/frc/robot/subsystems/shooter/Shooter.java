@@ -33,11 +33,12 @@ public class Shooter extends SubsystemBase {
   public void periodic() {
     io.updateInputs(inputs);
     Logger.processInputs("Shooter", inputs);
-    Logger.recordOutput("Shooter/targetVelocity", targetFlywheelVelocity);
+    Logger.recordOutput("Shooter/targetVelocity", targetFlywheelVelocity.in(RotationsPerSecond));
+    Logger.recordOutput("Shooter/currentVelocity", inputs.flywheelVelocity.in(RotationsPerSecond));
 
     // update alerts based on motor connection status
-    AlertUtils.updateAlert(shooterMotorConnectedAlert, !inputs.flywheelTalonConnected);
-    AlertUtils.updateAlert(feederMotorConnectedAlert, !inputs.feederTalonConnected);
+    AlertUtils.processCriticalAlert(shooterMotorConnectedAlert, !inputs.flywheelTalonConnected);
+    AlertUtils.processCriticalAlert(feederMotorConnectedAlert, !inputs.feederTalonConnected);
   }
 
   public Command setFlywheelRPM(Supplier<AngularVelocity> speed) {

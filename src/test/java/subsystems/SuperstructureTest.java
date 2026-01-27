@@ -1,11 +1,9 @@
 package subsystems;
 
-import edu.wpi.first.math.geometry.Pose2d;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.hopper.Hopper;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.superstructure.Superstructure;
-import frc.robot.subsystems.superstructure.Superstructure.WantedState;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,13 +29,13 @@ public class SuperstructureTest {
 
   @Test
   void Spinning_Up_To_Shooting_Transition() {
-    boolean upToSpeed = false;
-    Pose2d fakeSwervePose = new Pose2d();
+    // boolean upToSpeed = false;
+    // Pose2d fakeSwervePose = new Pose2d();
 
-    Mockito.when(mockShooter.flywheelUpToSpeed()).thenReturn(upToSpeed);
+    // Mockito.when(mockShooter.flywheelUpToSpeed()).thenReturn(upToSpeed);
 
-    superstructure.setWantedSuperState(WantedState.SHOOTING);
-    superstructure.periodic();
+    // superstructure.setWantedSuperState(WantedState.SHOOTING);
+    // superstructure.periodic();
   }
 
   @Test

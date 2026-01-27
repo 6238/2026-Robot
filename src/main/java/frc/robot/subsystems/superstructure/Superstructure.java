@@ -113,7 +113,7 @@ public class Superstructure extends SubsystemBase {
         }
         CommandScheduler.getInstance().schedule(hopper.spinTopIndexer());
 
-        if (!readyToShoot()) {
+        if (!isPrettyMuchCloseToTargetButNotQuite()) {
           break;
         }
         if (wantedSuperState == WantedState.SHOOTING) {
@@ -128,7 +128,7 @@ public class Superstructure extends SubsystemBase {
             .schedule(
                 shooter.setFlywheelRPM(() -> shotSetpoint.flywheelSpeed),
                 shooter.setFeederVoltage(() -> Volts.of(ShooterConstants.FEEDER_VOLTAGE.get())));
-        if (!readyToShoot()) {
+        if (!isPrettyMuchCloseToTargetButNotQuite()) {
           currentSuperState = CurrentState.SPINNING_UP;
           break;
         }
@@ -185,6 +185,27 @@ public class Superstructure extends SubsystemBase {
 
   public boolean readyToSpinTopIndexer() {
     return shooter.flywheelUpToSpeed(HopperConstants.HOPPER_TOLERANCE_BEFORE_SHOT);
+  }
+
+  public boolean isPrettyMuchCloseToTargetButNotQuite() {
+    boolean shooterSpeedSetpoint =
+        shooter.flywheelUpToSpeed(ShooterConstants.BIG_FLYWHEEL_TOLERANCE_BEFORE_SHOT);
+    boolean hubSetpoint = checkHubTolerance();
+
+    Logger.recordOutput("Superstructure/ShooterSpeedSetpoint", shooterSpeedSetpoint);
+    Logger.recordOutput("Superstructure/HubRotationSetpoint", hubSetpoint);
+    Logger.recordOutput("Superstructure/HubRotationTarget", shotSetpoint.robotPose.getRotation());
+    Logger.recordOutput("Superstructure/HubRotationCurrent", drive.getPose().getRotation());
+    Logger.recordOutput(
+        "Superstructure/HubRotationError",
+        Math.abs(
+            drive
+                .getPose()
+                .getRotation()
+                .minus(shotSetpoint.robotPose.getRotation())
+                .getDegrees()));
+
+    return shooterSpeedSetpoint && hubSetpoint;
   }
 
   public boolean checkHubTolerance() {

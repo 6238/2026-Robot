@@ -14,6 +14,7 @@ import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.robot.Constants;
+import frc.robot.util.AlertUtils;
 import frc.robot.util.BetterStatusSignalCollection;
 
 public class IntakeIOTalonFX implements IntakeIO {
@@ -24,7 +25,6 @@ public class IntakeIOTalonFX implements IntakeIO {
 
   // Motor Controllers
   public TalonFX intakeTalon;
-  public TalonFX topIndexerTalon;
 
   // Status Signals
   public BetterStatusSignalCollection statusSignalCollector;
@@ -42,12 +42,8 @@ public class IntakeIOTalonFX implements IntakeIO {
     intakeConfig.Feedback.SensorToMechanismRatio = IntakeConstants.INTAKE_GEARING;
     intakeConfig.MotorOutput.Inverted = IntakeConstants.INTAKE_MOTOR_DIRECTION;
 
-    if (tryUntilOk(
-        Constants.MAX_PHEONIX_RETRIES, () -> intakeTalon.getConfigurator().apply(intakeConfig))) {
-      intakeConfigAlert.set(false);
-    } else {
-      intakeConfigAlert.set(true);
-    }
+    AlertUtils.processCriticalAlert(intakeConfigAlert, !tryUntilOk(
+        Constants.MAX_PHEONIX_RETRIES, () -> intakeTalon.getConfigurator().apply(intakeConfig)));
 
     // Status Signals
     intakeVelocity = intakeTalon.getVelocity();
@@ -59,7 +55,7 @@ public class IntakeIOTalonFX implements IntakeIO {
         new BetterStatusSignalCollection(
             intakeVelocity, intakeAcceleration, intakeCurrent, intakeVoltage);
     statusSignalCollector.setUpdateFrequencyForAll(50);
-    ParentDevice.optimizeBusUtilizationForAll(intakeTalon, topIndexerTalon);
+    ParentDevice.optimizeBusUtilizationForAll(intakeTalon);
   }
 
   @Override
@@ -82,12 +78,7 @@ public class IntakeIOTalonFX implements IntakeIO {
     inputs.intakeAppliedVoltage = intakeVoltage.getValue();
   }
 
-  public void setIndexerVoltage(Voltage voltage) {
+  public void setIntakeVoltage(Voltage voltage) {
     intakeTalon.setVoltage(voltage.in(Volts));
-    topIndexerTalon.setVoltage(voltage.in(Volts));
-  }
-
-  public void setTopIndexerVoltage(Voltage voltage) {
-    topIndexerTalon.setVoltage(voltage.in(Volts));
   }
 }

@@ -17,12 +17,12 @@ import static edu.wpi.first.units.Units.*;
 import static frc.robot.subsystems.vision.VisionConstants.*;
 
 import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -49,6 +49,7 @@ import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOPhotonVision;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
+import frc.robot.util.AlertUtils;
 import frc.robot.util.RobotIdentity;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
@@ -80,6 +81,11 @@ public class RobotContainer {
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
+    AlertUtils.criticalErrorRumbleFunction = () -> controller.setRumble(RumbleType.kBothRumble, 1.0);
+    AlertUtils.stopRumbleFunction = () -> controller.setRumble(RumbleType.kBothRumble, 0.0);
+
+    AlertUtils.clearCriticalAlerts();
+
     switch (Constants.currentMode) {
       case REAL:
         // Real robot, instantiate hardware IO implementations
@@ -167,7 +173,19 @@ public class RobotContainer {
     configureButtonBindings();
   }
 
-  private void configureNamedCommands() {}
+  private void configureNamedCommands() {
+    NamedCommands.registerCommand("StartIntake", intake.spinIntake());
+    NamedCommands.registerCommand("StopIntake", intake.stopIntake());
+    NamedCommands.registerCommand(
+        "Shoot",
+        Commands.parallel(
+            DriveCommands.joystickDriveAtAngle(
+                drive,
+                () -> 0,
+                () -> 0,
+                () -> superstructure.getShotSetpoint().robotPose.getRotation()),
+            superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.SHOOTING)));
+  }
 
   /**
    * Use this method to define your button->command mappings. Buttons can be created by
@@ -180,8 +198,8 @@ public class RobotContainer {
     drive.setDefaultCommand(
         DriveCommands.joystickDrive(
             drive,
-            () -> controller.getLeftY(),
             () -> controller.getLeftX(),
+            () -> -controller.getLeftY(),
             () -> -controller.getRightX()));
 
     controller
@@ -200,46 +218,49 @@ public class RobotContainer {
             Commands.parallel(
                 DriveCommands.joystickDriveAtAngle(
                     drive,
-                    () -> controller.getLeftY(),
                     () -> controller.getLeftX(),
+                    () -> -controller.getLeftY(),
                     () -> superstructure.getShotSetpoint().robotPose.getRotation()),
                 superstructure.setWantedSuperStateCommand(
                     () -> Superstructure.WantedState.SHOOTING)))
         .onFalse(superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.IDLE));
 
     controller.leftTrigger().onTrue(intake.spinIntake()).onFalse(intake.stopIntake());
+    controller.leftBumper().onTrue(intake.reverseIntake()).onFalse(intake.stopIntake());
   }
 
   /**
-   * Use this to pass the autonomous command to the main {@link Robot} class.
+   * Use this to pass the autonomous command to the main {@link Robot} class. f
    *
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    PathPlannerPath path;
-    try {
-      path = PathPlannerPath.fromPathFile("test");
-    } catch (Exception e) {
-      DataLogManager.log(e.getMessage());
-      path = new PathPlannerPath(null, null, null, null);
-    }
-    Pose2d startPose2d = path.getStartingHolonomicPose().orElse(new Pose2d(0, 0, Rotation2d.kZero));
+    return autoChooser.get();
+    // PathPlannerPath path;
+    // try {
+    //   path = PathPlannerPath.fromPathFile("test");
+    // } catch (Exception e) {
+    //   DataLogManager.log(e.getMessage());
+    //   path = new PathPlannerPath(null, null, null, null);
+    // }
+    // Pose2d startPose2d = path.getStartingHolonomicPose().orElse(new Pose2d(0, 0,
+    // Rotation2d.kZero));
 
-    return Commands.sequence(
-        Commands.runOnce(() -> drive.setPose(startPose2d), drive),
-        Commands.parallel(
-            DriveCommands.followPathWhileAiming(
-                drive,
-                path,
-                () -> {
-                  return superstructure.getShotSetpoint().target;
-                }),
-            superstructure.setWantedSuperStateCommand(
-                () ->
-                    drive.getPose().getX() > Constants.FIELD_PASSING_SHOOTING_SPLIT
-                        ? Superstructure.WantedState.PASSING
-                        : Superstructure.WantedState.SHOOTING)),
-        superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.IDLE));
+    // return Commands.sequence(
+    //     Commands.runOnce(() -> drive.setPose(startPose2d), drive),
+    //     Commands.parallel(
+    //         DriveCommands.followPathWhileAiming(
+    //             drive,
+    //             path,
+    //             () -> {
+    //               return superstructure.getShotSetpoint().target;
+    //             }),
+    //         superstructure.setWantedSuperStateCommand(
+    //             () ->
+    //                 drive.getPose().getX() > Constants.FIELD_PASSING_SHOOTING_SPLIT
+    //                     ? Superstructure.WantedState.PASSING
+    //                     : Superstructure.WantedState.SHOOTING)),
+    //     superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.IDLE));
   }
 
   public Drive getDriveSubsystem() {

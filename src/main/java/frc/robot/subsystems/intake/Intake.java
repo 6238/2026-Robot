@@ -25,7 +25,7 @@ public class Intake extends SubsystemBase {
     io.updateInputs(inputs);
     Logger.processInputs("Intake", inputs);
 
-    AlertUtils.updateAlert(intakeMotorConnectedAlert, !inputs.intakeTalonConnected);
+    AlertUtils.processCriticalAlert(intakeMotorConnectedAlert, !inputs.intakeTalonConnected);
   }
 
   public Command spinIntake() {
@@ -39,6 +39,13 @@ public class Intake extends SubsystemBase {
     return runOnce(
         () -> {
           io.setIntakeVoltage(Volts.of(0));
+        });
+  }
+
+  public Command reverseIntake() {
+    return runOnce(
+        () -> {
+          io.setIntakeVoltage(Volts.of(-IntakeConstants.INTAKE_VOLTAGE.get()));
         });
   }
 }
