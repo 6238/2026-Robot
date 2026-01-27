@@ -62,9 +62,11 @@ public class HopperIOTalonFX implements HopperIO {
     topIndexerConfig.Feedback.SensorToMechanismRatio = HopperConstants.TOP_INDEXER_GEARING;
     topIndexerConfig.MotorOutput.Inverted = HopperConstants.TOP_INDEXER_MOTOR_DIRECTION;
 
-    AlertUtils.processCriticalAlert(indexerConfigAlert, !tryUntilOk(
-        Constants.MAX_PHEONIX_RETRIES,
-        () -> topIndexerTalon.getConfigurator().apply(topIndexerConfig)));
+    AlertUtils.processCriticalAlert(
+        indexerConfigAlert,
+        !tryUntilOk(
+            Constants.MAX_PHEONIX_RETRIES,
+            () -> topIndexerTalon.getConfigurator().apply(topIndexerConfig)));
 
     // Status Signals
     indexerVelocity = indexerTalon.getVelocity();

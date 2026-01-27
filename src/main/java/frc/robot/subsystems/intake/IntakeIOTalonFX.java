@@ -42,8 +42,11 @@ public class IntakeIOTalonFX implements IntakeIO {
     intakeConfig.Feedback.SensorToMechanismRatio = IntakeConstants.INTAKE_GEARING;
     intakeConfig.MotorOutput.Inverted = IntakeConstants.INTAKE_MOTOR_DIRECTION;
 
-    AlertUtils.processCriticalAlert(intakeConfigAlert, !tryUntilOk(
-        Constants.MAX_PHEONIX_RETRIES, () -> intakeTalon.getConfigurator().apply(intakeConfig)));
+    AlertUtils.processCriticalAlert(
+        intakeConfigAlert,
+        !tryUntilOk(
+            Constants.MAX_PHEONIX_RETRIES,
+            () -> intakeTalon.getConfigurator().apply(intakeConfig)));
 
     // Status Signals
     intakeVelocity = intakeTalon.getVelocity();
