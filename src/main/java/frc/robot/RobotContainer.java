@@ -21,8 +21,8 @@ import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.GenericHID;
-import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -81,7 +81,8 @@ public class RobotContainer {
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
-    AlertUtils.criticalErrorRumbleFunction = () -> controller.setRumble(RumbleType.kBothRumble, 1.0);
+    AlertUtils.criticalErrorRumbleFunction =
+        () -> controller.setRumble(RumbleType.kBothRumble, 1.0);
     AlertUtils.stopRumbleFunction = () -> controller.setRumble(RumbleType.kBothRumble, 0.0);
 
     AlertUtils.clearCriticalAlerts();
@@ -227,6 +228,10 @@ public class RobotContainer {
 
     controller.leftTrigger().onTrue(intake.spinIntake()).onFalse(intake.stopIntake());
     controller.leftBumper().onTrue(intake.reverseIntake()).onFalse(intake.stopIntake());
+    controller
+        .a()
+        .onTrue(intake.setIntakeAngle(() -> Degrees.of(200)))
+        .onFalse(intake.setIntakeAngle(() -> Degrees.of(10)));
   }
 
   /**

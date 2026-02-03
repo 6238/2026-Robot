@@ -69,13 +69,17 @@ public class ShooterIOTalonFX implements ShooterIO {
     feederConfig.Feedback.SensorToMechanismRatio = ShooterConstants.FEEDER_GEARING;
     feederConfig.MotorOutput.Inverted = ShooterConstants.FEEDER_INVERTED;
 
-    AlertUtils.processCriticalAlert(flywheelConfigAlert, !tryUntilOk(
-        Constants.MAX_PHEONIX_RETRIES,
-        () -> flywheelTalon.getConfigurator().apply(flywheelConfig)));
-    
-    AlertUtils.processCriticalAlert(feederConfigAlert, !tryUntilOk(
-        Constants.MAX_PHEONIX_RETRIES,
-        () -> feederTalon.getConfigurator().apply(feederConfig)));
+    AlertUtils.processCriticalAlert(
+        flywheelConfigAlert,
+        !tryUntilOk(
+            Constants.MAX_PHEONIX_RETRIES,
+            () -> flywheelTalon.getConfigurator().apply(flywheelConfig)));
+
+    AlertUtils.processCriticalAlert(
+        feederConfigAlert,
+        !tryUntilOk(
+            Constants.MAX_PHEONIX_RETRIES,
+            () -> feederTalon.getConfigurator().apply(feederConfig)));
 
     flywheelVelocity = flywheelTalon.getVelocity();
     flywheelAcceleration = flywheelTalon.getAcceleration();
