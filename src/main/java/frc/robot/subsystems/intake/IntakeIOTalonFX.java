@@ -41,6 +41,7 @@ public class IntakeIOTalonFX implements IntakeIO {
   public StatusSignal<Current> intakeCurrent;
   public StatusSignal<Voltage> intakeVoltage;
 
+  public StatusSignal<Angle> intakeArmPosition;
   public StatusSignal<AngularVelocity> intakeArmVelocity;
   public StatusSignal<AngularAcceleration> intakeArmAcceleration;
   public StatusSignal<Current> intakeArmCurrent;
@@ -86,6 +87,7 @@ public class IntakeIOTalonFX implements IntakeIO {
     intakeCurrent = intakeTalon.getStatorCurrent();
     intakeVoltage = intakeTalon.getMotorVoltage();
 
+    intakeArmPosition = intakeArmTalon.getPosition();
     intakeArmVelocity = intakeArmTalon.getVelocity();
     intakeArmAcceleration = intakeArmTalon.getAcceleration();
     intakeArmCurrent = intakeArmTalon.getStatorCurrent();
@@ -97,6 +99,7 @@ public class IntakeIOTalonFX implements IntakeIO {
             intakeAcceleration,
             intakeCurrent,
             intakeVoltage,
+            intakeArmPosition,
             intakeArmVelocity,
             intakeArmAcceleration,
             intakeArmCurrent,
@@ -125,6 +128,7 @@ public class IntakeIOTalonFX implements IntakeIO {
     inputs.intakeAppliedCurrent = intakeCurrent.getValue();
     inputs.intakeAppliedVoltage = intakeVoltage.getValue();
 
+    inputs.intakeArmPosition = intakeArmPosition.getValue();
     inputs.intakeArmVelocity = intakeVelocity.getValue();
     inputs.intakeArmAcceleration = intakeAcceleration.getValue();
     inputs.intakeArmAppliedCurrent = intakeCurrent.getValue();

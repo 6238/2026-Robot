@@ -175,17 +175,21 @@ public class RobotContainer {
   }
 
   private void configureNamedCommands() {
+    NamedCommands.registerCommand("Lower", intake.setIntakeAngle(() -> Degrees.of(0)));
     NamedCommands.registerCommand("StartIntake", intake.spinIntake());
     NamedCommands.registerCommand("StopIntake", intake.stopIntake());
     NamedCommands.registerCommand(
         "Shoot",
-        Commands.parallel(
-            DriveCommands.joystickDriveAtAngle(
-                drive,
-                () -> 0,
-                () -> 0,
-                () -> superstructure.getShotSetpoint().robotPose.getRotation()),
-            superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.SHOOTING)));
+        Commands.sequence(
+            intake.setIntakeAngle(() -> Degrees.of(45)),
+            Commands.parallel(
+                DriveCommands.joystickDriveAtAngle(
+                    drive,
+                    () -> 0,
+                    () -> 0,
+                    () -> superstructure.getShotSetpoint().robotPose.getRotation()),
+                superstructure.setWantedSuperStateCommand(
+                    () -> Superstructure.WantedState.SHOOTING))));
   }
 
   /**
@@ -217,21 +221,22 @@ public class RobotContainer {
         .rightTrigger()
         .whileTrue(
             Commands.parallel(
-                DriveCommands.joystickDriveAtAngle(
-                    drive,
-                    () -> controller.getLeftX(),
-                    () -> -controller.getLeftY(),
-                    () -> superstructure.getShotSetpoint().robotPose.getRotation()),
-                superstructure.setWantedSuperStateCommand(
-                    () -> Superstructure.WantedState.SHOOTING)))
+                    DriveCommands.joystickDriveAtAngle(
+                        drive,
+                        () -> controller.getLeftX(),
+                        () -> -controller.getLeftY(),
+                        () -> superstructure.getShotSetpoint().robotPose.getRotation()),
+                    superstructure.setWantedSuperStateCommand(
+                        () -> Superstructure.WantedState.SHOOTING))
+                .until(() -> controller.leftBumper().getAsBoolean()))
         .onFalse(superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.IDLE));
 
     controller.leftTrigger().onTrue(intake.spinIntake()).onFalse(intake.stopIntake());
     controller.leftBumper().onTrue(intake.reverseIntake()).onFalse(intake.stopIntake());
     controller
         .a()
-        .onTrue(intake.setIntakeAngle(() -> Degrees.of(200)))
-        .onFalse(intake.setIntakeAngle(() -> Degrees.of(10)));
+        .onTrue(intake.setIntakeAngle(() -> Degrees.of(95)))
+        .onFalse(intake.setIntakeAngle(() -> Degrees.of(0)));
   }
 
   /**

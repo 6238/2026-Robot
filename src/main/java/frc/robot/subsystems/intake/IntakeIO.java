@@ -20,6 +20,7 @@ public interface IntakeIO {
     public Current intakeAppliedCurrent = Amps.of(0.0);
     public Voltage intakeAppliedVoltage = Volts.of(0.0);
 
+    public Angle intakeArmPosition = Degrees.of(0.0);
     public AngularVelocity intakeArmVelocity = RotationsPerSecond.of(0.0);
     public AngularAcceleration intakeArmAcceleration = RotationsPerSecondPerSecond.of(0.0);
     public Current intakeArmAppliedCurrent = Amps.of(0.0);

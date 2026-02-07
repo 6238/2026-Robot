@@ -7,6 +7,12 @@
         {
           "type": "named",
           "data": {
+            "name": "Lower"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
             "name": "StartIntake"
           }
         },
