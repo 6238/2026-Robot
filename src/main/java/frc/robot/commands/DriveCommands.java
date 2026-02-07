@@ -117,10 +117,11 @@ public class DriveCommands {
         () -> {
           // 1. Get linear velocity (usually handles deadbanding inside this helper)
           Translation2d linearVelocity =
-              getLinearVelocityFromJoysticks(xSupplier.getAsDouble(), ySupplier.getAsDouble());
+              getLinearVelocityFromJoysticks(
+                  xSupplier.getAsDouble() * 0.3, ySupplier.getAsDouble() * 0.3);
 
           // 2. Apply rotation deadband
-          double omega = MathUtil.applyDeadband(omegaSupplier.getAsDouble(), DEADBAND);
+          double omega = MathUtil.applyDeadband(omegaSupplier.getAsDouble() * 0.4, DEADBAND);
 
           // 3. Square rotation value for more precise control
           omega = Math.copySign(omega * omega, omega);

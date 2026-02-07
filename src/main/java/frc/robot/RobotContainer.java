@@ -236,7 +236,7 @@ public class RobotContainer {
     controller
         .a()
         .onTrue(intake.setIntakeAngle(() -> Degrees.of(95)))
-        .onFalse(intake.setIntakeAngle(() -> Degrees.of(0)));
+        .onFalse(intake.setIntakeAngle(() -> Degrees.of(-5)));
   }
 
   /**
