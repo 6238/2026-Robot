@@ -227,7 +227,7 @@ public class RobotContainer {
                         () -> -controller.getLeftY(),
                         () -> superstructure.getShotSetpoint().robotPose.getRotation()),
                     superstructure.setWantedSuperStateCommand(
-                        () -> Superstructure.WantedState.SHOOTING))
+                        () -> Superstructure.WantedState.PASSING))
                 .until(() -> controller.leftBumper().getAsBoolean()))
         .onFalse(superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.IDLE));
 
@@ -235,8 +235,8 @@ public class RobotContainer {
     controller.leftBumper().onTrue(intake.reverseIntake()).onFalse(intake.stopIntake());
     controller
         .a()
-        .onTrue(intake.setIntakeAngle(() -> Degrees.of(95)))
-        .onFalse(intake.setIntakeAngle(() -> Degrees.of(-5)));
+        .onTrue(intake.setIntakeAngle(() -> Degrees.of(20)))
+        .onFalse(intake.setIntakeAngle(() -> Degrees.of(0)));
   }
 
   /**

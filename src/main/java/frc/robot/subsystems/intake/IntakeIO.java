@@ -34,4 +34,8 @@ public interface IntakeIO {
   ;
 
   public default void setIntakePosition(Angle targetAngle) {}
+  ;
+
+  public default void setIntakeVelocity(AngularVelocity speed) {}
+  ;
 }

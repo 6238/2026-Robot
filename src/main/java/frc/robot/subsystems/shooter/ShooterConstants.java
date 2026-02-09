@@ -6,6 +6,7 @@ import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.signals.InvertedValue;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
@@ -74,13 +75,13 @@ public class ShooterConstants {
   public static final double LEAD_TIME_DIST_OFFSET = 0.35; // 1.27 - 0.9125
   public static final double LEAD_TIME_DIST_SLOPE = 0.14;
 
-  public static final double PASSING_FLYWHEEL_DIST_OFFSET = 16.5;
-  public static final double PASSING_FLYWHEEL_DIST_SLOPE = 6;
+  public static final double PASSING_FLYWHEEL_DIST_OFFSET = 17.4;
+  public static final double PASSING_FLYWHEEL_DIST_SLOPE = 6.7;
 
   public static final double PASSING_LEAD_TIME_DIST_OFFSET = 0.45; // 1.27 - 0.9125
   public static final double PASSING_LEAD_TIME_DIST_SLOPE = 0.2;
 
-  public static final Pose2d LEFT_TARGET_PASS_POSE2D = new Pose2d();
-  public static final Pose2d RIGHT_TARGET_PASS_POSE2D = new Pose2d();
+  public static final Pose2d LEFT_TARGET_PASS_POSE2D = new Pose2d(-0.25, 0.03, Rotation2d.kZero);
+  public static final Pose2d RIGHT_TARGET_PASS_POSE2D = new Pose2d(-0.25, 0.03, Rotation2d.kZero);
   public static final double LEFT_RIGHT_SPLIT = Constants.HUB_POSE_3D.getY();
 }

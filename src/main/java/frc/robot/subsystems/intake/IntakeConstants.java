@@ -14,9 +14,11 @@ public class IntakeConstants {
   public static final int INTAKE_MOTOR_ID = 55;
   public static final int INTAKE_ARM_MOTOR_ID = 54;
 
-  public static final double INTAKE_GEARING = 1.0;
+  public static final double INTAKE_GEARING = 1.5;
   public static final InvertedValue INTAKE_MOTOR_DIRECTION =
       InvertedValue.CounterClockwise_Positive;
+  public static final LoggedNetworkPIDFeedforwardGains INTAKE_GAINS =
+      new LoggedNetworkPIDFeedforwardGains(0.3, 0, 0.07, 0, 0.17, 0, 0, "intake");
 
   public static final double INTAKE_ARM_GEARING = 15 * (72 / 24);
   public static final InvertedValue INTAKE_ARM_MOTOR_DIRECTION =
