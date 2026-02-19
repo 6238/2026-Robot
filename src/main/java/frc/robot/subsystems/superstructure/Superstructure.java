@@ -128,10 +128,10 @@ public class Superstructure extends SubsystemBase {
             .schedule(
                 shooter.setFlywheelRPM(() -> shotSetpoint.flywheelSpeed),
                 shooter.setFeederVoltage(() -> Volts.of(ShooterConstants.FEEDER_VOLTAGE.get())));
-        if (!isPrettyMuchCloseToTargetButNotQuite()) {
-          currentSuperState = CurrentState.SPINNING_UP;
-          break;
-        }
+        // if (!isPrettyMuchCloseToTargetButNotQuite()) {
+        //   currentSuperState = CurrentState.SPINNING_UP;
+        //   break;
+        // }
 
         simulateShot();
         CommandScheduler.getInstance().schedule(hopper.spinFullIndexer());
@@ -165,7 +165,7 @@ public class Superstructure extends SubsystemBase {
                             * 0.0508
                             * Math.PI
                             / 1.9),
-                    ShooterConstants.FIXED_HOOD_ANGLE_DEGREES)
+                    shotSetpoint.hoodAngle)
                 .withProjectileTrajectoryDisplayCallBack(
                     (pose3ds) ->
                         Logger.recordOutput(

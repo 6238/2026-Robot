@@ -26,7 +26,8 @@ public class Hopper extends SubsystemBase {
     Logger.processInputs("Hopper", inputs);
 
     AlertUtils.processCriticalAlert(indexerMotorConnectedAlert, !inputs.indexerTalonConnected);
-    AlertUtils.processCriticalAlert(indexerMotorConnectedAlert, !inputs.topIndexerTalonConnected);
+    // AlertUtils.processCriticalAlert(indexerMotorConnectedAlert,
+    // !inputs.topIndexerTalonConnected);
   }
 
   public Command spinIndexer() {
