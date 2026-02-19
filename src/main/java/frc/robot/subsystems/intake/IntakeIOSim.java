@@ -22,12 +22,12 @@ public class IntakeIOSim implements IntakeIO {
   // Physics constants for intake roller (flywheel)
   private static final double ROLLER_MASS_KG = 0.5; // Estimated mass of roller
   private static final double ROLLER_RADIUS_M = Units.inchesToMeters(2.0); // 4" diameter roller
-  
+
   // Physics constants for intake arm
   private static final double ARM_LENGTH_M = Units.inchesToMeters(18.0); // 18" arm length
   private static final double ARM_MASS_KG = 4.0; // Estimated mass of arm
   private static final double ARM_MOI = SingleJointedArmSim.estimateMOI(ARM_LENGTH_M, ARM_MASS_KG);
-  
+
   // Moment of inertia for roller: I = 0.5 * m * r^2
   private static final double ROLLER_MOI = 0.5 * ROLLER_MASS_KG * ROLLER_RADIUS_M * ROLLER_RADIUS_M;
 
@@ -67,7 +67,8 @@ public class IntakeIOSim implements IntakeIO {
     tryUntilOk(
         Constants.MAX_PHEONIX_RETRIES, () -> intakeTalon.getConfigurator().apply(intakeConfig));
     tryUntilOk(
-        Constants.MAX_PHEONIX_RETRIES, () -> intakeArmTalon.getConfigurator().apply(intakeArmConfig));
+        Constants.MAX_PHEONIX_RETRIES,
+        () -> intakeArmTalon.getConfigurator().apply(intakeArmConfig));
 
     // Get Phoenix 6 simulation states
     intakeSimState = intakeTalon.getSimState();
@@ -92,8 +93,8 @@ public class IntakeIOSim implements IntakeIO {
             SingleJointedArmSim.estimateMOI(ARM_LENGTH_M, ARM_MASS_KG),
             ARM_LENGTH_M,
             -Math.PI, // Minimum angle
-            Math.PI,   // Maximum angle
-            true,      // Simulate gravity
+            Math.PI, // Maximum angle
+            true, // Simulate gravity
             IntakeConstants.INTAKE_START_VALUE.in(Radians));
 
     // Set initial arm position
@@ -125,10 +126,11 @@ public class IntakeIOSim implements IntakeIO {
     // Arm simulation
     double armAngleRad = intakeArmSim.getAngleRads();
     double armVelocityRadPerSec = intakeArmSim.getVelocityRadPerSec();
-    
+
     // Convert arm velocity to rotor velocity
-    double armRotorRPS = (armVelocityRadPerSec / (2.0 * Math.PI)) * IntakeConstants.INTAKE_ARM_GEARING;
-    
+    double armRotorRPS =
+        (armVelocityRadPerSec / (2.0 * Math.PI)) * IntakeConstants.INTAKE_ARM_GEARING;
+
     intakeArmSimState.setRotorVelocity(armRotorRPS);
     intakeArmSimState.addRotorPosition(armRotorRPS * 0.02);
 

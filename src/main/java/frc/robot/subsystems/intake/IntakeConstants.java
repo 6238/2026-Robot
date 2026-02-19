@@ -20,10 +20,10 @@ public class IntakeConstants {
   public static final LoggedNetworkPIDFeedforwardGains INTAKE_GAINS =
       new LoggedNetworkPIDFeedforwardGains(0.3, 0, 0.07, 0, 0.17, 0, 0, "intake");
 
-  public static final double INTAKE_ARM_GEARING = 15 * (72 / 24);
+  public static final double INTAKE_ARM_GEARING = 25 * 2;
   public static final InvertedValue INTAKE_ARM_MOTOR_DIRECTION =
       InvertedValue.CounterClockwise_Positive;
-  public static final Angle INTAKE_START_VALUE = Degrees.of(0.0);
+  public static final Angle INTAKE_START_VALUE = Degrees.of(90.0);
   public static final LoggedNetworkPIDFeedforwardGains INTAKE_ARM_GAINS =
       new LoggedNetworkPIDFeedforwardGains(3.5, 0.07, 0, 0.19, 5, 0, 0.34, "Intake_ARM");
   public static final MotionMagicConfigs INTAKE_ARM_MOTION_MAGIC_CONFIGS =

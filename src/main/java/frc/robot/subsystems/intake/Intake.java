@@ -31,7 +31,7 @@ public class Intake extends SubsystemBase {
 
     Logger.recordOutput("currentVelocity", inputs.intakeVelocity.in(RotationsPerSecond));
 
-AlertUtils.processCriticalAlert(intakeMotorConnectedAlert, !inputs.intakeTalonConnected);
+    AlertUtils.processCriticalAlert(intakeMotorConnectedAlert, !inputs.intakeTalonConnected);
   }
 
   public Command spinIntake() {
