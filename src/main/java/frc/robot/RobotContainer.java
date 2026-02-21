@@ -39,6 +39,7 @@ import frc.robot.subsystems.hopper.Hopper;
 import frc.robot.subsystems.hopper.HopperIO;
 import frc.robot.subsystems.hopper.HopperIOTalonFX;
 import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intake.IntakeConstants;
 import frc.robot.subsystems.intake.IntakeIO;
 import frc.robot.subsystems.intake.IntakeIOTalonFX;
 import frc.robot.subsystems.shooter.Shooter;
@@ -235,8 +236,11 @@ public class RobotContainer {
     controller.leftBumper().onTrue(intake.reverseIntake()).onFalse(intake.stopIntake());
     controller
         .a()
-        .onTrue(intake.setIntakeAngle(() -> Degrees.of(20)))
-        .onFalse(intake.setIntakeAngle(() -> Degrees.of(-10)));
+        .onTrue(intake.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_UP_VALUE.get())))
+        .onFalse(intake.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())));
+    controller
+        .b()
+        .onTrue(intake.reset());
   }
 
   /**

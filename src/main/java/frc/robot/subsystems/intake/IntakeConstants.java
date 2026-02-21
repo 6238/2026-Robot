@@ -14,16 +14,18 @@ public class IntakeConstants {
   public static final int INTAKE_MOTOR_ID = 55;
   public static final int INTAKE_ARM_MOTOR_ID = 54;
 
-  public static final double INTAKE_GEARING = 1.5;
+  public static final double INTAKE_GEARING = 34/12 * 18/34;
   public static final InvertedValue INTAKE_MOTOR_DIRECTION =
-      InvertedValue.CounterClockwise_Positive;
+      InvertedValue.Clockwise_Positive;
   public static final LoggedNetworkPIDFeedforwardGains INTAKE_GAINS =
-      new LoggedNetworkPIDFeedforwardGains(0.3, 0, 0.07, 0, 0.17, 0, 0, "intake");
+      new LoggedNetworkPIDFeedforwardGains(0.075, 0, 0.07, 0, 0.17, 0, 0, "intake");
 
   public static final double INTAKE_ARM_GEARING = 25 * 2;
   public static final InvertedValue INTAKE_ARM_MOTOR_DIRECTION =
       InvertedValue.CounterClockwise_Positive;
   public static final Angle INTAKE_START_VALUE = Degrees.of(90.0);
+  public static final LoggedNetworkNumber INTAKE_DOWN_VALUE = new LoggedNetworkNumber("INTAKE_DOWN_ANGLE", 20.0);
+  public static final LoggedNetworkNumber INTAKE_UP_VALUE = new LoggedNetworkNumber("INTAKE_UP_ANGLE", 70.0);
   public static final LoggedNetworkPIDFeedforwardGains INTAKE_ARM_GAINS =
       new LoggedNetworkPIDFeedforwardGains(3.5, 0.07, 0, 0.19, 5, 0, 0.34, "Intake_ARM");
   public static final MotionMagicConfigs INTAKE_ARM_MOTION_MAGIC_CONFIGS =
@@ -31,6 +33,6 @@ public class IntakeConstants {
           .withMotionMagicCruiseVelocity(RotationsPerSecond.of(1))
           .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(2));
 
-  public static final LoggedNetworkNumber INTAKE_VOLTAGE =
-      new LoggedNetworkNumber("Intake/IntakeVoltage", 5);
+  public static final LoggedNetworkNumber INTAKE_SPEED =
+      new LoggedNetworkNumber("Intake/INTAKE_SPEED", 50);
 }

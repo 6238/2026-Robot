@@ -37,7 +37,7 @@ public class Intake extends SubsystemBase {
   public Command spinIntake() {
     return runOnce(
         () -> {
-          io.setIntakeVelocity(RotationsPerSecond.of(IntakeConstants.INTAKE_VOLTAGE.get()));
+          io.setIntakeVelocity(RotationsPerSecond.of(IntakeConstants.INTAKE_SPEED.get()));
         });
   }
 
@@ -51,7 +51,7 @@ public class Intake extends SubsystemBase {
   public Command reverseIntake() {
     return runOnce(
         () -> {
-          io.setIntakeVoltage(Volts.of(-IntakeConstants.INTAKE_VOLTAGE.get()));
+          io.setIntakeVelocity(RotationsPerSecond.of(-IntakeConstants.INTAKE_SPEED.get()));
         });
   }
 
@@ -61,5 +61,9 @@ public class Intake extends SubsystemBase {
           targetAngle = angleSupplier.get();
           io.setIntakePosition(angleSupplier.get());
         });
+  }
+
+  public Command reset() {
+    return runOnce(() -> io.resetArmAngle());
   }
 }

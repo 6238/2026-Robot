@@ -153,4 +153,8 @@ public class IntakeIOTalonFX implements IntakeIO {
   public void setIntakePosition(Angle targetAngle) {
     intakeArmTalon.setControl(motionMagicVoltageArm.withPosition(targetAngle));
   }
+
+  public void resetArmAngle() {
+    intakeArmTalon.setPosition(IntakeConstants.INTAKE_START_VALUE);
+  }
 }

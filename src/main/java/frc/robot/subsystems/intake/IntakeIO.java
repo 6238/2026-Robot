@@ -37,5 +37,5 @@ public interface IntakeIO {
   ;
 
   public default void setIntakeVelocity(AngularVelocity speed) {}
-  ;
+  public default void resetArmAngle() {};
 }
