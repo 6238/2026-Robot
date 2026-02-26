@@ -155,6 +155,6 @@ public class IntakeIOTalonFX implements IntakeIO {
   }
 
   public void resetArmAngle() {
-    intakeArmTalon.setPosition(IntakeConstants.INTAKE_START_VALUE);
+    intakeArmTalon.setPosition(Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get()));
   }
 }

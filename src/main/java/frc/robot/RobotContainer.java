@@ -20,9 +20,11 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -51,6 +53,7 @@ import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOPhotonVision;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.util.AlertUtils;
+import frc.robot.util.AutomaticCommands;
 import frc.robot.util.RobotIdentity;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
@@ -176,7 +179,7 @@ public class RobotContainer {
   }
 
   private void configureNamedCommands() {
-    NamedCommands.registerCommand("Lower", intake.setIntakeAngle(() -> Degrees.of(0)));
+    NamedCommands.registerCommand("Lower", intake.setIntakeAngle(() -> Degrees.of(-35)));
     NamedCommands.registerCommand("StartIntake", intake.spinIntake());
     NamedCommands.registerCommand("StopIntake", intake.stopIntake());
     NamedCommands.registerCommand(
@@ -200,14 +203,15 @@ public class RobotContainer {
    * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
    */
   private void configureButtonBindings() {
-
+    // Drive Command
     drive.setDefaultCommand(
         DriveCommands.joystickDrive(
             drive,
-            () -> controller.getLeftX(),
-            () -> -controller.getLeftY(),
+            () -> (isRed() ? -1 : 1) * controller.getLeftY(),
+            () -> (isRed() ? -1 : 1) * controller.getLeftX(),
             () -> -controller.getRightX()));
 
+    // Reset Drive Rotation
     controller
         .start()
         .onTrue(
@@ -218,29 +222,53 @@ public class RobotContainer {
                     drive)
                 .ignoringDisable(true));
 
+    // Shoot
     controller
-        .rightTrigger()
+        .rightBumper()
         .whileTrue(
             Commands.parallel(
                     DriveCommands.joystickDriveAtAngle(
                         drive,
-                        () -> controller.getLeftX(),
-                        () -> -controller.getLeftY(),
+                        () -> (isRed() ? -1 : 1) * controller.getLeftY(),
+                        () -> (isRed() ? -1 : 1) * controller.getLeftX(),
                         () -> superstructure.getShotSetpoint().robotPose.getRotation()),
                     superstructure.setWantedSuperStateCommand(
-                        () -> Superstructure.WantedState.PASSING))
+                        () ->
+                            Constants.SHOULD_PASS.apply(drive.getPose().getX())
+                                ? Superstructure.WantedState.PASSING
+                                : Superstructure.WantedState.SHOOTING))
                 .until(() -> controller.leftBumper().getAsBoolean()))
         .onFalse(superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.IDLE));
 
+    // Intake and Reverse Intake
     controller.leftTrigger().onTrue(intake.spinIntake()).onFalse(intake.stopIntake());
     controller.leftBumper().onTrue(intake.reverseIntake()).onFalse(intake.stopIntake());
+
+    // Intake Flip Position
     controller
         .a()
-        .onTrue(intake.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_UP_VALUE.get())))
-        .onFalse(intake.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())));
+        .onTrue(
+            Commands.either(
+                intake.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_UP_VALUE.get())),
+                intake.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
+                () ->
+                    intake.targetAngle.equals(
+                        Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get()))));
+
     controller
-        .b()
-        .onTrue(intake.reset());
+        .y()
+        .whileTrue(
+            Commands.repeatingSequence(
+                intake.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_UP_VALUE.get())),
+                Commands.waitSeconds(0.4),
+                intake.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
+                Commands.waitSeconds(0.4)));
+
+    // Intake Reset
+    controller.back().onTrue(intake.reset());
+
+    // Automatic Button :)
+    controller.b().onTrue(AutomaticCommands.automaticCommand(drive));
   }
 
   /**
@@ -268,5 +296,9 @@ public class RobotContainer {
         "FieldSimulation/RobotPosition", swerveDriveSimulation.getSimulatedDriveTrainPose());
     Logger.recordOutput(
         "FieldSimulation/Fuel", SimulatedArena.getInstance().getGamePiecesArrayByType("Fuel"));
+  }
+
+  public static boolean isRed() {
+    return DriverStation.getAlliance().orElse(Alliance.Blue).equals(Alliance.Red);
   }
 }

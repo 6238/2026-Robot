@@ -18,7 +18,7 @@ public class Intake extends SubsystemBase {
   public IntakeIO io;
   public IntakeIOInputsAutoLogged inputs;
 
-  private Angle targetAngle = Degrees.of(-100);
+  public Angle targetAngle = Degrees.of(-100);
 
   public Intake(IntakeIO io) {
     this.io = io;

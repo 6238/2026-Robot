@@ -19,7 +19,7 @@ public class ShooterConstants {
   public static final int FLYWHEEL2_MOTOR_ID = 48;
   public static final int FEEDER_MOTOR_ID = 40;
 
-  public static final InvertedValue FLYWHEEL_INVERTED = InvertedValue.Clockwise_Positive;
+  public static final InvertedValue FLYWHEEL_INVERTED = InvertedValue.CounterClockwise_Positive;
   public static final InvertedValue FEEDER_INVERTED = InvertedValue.CounterClockwise_Positive;
   public static final CANBus CAN_BUS = CANBus.roboRIO();
 
@@ -69,19 +69,15 @@ public class ShooterConstants {
   public static final Distance HUB_POSITION_TOLERANCE = Meters.of(0.04);
   public static final Angle HUB_ROTATION_TOLERANCE = Degrees.of(5.5);
 
-  public static final double FLYWHEEL_DIST_OFFSET = 21.1;
-  public static final double FLYWHEEL_DIST_SLOPE = 6.1;
+  public static final double FLYWHEEL_DIST_OFFSET = 19.8;
+  public static final double FLYWHEEL_DIST_SLOPE = 5.3;
 
   public static final double LEAD_TIME_DIST_OFFSET = 0.35; // 1.27 - 0.9125
   public static final double LEAD_TIME_DIST_SLOPE = 0.14;
 
-  public static final double PASSING_FLYWHEEL_DIST_OFFSET = 17.4;
-  public static final double PASSING_FLYWHEEL_DIST_SLOPE = 6.7;
+  public static final double PASSING_FLYWHEEL_DIST_OFFSET = 26.8;
+  public static final double PASSING_FLYWHEEL_DIST_SLOPE = 2.8;
 
   public static final double PASSING_LEAD_TIME_DIST_OFFSET = 0.45; // 1.27 - 0.9125
   public static final double PASSING_LEAD_TIME_DIST_SLOPE = 0.2;
-
-  public static final Pose2d LEFT_TARGET_PASS_POSE2D = new Pose2d(-0.25, 0.03, Rotation2d.kZero);
-  public static final Pose2d RIGHT_TARGET_PASS_POSE2D = new Pose2d(-0.25, 0.03, Rotation2d.kZero);
-  public static final double LEFT_RIGHT_SPLIT = Constants.HUB_POSE_3D.getY();
 }

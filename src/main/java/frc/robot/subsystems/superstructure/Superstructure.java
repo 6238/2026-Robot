@@ -244,14 +244,16 @@ public class Superstructure extends SubsystemBase {
   public void periodic() {
     if (wantedSuperState == WantedState.SHOOTING)
       shotSetpoint = ShotPlanner.createShotSetpoint(drive.getPose(), drive.getChassisSpeeds());
-    else if (wantedSuperState == WantedState.PASSING)
+    else if (wantedSuperState == WantedState.PASSING) {
+      Logger.recordOutput("passing", true);
       shotSetpoint =
           ShotPlanner.createPassSetpoint(
-              drive.getPose().getY() > ShooterConstants.LEFT_RIGHT_SPLIT
-                  ? ShooterConstants.LEFT_TARGET_PASS_POSE2D
-                  : ShooterConstants.RIGHT_TARGET_PASS_POSE2D,
+              drive.getPose().getY() > Constants.LEFT_RIGHT_SPLIT
+                  ? Constants.LEFT_TARGET_PASS_POSE2D.get()
+                  : Constants.RIGHT_TARGET_PASS_POSE2D.get(),
               drive.getPose(),
               drive.getChassisSpeeds());
+    }
 
     handleWantedState();
     applyStates();

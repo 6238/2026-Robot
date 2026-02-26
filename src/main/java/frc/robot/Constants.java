@@ -13,9 +13,16 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.wpilibj.RobotBase;
+
+import java.util.function.DoubleFunction;
+import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
+
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 /**
@@ -46,7 +53,32 @@ public final class Constants {
     public static final double DRIVE_RESUME_DEADBAND = 0.2;
   }
 
-  public static final double FIELD_PASSING_SHOOTING_SPLIT = 4.0;
+  public static final DoubleFunction<Boolean> SHOULD_PASS = (poseX) -> {
+    if (RobotContainer.isRed()) {
+      return poseX < 12.0;
+    }
+    return poseX > 4.25;
+  };
 
-  public static final Pose3d HUB_POSE_3D = new Pose3d(4.614, 4.045, 0.0, Rotation3d.kZero);
+  public static final Supplier<Pose3d> HUB_POSE_3D = () -> {
+    if (RobotContainer.isRed()) {
+      return new Pose3d(11.94, 4.045, 0.0, Rotation3d.kZero);
+    }
+    return new Pose3d(4.625, 4.045, 0.0, Rotation3d.kZero);
+  };
+
+  public static final Supplier<Pose2d> LEFT_TARGET_PASS_POSE2D = () -> {
+    if (RobotContainer.isRed()) {
+      return new Pose2d(16, 7.5, Rotation2d.kZero);
+    }
+    return new Pose2d(0.625, 7.5, Rotation2d.kZero);
+  };
+
+  public static final Supplier<Pose2d> RIGHT_TARGET_PASS_POSE2D = () -> {
+    if (RobotContainer.isRed()) {
+      return new Pose2d(16, 0.25, Rotation2d.kZero);
+    }
+    return new Pose2d(0.625, 0.25, Rotation2d.kZero);
+  };
+  public static final double LEFT_RIGHT_SPLIT = Constants.HUB_POSE_3D.get().getY();
 }

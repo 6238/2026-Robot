@@ -3,29 +3,29 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 3.2561490683229812,
-        "y": 0.884241348713398
+        "x": 3.5056344276855187,
+        "y": 7.5
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.1052972493352216,
-        "y": 2.3811535048802197
+        "x": 4.505634427685519,
+        "y": 7.5
       },
       "isLocked": false,
-      "linkedName": "DynamicPickupStart"
+      "linkedName": null
     },
     {
       "anchor": {
-        "x": 3.537826086956521,
-        "y": 7.153566992014197
+        "x": 5.6600962199312725,
+        "y": 7.5
       },
       "prevControl": {
-        "x": 1.7592369121561653,
-        "y": 4.666761313228982
+        "x": 4.6600962199312725,
+        "y": 7.5
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "Trench"
     }
   ],
   "rotationTargets": [],
@@ -33,8 +33,8 @@
   "pointTowardsZones": [],
   "eventMarkers": [],
   "globalConstraints": {
-    "maxVelocity": 1.5,
-    "maxAcceleration": 1.0,
+    "maxVelocity": 0.7,
+    "maxAcceleration": 0.5,
     "maxAngularVelocity": 540.0,
     "maxAngularAcceleration": 720.0,
     "nominalVoltage": 12.0,
@@ -42,13 +42,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 0.0
+    "rotation": 180.0
   },
   "reversed": false,
-  "folder": null,
+  "folder": "Mid Rush",
   "idealStartingState": {
-    "velocity": 0.0,
-    "rotation": 0.0
+    "velocity": 0,
+    "rotation": 179.58133558792014
   },
-  "useDefaultConstraints": false
+  "useDefaultConstraints": true
 }
