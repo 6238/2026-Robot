@@ -20,10 +20,7 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.wpilibj.RobotBase;
 
 import java.util.function.DoubleFunction;
-import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
-
-import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 /**
  * This class defines the runtime mode used by AdvantageKit. The mode is always "real" when running
@@ -33,8 +30,6 @@ import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 public final class Constants {
   public static final Mode simMode = Mode.SIM;
   public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
-
-  public static final LoggedNetworkNumber shootVolt = new LoggedNetworkNumber("Shoot", 3);
 
   public static enum Mode {
     /** Running on a real robot. */

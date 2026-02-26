@@ -245,7 +245,6 @@ public class Superstructure extends SubsystemBase {
     if (wantedSuperState == WantedState.SHOOTING)
       shotSetpoint = ShotPlanner.createShotSetpoint(drive.getPose(), drive.getChassisSpeeds());
     else if (wantedSuperState == WantedState.PASSING) {
-      Logger.recordOutput("passing", true);
       shotSetpoint =
           ShotPlanner.createPassSetpoint(
               drive.getPose().getY() > Constants.LEFT_RIGHT_SPLIT

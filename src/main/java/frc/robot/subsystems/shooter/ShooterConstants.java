@@ -5,12 +5,9 @@ import static edu.wpi.first.units.Units.*;
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.signals.InvertedValue;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
-import frc.robot.Constants;
 import frc.robot.util.LoggedNetworkPIDFeedforwardGains;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
@@ -69,7 +66,7 @@ public class ShooterConstants {
   public static final Distance HUB_POSITION_TOLERANCE = Meters.of(0.04);
   public static final Angle HUB_ROTATION_TOLERANCE = Degrees.of(5.5);
 
-  public static final double FLYWHEEL_DIST_OFFSET = 19.8;
+  public static final double FLYWHEEL_DIST_OFFSET = 20.4;
   public static final double FLYWHEEL_DIST_SLOPE = 5.3;
 
   public static final double LEAD_TIME_DIST_OFFSET = 0.35; // 1.27 - 0.9125

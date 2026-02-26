@@ -22,7 +22,7 @@ public class ShotPlanner {
             driveChassisSpeeds.omegaRadiansPerSecond,
             drivePose.getRotation());
 
-    Translation2d hubTranslation2d = Constants.HUB_POSE_3D.getTranslation().toTranslation2d();
+    Translation2d hubTranslation2d = Constants.HUB_POSE_3D.get().getTranslation().toTranslation2d();
     double distanceCurrently = drivePose.getTranslation().getDistance(hubTranslation2d);
     double leadTimeSec =
         ShooterConstants.LEAD_TIME_DIST_OFFSET
@@ -134,7 +134,7 @@ public class ShotPlanner {
     Angle hoodAngle = Degrees.of(hoodAngleDeg);
 
     // Target is still the hub
-    Translation2d hubTranslation2d = Constants.HUB_POSE_3D.getTranslation().toTranslation2d();
+    Translation2d hubTranslation2d = Constants.HUB_POSE_3D.get().getTranslation().toTranslation2d();
 
     // Robot pose should point at the computed chassis heading
     Pose2d robotPose =
