@@ -38,6 +38,8 @@ public interface IntakeIO {
 
   public default void setIntakeVelocity(AngularVelocity speed) {}
 
+  public default void setIntakeArmVoltage(Voltage voltage) {}
+
   public default void resetArmAngle() {}
   ;
 }

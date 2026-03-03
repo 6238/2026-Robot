@@ -21,10 +21,10 @@ import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -106,7 +106,8 @@ public class RobotContainer {
             new Vision(
                 drive::addVisionMeasurement,
                 drive::getPose,
-                new VisionIOPhotonVision(camera0Name, robotToCamera0));
+                new VisionIOPhotonVision(camera0Name, robotToCamera0),
+                new VisionIOPhotonVision(camera1Name, robotToCamera1));
         shooter = new Shooter(new ShooterIOTalonFX());
         hopper = new Hopper(new HopperIOTalonFX());
         intake = new Intake(new IntakeIOTalonFX());
@@ -180,6 +181,7 @@ public class RobotContainer {
 
   private void configureNamedCommands() {
     NamedCommands.registerCommand("Lower", intake.setIntakeAngle(() -> Degrees.of(-35)));
+    NamedCommands.registerCommand("SlightyHigher", intake.setIntakeAngle(() -> Degrees.of(10)));
     NamedCommands.registerCommand("StartIntake", intake.spinIntake());
     NamedCommands.registerCommand("StopIntake", intake.stopIntake());
     NamedCommands.registerCommand(
@@ -187,6 +189,12 @@ public class RobotContainer {
         Commands.sequence(
             intake.setIntakeAngle(() -> Degrees.of(45)),
             Commands.parallel(
+                Commands.repeatingSequence(
+                    intake.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_UP_VALUE.get())),
+                    Commands.waitSeconds(0.4),
+                    intake.setIntakeAngle(
+                        () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
+                    Commands.waitSeconds(0.4)),
                 DriveCommands.joystickDriveAtAngle(
                     drive,
                     () -> 0,
@@ -207,8 +215,8 @@ public class RobotContainer {
     drive.setDefaultCommand(
         DriveCommands.joystickDrive(
             drive,
-            () -> (isRed() ? -1 : 1) * controller.getLeftY(),
-            () -> (isRed() ? -1 : 1) * controller.getLeftX(),
+            () -> (isRed() ? 1 : -1) * Constants.driveMult.get() * controller.getLeftY(),
+            () -> (isRed() ? 1 : -1) * Constants.driveMult.get() * controller.getLeftX(),
             () -> -controller.getRightX()));
 
     // Reset Drive Rotation
@@ -229,8 +237,10 @@ public class RobotContainer {
             Commands.parallel(
                     DriveCommands.joystickDriveAtAngle(
                         drive,
-                        () -> (isRed() ? -1 : 1) * controller.getLeftY(),
-                        () -> (isRed() ? -1 : 1) * controller.getLeftX(),
+                        () ->
+                            (isRed() ? 1 : -1) * Constants.driveMult.get() * controller.getLeftY(),
+                        () ->
+                            (isRed() ? 1 : -1) * Constants.driveMult.get() * controller.getLeftX(),
                         () -> superstructure.getShotSetpoint().robotPose.getRotation()),
                     superstructure.setWantedSuperStateCommand(
                         () ->
@@ -241,8 +251,8 @@ public class RobotContainer {
         .onFalse(superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.IDLE));
 
     // Intake and Reverse Intake
-    controller.leftTrigger().onTrue(intake.spinIntake()).onFalse(intake.stopIntake());
-    controller.leftBumper().onTrue(intake.reverseIntake()).onFalse(intake.stopIntake());
+    controller.leftTrigger().onTrue(intake.reverseIntake()).onFalse(intake.stopIntake());
+    controller.leftBumper().onTrue(intake.spinIntake()).onFalse(intake.stopIntake());
 
     // Intake Flip Position
     controller
@@ -264,11 +274,16 @@ public class RobotContainer {
                 intake.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
                 Commands.waitSeconds(0.4)));
 
+    controller
+        .x()
+        .whileTrue(intake.setIntakeArmVoltage(() -> Volts.of(-3)))
+        .onFalse(intake.setIntakeArmVoltage(() -> Volts.of(0)));
+
     // Intake Reset
     controller.back().onTrue(intake.reset());
 
     // Automatic Button :)
-    controller.b().onTrue(AutomaticCommands.automaticCommand(drive));
+    controller.b().whileTrue(AutomaticCommands.automaticCommand(drive));
   }
 
   /**

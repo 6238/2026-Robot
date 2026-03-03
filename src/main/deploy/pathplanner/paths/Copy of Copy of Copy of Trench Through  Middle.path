@@ -1,0 +1,95 @@
+{
+  "version": "2025.0",
+  "waypoints": [
+    {
+      "anchor": {
+        "x": 2.0167701863400005,
+        "y": 1.3590683229853904
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 8.485411863988293,
+        "y": -1.3161279027504886
+      },
+      "isLocked": false,
+      "linkedName": "Bottom Trench"
+    },
+    {
+      "anchor": {
+        "x": 6.53165039929015,
+        "y": 3.4676220053238684
+      },
+      "prevControl": {
+        "x": 6.454032282202718,
+        "y": 3.705267598381687
+      },
+      "nextControl": {
+        "x": 7.835412599822538,
+        "y": -0.5241437444543049
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 2.0167701863400005,
+        "y": 1.3590683229853904
+      },
+      "prevControl": {
+        "x": 2.9825199645075418,
+        "y": 0.44965394853593577
+      },
+      "nextControl": null,
+      "isLocked": false,
+      "linkedName": null
+    }
+  ],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 0.08753315649867371,
+      "rotationDegrees": 180.0
+    },
+    {
+      "waypointRelativePos": 0.273209549071618,
+      "rotationDegrees": 180.0
+    },
+    {
+      "waypointRelativePos": 0.5066312997347476,
+      "rotationDegrees": -90.0
+    },
+    {
+      "waypointRelativePos": 1.1909814323607422,
+      "rotationDegrees": -90.0
+    },
+    {
+      "waypointRelativePos": 1.5835543766578246,
+      "rotationDegrees": -178.04832371049073
+    },
+    {
+      "waypointRelativePos": 1.8832891246684342,
+      "rotationDegrees": 180.0
+    }
+  ],
+  "constraintZones": [],
+  "pointTowardsZones": [],
+  "eventMarkers": [],
+  "globalConstraints": {
+    "maxVelocity": 2.5,
+    "maxAcceleration": 2.0,
+    "maxAngularVelocity": 540.0,
+    "maxAngularAcceleration": 720.0,
+    "nominalVoltage": 12.0,
+    "unlimited": false
+  },
+  "goalEndState": {
+    "velocity": 0,
+    "rotation": 55.42217481444414
+  },
+  "reversed": false,
+  "folder": "Mid Rush",
+  "idealStartingState": {
+    "velocity": 0,
+    "rotation": 55.42217481444414
+  },
+  "useDefaultConstraints": true
+}

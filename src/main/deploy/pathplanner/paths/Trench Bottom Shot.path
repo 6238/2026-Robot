@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 5.6600962199312725,
-        "y": 0.6
+        "x": 2.0167701863400005,
+        "y": 1.3590683229853904
       },
       "prevControl": null,
       "nextControl": {
-        "x": 3.6600962199312725,
-        "y": 0.5999999999999998
+        "x": 0.016770186340000492,
+        "y": 1.3590683229853904
       },
       "isLocked": false,
       "linkedName": "Bottom Trench"
@@ -38,8 +38,8 @@
   "pointTowardsZones": [],
   "eventMarkers": [],
   "globalConstraints": {
-    "maxVelocity": 0.7,
-    "maxAcceleration": 0.5,
+    "maxVelocity": 2.5,
+    "maxAcceleration": 2.0,
     "maxAngularVelocity": 540.0,
     "maxAngularAcceleration": 720.0,
     "nominalVoltage": 12.0,
@@ -53,7 +53,7 @@
   "folder": "Mid Rush",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 0.0
+    "rotation": 55.42217481444414
   },
   "useDefaultConstraints": true
 }

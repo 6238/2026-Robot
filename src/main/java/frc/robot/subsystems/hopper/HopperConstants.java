@@ -24,7 +24,7 @@ public class HopperConstants {
   public static final double simulatedHopperThroughput = 5;
 
   public static final LoggedNetworkNumber INDEXER_VOLTAGE =
-      new LoggedNetworkNumber("Hopper/IndexerVoltage", 5);
+      new LoggedNetworkNumber("Hopper/IndexerVoltage", 9);
 
   public static final LoggedNetworkNumber REVERSE_INDEXER_VOLTAGE =
       new LoggedNetworkNumber("Hopper/IndexerVoltage", 5);

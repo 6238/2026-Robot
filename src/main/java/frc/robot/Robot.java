@@ -130,6 +130,35 @@ public class Robot extends LoggedRobot {
 
     // Return to non-RT thread priority (do not modify the first argument)
     // Threads.setCurrentThreadPriority(false, 10);
+
+    String gameData;
+    gameData = DriverStation.getGameSpecificMessage();
+    if (gameData.length() > 0) {
+      switch (gameData.charAt(0)) {
+        case 'B':
+          if (DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue)
+              == DriverStation.Alliance.Blue) {
+            Logger.recordOutput("ACTIVE", true);
+          } else {
+            Logger.recordOutput("ACTIVE", false);
+          }
+          break;
+        case 'R':
+          // Red case code
+          if (DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue)
+              == DriverStation.Alliance.Red) {
+            Logger.recordOutput("ACTIVE", true);
+          } else {
+            Logger.recordOutput("ACTIVE", false);
+          }
+          break;
+        default:
+          // This is corrupt data
+          break;
+      }
+    } else {
+      // Code for no data received yet
+    }
   }
 
   /** This function is called once when the robot is disabled. */

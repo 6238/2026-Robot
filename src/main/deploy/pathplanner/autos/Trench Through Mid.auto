@@ -11,9 +11,9 @@
           }
         },
         {
-          "type": "path",
+          "type": "wait",
           "data": {
-            "pathName": "Past Trench"
+            "waitTime": 0.5
           }
         },
         {
@@ -25,25 +25,19 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Trench Through  Middle"
+            "pathName": "Copy of Copy of Copy of Copy of Trench Through  Middle"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Shoot"
           }
         },
         {
           "type": "named",
           "data": {
             "name": "StopIntake"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "Trench Bottom Shot"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "Lower"
           }
         }
       ]

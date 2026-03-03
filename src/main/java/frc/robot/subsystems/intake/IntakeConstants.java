@@ -15,7 +15,8 @@ public class IntakeConstants {
   public static final int INTAKE_ARM_MOTOR_ID = 54;
 
   public static final double INTAKE_GEARING = 34 / 12 * 18 / 34;
-  public static final InvertedValue INTAKE_MOTOR_DIRECTION = InvertedValue.Clockwise_Positive;
+  public static final InvertedValue INTAKE_MOTOR_DIRECTION =
+      InvertedValue.CounterClockwise_Positive;
   public static final LoggedNetworkPIDFeedforwardGains INTAKE_GAINS =
       new LoggedNetworkPIDFeedforwardGains(0.075, 0, 0.07, 0, 0.17, 0, 0, "intake");
 
@@ -24,7 +25,7 @@ public class IntakeConstants {
       InvertedValue.CounterClockwise_Positive;
   public static final Angle INTAKE_START_VALUE = Degrees.of(120.0);
   public static final LoggedNetworkNumber INTAKE_DOWN_VALUE =
-      new LoggedNetworkNumber("INTAKE_DOWN_ANGLE", 0.0);
+      new LoggedNetworkNumber("INTAKE_DOWN_ANGLE", -35.0);
   public static final LoggedNetworkNumber INTAKE_UP_VALUE =
       new LoggedNetworkNumber("INTAKE_UP_ANGLE", 70.0);
   public static final LoggedNetworkPIDFeedforwardGains INTAKE_ARM_GAINS =

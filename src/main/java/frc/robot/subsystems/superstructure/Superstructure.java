@@ -113,7 +113,7 @@ public class Superstructure extends SubsystemBase {
         }
         CommandScheduler.getInstance().schedule(hopper.spinTopIndexer());
 
-        if (!isPrettyMuchCloseToTargetButNotQuite()) {
+        if (!readyToShoot()) {
           break;
         }
         if (wantedSuperState == WantedState.SHOOTING) {
