@@ -52,6 +52,8 @@ public class Superstructure extends SubsystemBase {
 
   private double shotSimulationTime = 0.0;
 
+  public boolean indxererMode = false;
+
   public Superstructure(
       Drive drive, Shooter shooter, Hopper hopper, SwerveDriveSimulation swerveDriveSimulation) {
     this.drive = drive;
@@ -134,6 +136,10 @@ public class Superstructure extends SubsystemBase {
         // }
 
         simulateShot();
+        if (indxererMode) {
+          CommandScheduler.getInstance().schedule(hopper.spinFullIndexer(3, 3));
+          break;
+        }
         CommandScheduler.getInstance().schedule(hopper.spinFullIndexer());
         break;
       default:

@@ -215,8 +215,8 @@ public class RobotContainer {
     drive.setDefaultCommand(
         DriveCommands.joystickDrive(
             drive,
-            () -> (isRed() ? 1 : -1) * Constants.driveMult.get() * controller.getLeftY(),
             () -> (isRed() ? 1 : -1) * Constants.driveMult.get() * controller.getLeftX(),
+            () -> (isRed() ? 1 : -1) * Constants.driveMult.get() * -controller.getLeftY(),
             () -> -controller.getRightX()));
 
     // Reset Drive Rotation
@@ -235,6 +235,7 @@ public class RobotContainer {
         .rightBumper()
         .whileTrue(
             Commands.parallel(
+                    intake.spinIntake(),
                     DriveCommands.joystickDriveAtAngle(
                         drive,
                         () ->
@@ -248,7 +249,10 @@ public class RobotContainer {
                                 ? Superstructure.WantedState.PASSING
                                 : Superstructure.WantedState.SHOOTING))
                 .until(() -> controller.leftBumper().getAsBoolean()))
-        .onFalse(superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.IDLE));
+        .onFalse(
+            Commands.parallel(
+                superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.IDLE),
+                intake.stopIntake()));
 
     // Intake and Reverse Intake
     controller.leftTrigger().onTrue(intake.reverseIntake()).onFalse(intake.stopIntake());
@@ -259,11 +263,10 @@ public class RobotContainer {
         .a()
         .onTrue(
             Commands.either(
-                intake.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_UP_VALUE.get())),
                 intake.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
+                intake.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_UP_VALUE.get())),
                 () ->
-                    intake.targetAngle.equals(
-                        Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get()))));
+                    intake.targetAngle.equals(Degrees.of(IntakeConstants.INTAKE_UP_VALUE.get()))));
 
     controller
         .y()

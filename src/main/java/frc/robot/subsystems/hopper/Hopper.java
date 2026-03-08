@@ -66,6 +66,14 @@ public class Hopper extends SubsystemBase {
         });
   }
 
+  public Command spinFullIndexer(double a, double b) {
+    return runOnce(
+        () -> {
+          io.setIndexerVoltage(Volts.of(a));
+          io.setTopIndexerVoltage(Volts.of(b));
+        });
+  }
+
   public Command stopFullIndexer() {
     return runOnce(
         () -> {
