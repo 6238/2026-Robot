@@ -66,14 +66,14 @@ public class ShooterConstants {
   public static final Distance HUB_POSITION_TOLERANCE = Meters.of(0.04);
   public static final Angle HUB_ROTATION_TOLERANCE = Degrees.of(3.5);
 
-  public static final double FLYWHEEL_DIST_OFFSET = 20.4;
-  public static final double FLYWHEEL_DIST_SLOPE = 5.65;
+  public static final double FLYWHEEL_DIST_OFFSET = 20.0;
+  public static final double FLYWHEEL_DIST_SLOPE = 5.5;
 
   public static final double LEAD_TIME_DIST_OFFSET = 0.35; // 1.27 - 0.9125
   public static final double LEAD_TIME_DIST_SLOPE = 0.14;
 
-  public static final double PASSING_FLYWHEEL_DIST_OFFSET = 26.8;
-  public static final double PASSING_FLYWHEEL_DIST_SLOPE = 2.8;
+  public static final double PASSING_FLYWHEEL_DIST_OFFSET = 27.8;
+  public static final double PASSING_FLYWHEEL_DIST_SLOPE = 3.8;
 
   public static final double PASSING_LEAD_TIME_DIST_OFFSET = 0.45; // 1.27 - 0.9125
   public static final double PASSING_LEAD_TIME_DIST_SLOPE = 0.2;

@@ -110,7 +110,18 @@ public class RobotContainer {
                 new VisionIOPhotonVision(camera1Name, robotToCamera1));
         shooter = new Shooter(new ShooterIOTalonFX());
         hopper = new Hopper(new HopperIOTalonFX());
-        intake = new Intake(new IntakeIOTalonFX());
+        intake =
+            new Intake(
+                new IntakeIOTalonFX(),
+                () ->
+                    edu.wpi.first.wpilibj2.command.CommandScheduler.getInstance()
+                        .schedule(
+                            Commands.sequence(
+                                Commands.runOnce(
+                                    () -> controller.setRumble(RumbleType.kBothRumble, 0.8)),
+                                Commands.waitSeconds(0.4),
+                                Commands.runOnce(
+                                    () -> controller.setRumble(RumbleType.kBothRumble, 0.0)))));
         break;
 
       case SIM:
@@ -153,7 +164,7 @@ public class RobotContainer {
         break;
     }
 
-    superstructure = new Superstructure(drive, shooter, hopper, swerveDriveSimulation);
+    superstructure = new Superstructure(drive, shooter, hopper, intake, swerveDriveSimulation);
 
     configureNamedCommands();
 
@@ -187,21 +198,31 @@ public class RobotContainer {
     NamedCommands.registerCommand(
         "Shoot",
         Commands.sequence(
-            intake.setIntakeAngle(() -> Degrees.of(45)),
-            Commands.parallel(
-                Commands.repeatingSequence(
-                    intake.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_UP_VALUE.get())),
-                    Commands.waitSeconds(0.4),
+                intake.spinIntake(),
+                intake.setIntakeAngle(() -> Degrees.of(45)),
+                Commands.parallel(
+                    DriveCommands.joystickDriveAtAngle(
+                        drive,
+                        () -> 0,
+                        () -> 0,
+                        () -> superstructure.getShotSetpoint().robotPose.getRotation()),
+                    superstructure.setWantedSuperStateCommand(
+                        () -> Superstructure.WantedState.SHOOTING)))
+            .withTimeout(5)
+            .andThen(
+                Commands.sequence(
+                    intake.spinIntake(),
                     intake.setIntakeAngle(
                         () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
-                    Commands.waitSeconds(0.4)),
-                DriveCommands.joystickDriveAtAngle(
-                    drive,
-                    () -> 0,
-                    () -> 0,
-                    () -> superstructure.getShotSetpoint().robotPose.getRotation()),
-                superstructure.setWantedSuperStateCommand(
-                    () -> Superstructure.WantedState.SHOOTING))));
+                    Commands.parallel(
+                        DriveCommands.joystickDriveAtAngle(
+                            drive,
+                            () -> 0,
+                            () -> 0,
+                            () -> superstructure.getShotSetpoint().robotPose.getRotation()),
+                        superstructure.setWantedSuperStateCommand(
+                            () -> Superstructure.WantedState.SHOOTING))))
+            .withTimeout(2));
   }
 
   /**
@@ -215,8 +236,8 @@ public class RobotContainer {
     drive.setDefaultCommand(
         DriveCommands.joystickDrive(
             drive,
-            () -> (isRed() ? 1 : -1) * Constants.driveMult.get() * controller.getLeftX(),
-            () -> (isRed() ? 1 : -1) * Constants.driveMult.get() * -controller.getLeftY(),
+            () -> -Constants.driveMult.get() * controller.getLeftY(),
+            () -> -Constants.driveMult.get() * controller.getLeftX(),
             () -> -controller.getRightX()));
 
     // Reset Drive Rotation
@@ -232,16 +253,18 @@ public class RobotContainer {
 
     // Shoot
     controller
+        .rightTrigger()
+        .whileTrue(intake.setIntakeArmVoltage(() -> Volts.of(-1)))
+        .onFalse(intake.setIntakeArmVoltage(() -> Volts.of(0)));
+    controller
         .rightBumper()
         .whileTrue(
             Commands.parallel(
                     intake.spinIntake(),
                     DriveCommands.joystickDriveAtAngle(
                         drive,
-                        () ->
-                            (isRed() ? 1 : -1) * Constants.driveMult.get() * controller.getLeftY(),
-                        () ->
-                            (isRed() ? 1 : -1) * Constants.driveMult.get() * controller.getLeftX(),
+                        () -> -Constants.driveMult.get() * controller.getLeftY(),
+                        () -> -Constants.driveMult.get() * controller.getLeftX(),
                         () -> superstructure.getShotSetpoint().robotPose.getRotation()),
                     superstructure.setWantedSuperStateCommand(
                         () ->

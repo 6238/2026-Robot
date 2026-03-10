@@ -8,12 +8,15 @@ import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.hopper.Hopper;
 import frc.robot.subsystems.hopper.HopperConstants;
+import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intake.IntakeConstants;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.ShooterConstants;
 import frc.robot.subsystems.superstructure.ShotPlanner.ShotSetpoint;
@@ -29,6 +32,7 @@ public class Superstructure extends SubsystemBase {
   public Drive drive;
   public Shooter shooter;
   public Hopper hopper;
+  public Intake intake;
 
   public SwerveDriveSimulation swerveDriveSimulation;
 
@@ -55,10 +59,15 @@ public class Superstructure extends SubsystemBase {
   public boolean indxererMode = false;
 
   public Superstructure(
-      Drive drive, Shooter shooter, Hopper hopper, SwerveDriveSimulation swerveDriveSimulation) {
+      Drive drive,
+      Shooter shooter,
+      Hopper hopper,
+      Intake intake,
+      SwerveDriveSimulation swerveDriveSimulation) {
     this.drive = drive;
     this.shooter = shooter;
     this.hopper = hopper;
+    this.intake = intake;
     this.swerveDriveSimulation = swerveDriveSimulation;
   }
 
@@ -109,17 +118,23 @@ public class Superstructure extends SubsystemBase {
                 shooter.setFeederVoltage(() -> Volts.of(ShooterConstants.FEEDER_VOLTAGE.get())),
                 shooter.setFlywheelRPM(() -> shotSetpoint.flywheelSpeed));
 
-        if (!readyToSpinTopIndexer()) {
-          CommandScheduler.getInstance().schedule(hopper.stopTopIndexer());
-          break;
-        }
-        CommandScheduler.getInstance().schedule(hopper.spinTopIndexer());
+        // if (!readyToSpinTopIndexer()) {
+        //   CommandScheduler.getInstance().schedule(hopper.stopTopIndexer());
+        //   break;
+        // }
+        // CommandScheduler.getInstance().schedule(hopper.spinTopIndexer());
 
         if (!readyToShoot()) {
           break;
         }
         if (wantedSuperState == WantedState.SHOOTING) {
           currentSuperState = CurrentState.SHOOTING;
+          CommandScheduler.getInstance()
+              .schedule(
+                  intake.setIntakeAngle(
+                      () -> Degrees.of(IntakeConstants.INTAKE_UP_VALUE.get() / 2)));
+          CommandScheduler.getInstance()
+              .schedule(Commands.sequence(hopper.spinIndexer(), hopper.oscillateTopIndexer()));
         } else if (wantedSuperState == WantedState.PASSING) {
           currentSuperState = CurrentState.PASSING;
         }
@@ -136,11 +151,10 @@ public class Superstructure extends SubsystemBase {
         // }
 
         simulateShot();
-        if (indxererMode) {
-          CommandScheduler.getInstance().schedule(hopper.spinFullIndexer(3, 3));
-          break;
-        }
-        CommandScheduler.getInstance().schedule(hopper.spinFullIndexer());
+        // if (indxererMode) {
+        //   CommandScheduler.getInstance().schedule(hopper.spinFullIndexer(3, 3));
+        //   break;
+        // }
         break;
       default:
         break;

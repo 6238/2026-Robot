@@ -15,6 +15,7 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
+import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
@@ -41,6 +42,7 @@ public class IntakeIOTalonFX implements IntakeIO {
   public StatusSignal<AngularAcceleration> intakeAcceleration;
   public StatusSignal<Current> intakeCurrent;
   public StatusSignal<Voltage> intakeVoltage;
+  public StatusSignal<Temperature> intakeTemperature;
 
   public StatusSignal<Angle> intakeArmPosition;
   public StatusSignal<AngularVelocity> intakeArmVelocity;
@@ -89,6 +91,7 @@ public class IntakeIOTalonFX implements IntakeIO {
     intakeAcceleration = intakeTalon.getAcceleration();
     intakeCurrent = intakeTalon.getStatorCurrent();
     intakeVoltage = intakeTalon.getMotorVoltage();
+    intakeTemperature = intakeTalon.getDeviceTemp();
 
     intakeArmPosition = intakeArmTalon.getPosition();
     intakeArmVelocity = intakeArmTalon.getVelocity();
@@ -102,6 +105,7 @@ public class IntakeIOTalonFX implements IntakeIO {
             intakeAcceleration,
             intakeCurrent,
             intakeVoltage,
+            intakeTemperature,
             intakeArmPosition,
             intakeArmVelocity,
             intakeArmAcceleration,
@@ -130,6 +134,7 @@ public class IntakeIOTalonFX implements IntakeIO {
     inputs.intakeAcceleration = intakeAcceleration.getValue();
     inputs.intakeAppliedCurrent = intakeCurrent.getValue();
     inputs.intakeAppliedVoltage = intakeVoltage.getValue();
+    inputs.intakeTemperature = intakeTemperature.getValue();
 
     inputs.intakeArmPosition = intakeArmPosition.getValue();
     inputs.intakeArmVelocity = intakeArmVelocity.getValue();

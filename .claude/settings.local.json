@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:therekrab.github.io)",
+      "WebFetch(domain:github.com)"
+    ]
+  }
+}

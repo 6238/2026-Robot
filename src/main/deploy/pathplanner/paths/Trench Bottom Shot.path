@@ -9,7 +9,7 @@
       "prevControl": null,
       "nextControl": {
         "x": 0.016770186340000492,
-        "y": 1.3590683229853904
+        "y": 1.3590683229853906
       },
       "isLocked": false,
       "linkedName": "Bottom Trench"
@@ -39,7 +39,7 @@
   "eventMarkers": [],
   "globalConstraints": {
     "maxVelocity": 2.5,
-    "maxAcceleration": 2.0,
+    "maxAcceleration": 2.5,
     "maxAngularVelocity": 540.0,
     "maxAngularAcceleration": 720.0,
     "nominalVoltage": 12.0,

@@ -18,7 +18,7 @@ public class IntakeConstants {
   public static final InvertedValue INTAKE_MOTOR_DIRECTION =
       InvertedValue.CounterClockwise_Positive;
   public static final LoggedNetworkPIDFeedforwardGains INTAKE_GAINS =
-      new LoggedNetworkPIDFeedforwardGains(0.075, 0, 0.07, 0, 0.17, 0, 0, "intake");
+      new LoggedNetworkPIDFeedforwardGains(0.01, 0, 0.00, 0, 0.17, 0, 0, "intake");
 
   public static final double INTAKE_ARM_GEARING = 25 * 2;
   public static final InvertedValue INTAKE_ARM_MOTOR_DIRECTION =
@@ -36,5 +36,11 @@ public class IntakeConstants {
           .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(2));
 
   public static final LoggedNetworkNumber INTAKE_SPEED =
-      new LoggedNetworkNumber("Intake/INTAKE_SPEED", 50);
+      new LoggedNetworkNumber("Intake/INTAKE_SPEED", 70);
+
+  // Jam prevention
+  public static final double STALL_CURRENT_THRESHOLD_AMPS = 40.0;
+  public static final double STALL_VELOCITY_THRESHOLD_RPS = 5.0;
+  public static final double STALL_DEBOUNCE_SECONDS = 0.15;
+  public static final double JAM_REVERSE_MIN_DURATION_SECONDS = 0.25;
 }
