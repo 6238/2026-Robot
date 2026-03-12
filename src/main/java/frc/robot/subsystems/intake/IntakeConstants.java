@@ -39,8 +39,8 @@ public class IntakeConstants {
       new LoggedNetworkNumber("Intake/INTAKE_SPEED", 70);
 
   // Jam prevention
-  public static final double STALL_CURRENT_THRESHOLD_AMPS = 40.0;
-  public static final double STALL_VELOCITY_THRESHOLD_RPS = 5.0;
-  public static final double STALL_DEBOUNCE_SECONDS = 0.15;
-  public static final double JAM_REVERSE_MIN_DURATION_SECONDS = 0.25;
+  public static final double STALL_CURRENT_THRESHOLD_AMPS = 35.0;
+  public static final double STALL_VELOCITY_THRESHOLD_RPS = 8.0;
+  public static final double STALL_DEBOUNCE_SECONDS = 0.25;
+  public static final double JAM_REVERSE_MIN_DURATION_SECONDS = 0.125;
 }

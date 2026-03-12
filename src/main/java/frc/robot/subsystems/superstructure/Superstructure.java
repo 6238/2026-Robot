@@ -145,10 +145,10 @@ public class Superstructure extends SubsystemBase {
             .schedule(
                 shooter.setFlywheelRPM(() -> shotSetpoint.flywheelSpeed),
                 shooter.setFeederVoltage(() -> Volts.of(ShooterConstants.FEEDER_VOLTAGE.get())));
-        // if (!isPrettyMuchCloseToTargetButNotQuite()) {
-        //   currentSuperState = CurrentState.SPINNING_UP;
-        //   break;
-        // }
+        if (!checkHubTolerance()) {
+          currentSuperState = CurrentState.SPINNING_UP;
+          break;
+        }
 
         simulateShot();
         // if (indxererMode) {
@@ -228,11 +228,22 @@ public class Superstructure extends SubsystemBase {
     return shooterSpeedSetpoint && hubSetpoint;
   }
 
+  private double getDynamicHubToleranceDegrees() {
+    double distance = drive.getPose().getTranslation().getDistance(shotSetpoint.target);
+    boolean nearHub = distance < ShooterConstants.HUB_NEAR_DISTANCE_METERS;
+    var speeds = drive.getChassisSpeeds();
+    double robotSpeedMps = Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
+    boolean highSpeed = robotSpeedMps > ShooterConstants.HUB_HIGH_ROBOT_SPEED_MPS;
+    if (nearHub || highSpeed) {
+      return ShooterConstants.HUB_ROTATION_TOLERANCE_TIGHT.in(Degrees);
+    }
+    return ShooterConstants.HUB_ROTATION_TOLERANCE.in(Degrees);
+  }
+
   public boolean checkHubTolerance() {
     double rotationError =
         Math.abs(drive.getRotation().minus(shotSetpoint.robotPose.getRotation()).getDegrees());
-    boolean hubRotationWithinTolerance =
-        Math.abs(rotationError) < ShooterConstants.HUB_ROTATION_TOLERANCE.in(Degrees);
+    boolean hubRotationWithinTolerance = rotationError < getDynamicHubToleranceDegrees();
     return hubRotationWithinTolerance;
   }
 
@@ -244,6 +255,7 @@ public class Superstructure extends SubsystemBase {
     Logger.recordOutput("Superstructure/HubRotationSetpoint", hubSetpoint);
     Logger.recordOutput("Superstructure/HubRotationTarget", shotSetpoint.robotPose.getRotation());
     Logger.recordOutput("Superstructure/HubRotationCurrent", drive.getPose().getRotation());
+    Logger.recordOutput("Superstructure/HubRotationToleranceDeg", getDynamicHubToleranceDegrees());
     Logger.recordOutput(
         "Superstructure/HubRotationError",
         Math.abs(

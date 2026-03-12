@@ -55,6 +55,8 @@ import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.util.AlertUtils;
 import frc.robot.util.AutomaticCommands;
 import frc.robot.util.RobotIdentity;
+import java.util.Set;
+import java.util.function.BooleanSupplier;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.littletonrobotics.junction.Logger;
@@ -236,8 +238,8 @@ public class RobotContainer {
     drive.setDefaultCommand(
         DriveCommands.joystickDrive(
             drive,
-            () -> -Constants.driveMult.get() * controller.getLeftY(),
-            () -> -Constants.driveMult.get() * controller.getLeftX(),
+            () -> -controller.getLeftY(),
+            () -> -controller.getLeftX(),
             () -> -controller.getRightX()));
 
     // Reset Drive Rotation
@@ -251,20 +253,20 @@ public class RobotContainer {
                     drive)
                 .ignoringDisable(true));
 
-    // Shoot
+    // Point-opposite drive mode (hold right trigger)
     controller
         .rightTrigger()
-        .whileTrue(intake.setIntakeArmVoltage(() -> Volts.of(-1)))
-        .onFalse(intake.setIntakeArmVoltage(() -> Volts.of(0)));
+        .whileTrue(
+            DriveCommands.joystickDrivePointingOpposite(
+                drive, () -> -controller.getLeftY(), () -> -controller.getLeftX()));
     controller
         .rightBumper()
         .whileTrue(
             Commands.parallel(
-                    intake.spinIntake(),
                     DriveCommands.joystickDriveAtAngle(
                         drive,
-                        () -> -Constants.driveMult.get() * controller.getLeftY(),
-                        () -> -Constants.driveMult.get() * controller.getLeftX(),
+                        () -> -controller.getLeftY(),
+                        () -> -controller.getLeftX(),
                         () -> superstructure.getShotSetpoint().robotPose.getRotation()),
                     superstructure.setWantedSuperStateCommand(
                         () ->
@@ -272,14 +274,11 @@ public class RobotContainer {
                                 ? Superstructure.WantedState.PASSING
                                 : Superstructure.WantedState.SHOOTING))
                 .until(() -> controller.leftBumper().getAsBoolean()))
-        .onFalse(
-            Commands.parallel(
-                superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.IDLE),
-                intake.stopIntake()));
+        .onFalse(superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.IDLE));
 
     // Intake and Reverse Intake
     controller.leftTrigger().onTrue(intake.reverseIntake()).onFalse(intake.stopIntake());
-    controller.leftBumper().onTrue(intake.spinIntake()).onFalse(intake.stopIntake());
+    controller.leftBumper().toggleOnTrue(Commands.sequence(intake.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())), intake.runIntake()));
 
     // Intake Flip Position
     controller
@@ -308,8 +307,35 @@ public class RobotContainer {
     // Intake Reset
     controller.back().onTrue(intake.reset());
 
-    // Automatic Button :)
-    controller.b().whileTrue(AutomaticCommands.automaticCommand(drive));
+    // Driver override: any stick movement cancels automation
+    BooleanSupplier driverOverride =
+        () ->
+            Math.abs(controller.getLeftX()) > DriveCommands.DEADBAND
+                || Math.abs(controller.getLeftY()) > DriveCommands.DEADBAND
+                || Math.abs(controller.getRightX()) > DriveCommands.DEADBAND;
+
+    // B button: context-aware trench / bump navigation
+    controller.b().whileTrue(AutomaticCommands.automaticCommand(drive, driverOverride));
+
+    // D-Pad: targeted automations
+    controller.povUp().whileTrue(AutomaticCommands.hubBackWallCommand(drive, driverOverride));
+    controller.povDown().whileTrue(AutomaticCommands.wallShootSetupCommand(drive, driverOverride));
+    controller.povLeft().whileTrue(AutomaticCommands.underTowerCommand(drive, driverOverride));
+
+    // D-Pad Right: shoot while drifting in -x direction
+    controller
+        .povRight()
+        .whileTrue(
+            Commands.parallel(
+                Commands.defer(() -> intake.spinIntake(), Set.of()),
+                DriveCommands.joystickDriveAtAngle(
+                    drive,
+                    () -> -0.4,
+                    () -> 0.0,
+                    () -> superstructure.getShotSetpoint().robotPose.getRotation()),
+                superstructure.setWantedSuperStateCommand(
+                    () -> Superstructure.WantedState.SHOOTING)))
+        .onFalse(superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.IDLE));
   }
 
   /**

@@ -64,7 +64,10 @@ public class ShooterConstants {
   public static final AngularVelocity BIG_FLYWHEEL_TOLERANCE_BEFORE_SHOT =
       RotationsPerSecond.of(0.8);
   public static final Distance HUB_POSITION_TOLERANCE = Meters.of(0.04);
-  public static final Angle HUB_ROTATION_TOLERANCE = Degrees.of(3.5);
+  public static final Angle HUB_ROTATION_TOLERANCE = Degrees.of(3.0);
+  public static final Angle HUB_ROTATION_TOLERANCE_TIGHT = Degrees.of(1.7);
+  public static final double HUB_NEAR_DISTANCE_METERS = 3.0;
+  public static final double HUB_HIGH_ROBOT_SPEED_MPS = 2.5;
 
   public static final double FLYWHEEL_DIST_OFFSET = 20.0;
   public static final double FLYWHEEL_DIST_SLOPE = 5.5;

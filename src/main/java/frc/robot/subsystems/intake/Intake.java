@@ -63,7 +63,7 @@ public class Intake extends SubsystemBase {
     if (stalled && !isJamReversing) {
       isJamReversing = true;
       jamReverseTimer.restart();
-      io.setIntakeVoltage(Volts.of(12.0));
+      io.setIntakeVoltage(Volts.of(-12.0));
       onJamDetected.run();
     }
 
@@ -88,6 +88,20 @@ public class Intake extends SubsystemBase {
           if (!isJamReversing) {
             io.setIntakeVelocity(desiredIntakeVelocity);
           }
+        });
+  }
+
+  /** Runs the intake until cancelled — suitable for toggle bindings. */
+  public Command runIntake() {
+    return startEnd(
+        () -> {
+          desiredIntakeVelocity = RotationsPerSecond.of(IntakeConstants.INTAKE_SPEED.get());
+          if (!isJamReversing) io.setIntakeVelocity(desiredIntakeVelocity);
+        },
+        () -> {
+          desiredIntakeVelocity = RotationsPerSecond.of(0);
+          isJamReversing = false;
+          io.setIntakeVoltage(Volts.of(0));
         });
   }
 

@@ -2,7 +2,13 @@
   "permissions": {
     "allow": [
       "WebFetch(domain:therekrab.github.io)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:jitpack.io)",
+      "Bash(./gradlew build)",
+      "Bash(./gradlew compileJava)",
+      "Bash(./gradlew build -x test)",
+      "Bash(./gradlew classes)"
     ]
   }
 }

@@ -30,7 +30,9 @@ import com.pathplanner.lib.util.swerve.SwerveSetpoint;
 import com.pathplanner.lib.util.swerve.SwerveSetpointGenerator;
 import com.therekrab.autopilot.APConstraints;
 import com.therekrab.autopilot.APProfile;
+import com.therekrab.autopilot.APTarget;
 import com.therekrab.autopilot.Autopilot;
+import com.therekrab.autopilot.Autopilot.APResult;
 import edu.wpi.first.hal.FRCNetComm.tInstances;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
@@ -63,6 +65,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -519,6 +522,33 @@ public class Drive extends SubsystemBase {
             ),
         PP_CONFIG,
         this);
+  }
+
+  /** Drives the robot to an APTarget using AutoPilot. Ends when at target or driver overrides. */
+  public Command align(APTarget target, BooleanSupplier driverOverride) {
+    return this.run(
+            () -> {
+              Pose2d pose = getPose();
+              APResult output = kAutopilot.calculate(pose, getChassisSpeeds(), target);
+
+              double angularError =
+                  MathUtil.angleModulus(
+                      output.targetAngle().getRadians() - pose.getRotation().getRadians());
+              double omega =
+                  MathUtil.clamp(
+                      angularError * 4.15,
+                      -getMaxAngularSpeedRadPerSec(),
+                      getMaxAngularSpeedRadPerSec());
+
+              runVelocity(
+                  ChassisSpeeds.fromFieldRelativeSpeeds(
+                      output.vx().in(MetersPerSecond),
+                      output.vy().in(MetersPerSecond),
+                      omega,
+                      pose.getRotation()));
+            })
+        .until(() -> kAutopilot.atTarget(getPose(), target) || driverOverride.getAsBoolean())
+        .finallyDo(() -> runVelocity(new ChassisSpeeds()));
   }
 
   private static final APConstraints kConstraints =

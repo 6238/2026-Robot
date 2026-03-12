@@ -41,7 +41,7 @@ import java.util.function.Supplier;
 
 public class DriveCommands {
   public static final double DEADBAND = 0.1;
-  public static final double ANGLE_KP = 5.2;
+  public static final double ANGLE_KP = 5.0;
   public static final double ANGLE_KD = 0.1;
   public static final double ANGLE_MAX_VELOCITY = 20.0;
   public static final double ANGLE_MAX_ACCELERATION = 50.0;
@@ -192,6 +192,64 @@ public class DriveCommands {
 
         // Reset PID controller when command starts
         .beforeStarting(() -> angleController.reset(drive.getRotation().getRadians()));
+  }
+
+  /**
+   * Field relative drive where the robot automatically faces opposite to the stick direction. Holds
+   * the last heading when the stick is idle.
+   */
+  public static Command joystickDrivePointingOpposite(
+      Drive drive, DoubleSupplier xSupplier, DoubleSupplier ySupplier) {
+
+    ProfiledPIDController angleController =
+        new ProfiledPIDController(
+            ANGLE_KP,
+            0.0,
+            ANGLE_KD,
+            new TrapezoidProfile.Constraints(ANGLE_MAX_VELOCITY, ANGLE_MAX_ACCELERATION));
+    angleController.enableContinuousInput(-Math.PI, Math.PI);
+
+    // Mutable last heading — updated whenever stick magnitude clears the deadband
+    final Rotation2d[] lastHeading = {new Rotation2d()};
+
+    return Commands.run(
+            () -> {
+              double x = xSupplier.getAsDouble();
+              double y = ySupplier.getAsDouble();
+
+              Translation2d linearVelocity = getLinearVelocityFromJoysticks(x, y);
+
+              // Update target heading when stick is active
+              if (Math.hypot(x, y) > DEADBAND) {
+                // Opposite of movement direction → add 180°
+                lastHeading[0] = new Rotation2d(Math.atan2(y, x));
+              }
+
+              double omega =
+                  angleController.calculate(
+                      drive.getRotation().getRadians(), lastHeading[0].getRadians());
+
+              boolean isFlipped =
+                  DriverStation.getAlliance().isPresent()
+                      && DriverStation.getAlliance().get() == Alliance.Red;
+              ChassisSpeeds speeds =
+                  new ChassisSpeeds(
+                      linearVelocity.getX() * drive.getMaxLinearSpeedMetersPerSec(),
+                      linearVelocity.getY() * drive.getMaxLinearSpeedMetersPerSec(),
+                      omega);
+              drive.runVelocity(
+                  ChassisSpeeds.fromFieldRelativeSpeeds(
+                      speeds,
+                      isFlipped
+                          ? drive.getRotation().plus(new Rotation2d(Math.PI))
+                          : drive.getRotation()));
+            },
+            drive)
+        .beforeStarting(
+            () -> {
+              lastHeading[0] = drive.getRotation();
+              angleController.reset(drive.getRotation().getRadians());
+            });
   }
 
   public static Command followPathWhileAiming(
