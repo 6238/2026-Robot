@@ -17,14 +17,18 @@ import static edu.wpi.first.units.Units.*;
 import static frc.robot.subsystems.vision.VisionConstants.*;
 
 import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.auto.NamedCommands;
+import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.util.FileVersionException;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -40,10 +44,13 @@ import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.hopper.Hopper;
 import frc.robot.subsystems.hopper.HopperIO;
 import frc.robot.subsystems.hopper.HopperIOTalonFX;
-import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeConstants;
-import frc.robot.subsystems.intake.IntakeIO;
-import frc.robot.subsystems.intake.IntakeIOTalonFX;
+import frc.robot.subsystems.intake.IntakePivot;
+import frc.robot.subsystems.intake.IntakePivotIO;
+import frc.robot.subsystems.intake.IntakePivotIOTalonFX;
+import frc.robot.subsystems.intake.IntakeRoller;
+import frc.robot.subsystems.intake.IntakeRollerIO;
+import frc.robot.subsystems.intake.IntakeRollerIOTalonFX;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.ShooterIOSim;
 import frc.robot.subsystems.shooter.ShooterIOTalonFX;
@@ -55,10 +62,12 @@ import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.util.AlertUtils;
 import frc.robot.util.AutomaticCommands;
 import frc.robot.util.RobotIdentity;
+import java.io.IOException;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
+import org.json.simple.parser.ParseException;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
@@ -74,7 +83,8 @@ public class RobotContainer {
   private final Vision vision;
   private final Shooter shooter;
   private final Hopper hopper;
-  private final Intake intake;
+  private final IntakeRoller intakeRoller;
+  private final IntakePivot intakePivot;
   private final Superstructure superstructure;
 
   // Controller
@@ -112,9 +122,9 @@ public class RobotContainer {
                 new VisionIOPhotonVision(camera1Name, robotToCamera1));
         shooter = new Shooter(new ShooterIOTalonFX());
         hopper = new Hopper(new HopperIOTalonFX());
-        intake =
-            new Intake(
-                new IntakeIOTalonFX(),
+        intakeRoller =
+            new IntakeRoller(
+                new IntakeRollerIOTalonFX(),
                 () ->
                     edu.wpi.first.wpilibj2.command.CommandScheduler.getInstance()
                         .schedule(
@@ -124,6 +134,7 @@ public class RobotContainer {
                                 Commands.waitSeconds(0.4),
                                 Commands.runOnce(
                                     () -> controller.setRumble(RumbleType.kBothRumble, 0.0)))));
+        intakePivot = new IntakePivot(new IntakePivotIOTalonFX());
         break;
 
       case SIM:
@@ -147,7 +158,8 @@ public class RobotContainer {
                     swerveDriveSimulation::getSimulatedDriveTrainPose));
         shooter = new Shooter(new ShooterIOSim() {});
         hopper = new Hopper(new HopperIO() {});
-        intake = new Intake(new IntakeIO() {});
+        intakeRoller = new IntakeRoller(new IntakeRollerIO() {});
+        intakePivot = new IntakePivot(new IntakePivotIO() {});
         break;
 
       default:
@@ -162,69 +174,157 @@ public class RobotContainer {
         vision = new Vision(drive::addVisionMeasurement, drive::getPose, new VisionIO() {});
         shooter = new Shooter(new ShooterIOTalonFX() {});
         hopper = new Hopper(new HopperIO() {});
-        intake = new Intake(new IntakeIO() {});
+        intakeRoller = new IntakeRoller(new IntakeRollerIO() {});
+        intakePivot = new IntakePivot(new IntakePivotIO() {});
         break;
     }
 
-    superstructure = new Superstructure(drive, shooter, hopper, intake, swerveDriveSimulation);
-
-    configureNamedCommands();
+    superstructure = new Superstructure(drive, shooter, hopper, intakePivot, swerveDriveSimulation);
 
     // Set up auto routines
-    autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
-
-    // Set up SysId routines
-    autoChooser.addOption(
-        "Drive Wheel Radius Characterization", DriveCommands.wheelRadiusCharacterization(drive));
-    autoChooser.addOption(
-        "Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(drive));
-    autoChooser.addOption(
-        "Drive SysId (Quasistatic Forward)",
-        drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-    autoChooser.addOption(
-        "Drive SysId (Quasistatic Reverse)",
-        drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-    autoChooser.addOption(
-        "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
-    autoChooser.addOption(
-        "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+    LoggedDashboardChooser<Command> tempChooser;
+    try {
+      tempChooser = new LoggedDashboardChooser<>("Auto Choices", buildAutoChooser());
+      tempChooser.addOption(
+          "Drive Wheel Radius Characterization", DriveCommands.wheelRadiusCharacterization(drive));
+      tempChooser.addOption(
+          "Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(drive));
+      tempChooser.addOption(
+          "Drive SysId (Quasistatic Forward)",
+          drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+      tempChooser.addOption(
+          "Drive SysId (Quasistatic Reverse)",
+          drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+      tempChooser.addOption(
+          "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
+      tempChooser.addOption(
+          "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+    } catch (Exception e) {
+      e.printStackTrace();
+      Alert alert = new Alert("auto failed to load", AlertType.kError);
+      alert.set(true);
+      tempChooser = new LoggedDashboardChooser<>("Auto Choices");
+    }
+    autoChooser = tempChooser;
 
     configureButtonBindings();
   }
 
-  private void configureNamedCommands() {
-    NamedCommands.registerCommand("Lower", intake.setIntakeAngle(() -> Degrees.of(-35)));
-    NamedCommands.registerCommand("SlightyHigher", intake.setIntakeAngle(() -> Degrees.of(10)));
-    NamedCommands.registerCommand("StartIntake", intake.spinIntake());
-    NamedCommands.registerCommand("StopIntake", intake.stopIntake());
-    NamedCommands.registerCommand(
-        "Shoot",
-        Commands.sequence(
-                intake.spinIntake(),
-                intake.setIntakeAngle(() -> Degrees.of(45)),
-                Commands.parallel(
-                    DriveCommands.joystickDriveAtAngle(
-                        drive,
-                        () -> 0,
-                        () -> 0,
-                        () -> superstructure.getShotSetpoint().robotPose.getRotation()),
-                    superstructure.setWantedSuperStateCommand(
-                        () -> Superstructure.WantedState.SHOOTING)))
-            .withTimeout(5)
-            .andThen(
-                Commands.sequence(
-                    intake.spinIntake(),
-                    intake.setIntakeAngle(
+  private Command resetPoseCommand(PathPlannerPath path) {
+    return path.getStartingHolonomicPose().map(AutoBuilder::resetOdom).orElse(Commands.none());
+  }
+
+  private Command shootCommand() {
+    return Commands.sequence(
+            intakeRoller.spinIntake(),
+            intakePivot.setIntakeAngle(() -> Degrees.of(45)),
+            Commands.parallel(
+                DriveCommands.joystickDriveAtAngle(
+                    drive,
+                    () -> 0,
+                    () -> 0,
+                    () -> superstructure.getShotSetpoint().robotPose.getRotation()),
+                superstructure.setWantedSuperStateCommand(
+                    () -> Superstructure.WantedState.SHOOTING)))
+        .withTimeout(3)
+        .andThen(
+            Commands.deadline(
+                Commands.waitSeconds(2),
+                Commands.repeatingSequence(
+                    intakePivot.setIntakeAngle(
+                        () -> Degrees.of(IntakeConstants.INTAKE_UP_VALUE.get())),
+                    Commands.waitSeconds(0.4),
+                    intakePivot.setIntakeAngle(
                         () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
-                    Commands.parallel(
-                        DriveCommands.joystickDriveAtAngle(
-                            drive,
-                            () -> 0,
-                            () -> 0,
-                            () -> superstructure.getShotSetpoint().robotPose.getRotation()),
-                        superstructure.setWantedSuperStateCommand(
-                            () -> Superstructure.WantedState.SHOOTING))))
-            .withTimeout(2));
+                    Commands.waitSeconds(0.125))));
+  }
+
+  private SendableChooser<Command> buildAutoChooser()
+      throws FileVersionException, IOException, ParseException {
+    SendableChooser<Command> autoChooser = new SendableChooser<>();
+
+    PathPlannerPath lowerTrenchToShoot =
+        PathPlannerPath.fromPathFile("Lower Trench to Lower Shoot");
+    PathPlannerPath lowerTrenchBackCycle = PathPlannerPath.fromPathFile("Lower Trench Back Cycle");
+    PathPlannerPath lowerTrenchCycle = PathPlannerPath.fromPathFile("Lower Trench Cycle");
+    PathPlannerPath upperTrenchCycle = PathPlannerPath.fromPathFile("Upper Trench Cycle");
+    PathPlannerPath upperTrenchBackCycle = PathPlannerPath.fromPathFile("Upper Trench Back Cycle");
+    PathPlannerPath upperTrenchToShoot =
+        PathPlannerPath.fromPathFile("Upper Trench to Upper Shoot");
+    PathPlannerPath outpostGrab = PathPlannerPath.fromPathFile("Outpost Grab");
+
+    autoChooser.addOption("Do Nothing", Commands.none());
+    autoChooser.addOption(
+        "Right Trench Mid Rush (single)",
+        Commands.sequence(
+            resetPoseCommand(lowerTrenchToShoot),
+            intakeRoller.spinIntake(),
+            AutoBuilder.followPath(lowerTrenchToShoot),
+            shootCommand()));
+    autoChooser.addOption(
+        "Wait Right Trench Mid Rush (single)",
+        Commands.sequence(
+            resetPoseCommand(lowerTrenchBackCycle),
+            Commands.waitSeconds(5),
+            intakeRoller.spinIntake(),
+            AutoBuilder.followPath(lowerTrenchBackCycle),
+            shootCommand()));
+    autoChooser.addOption(
+        "Right Trench Mid Rush (double)",
+        Commands.sequence(
+            intakeRoller.spinIntake(),
+            resetPoseCommand(lowerTrenchToShoot),
+            intakePivot.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
+            AutoBuilder.followPath(lowerTrenchToShoot),
+            shootCommand(),
+            intakePivot.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
+            intakeRoller.spinIntake(),
+            AutoBuilder.followPath(lowerTrenchCycle)));
+
+    autoChooser.addOption(
+        "Left Trench Mid Rush (single)",
+        Commands.sequence(
+            resetPoseCommand(upperTrenchCycle),
+            Commands.waitSeconds(5),
+            intakeRoller.spinIntake(),
+            AutoBuilder.followPath(upperTrenchCycle),
+            shootCommand()));
+    autoChooser.addOption(
+        "Wait Left Trench Mid Rush (single)",
+        Commands.sequence(
+            resetPoseCommand(upperTrenchBackCycle),
+            intakeRoller.spinIntake(),
+            AutoBuilder.followPath(upperTrenchBackCycle),
+            shootCommand()));
+    autoChooser.addOption(
+        "Left Trench Mid Rush (double)",
+        Commands.sequence(
+            intakeRoller.spinIntake(),
+            resetPoseCommand(upperTrenchToShoot),
+            Commands.parallel(
+                AutoBuilder.followPath(upperTrenchToShoot),
+                Commands.sequence(
+                    Commands.waitSeconds(0.1),
+                    intakePivot.setIntakeAngle(
+                        () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())))),
+            shootCommand(),
+            intakePivot.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
+            intakeRoller.spinIntake(),
+            AutoBuilder.followPath(upperTrenchCycle)));
+
+    autoChooser.addOption(
+        "Outpost Trench Mid Rush",
+        Commands.sequence(
+            resetPoseCommand(lowerTrenchToShoot),
+            intakePivot.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
+            intakeRoller.spinIntake(),
+            AutoBuilder.followPath(lowerTrenchToShoot),
+            shootCommand(),
+            intakeRoller.spinIntake(),
+            AutoBuilder.followPath(outpostGrab),
+            shootCommand()));
+
+    return autoChooser;
   }
 
   /**
@@ -262,50 +362,64 @@ public class RobotContainer {
     controller
         .rightBumper()
         .whileTrue(
-            Commands.parallel(
-                    DriveCommands.joystickDriveAtAngle(
-                        drive,
-                        () -> -controller.getLeftY(),
-                        () -> -controller.getLeftX(),
-                        () -> superstructure.getShotSetpoint().robotPose.getRotation()),
-                    superstructure.setWantedSuperStateCommand(
-                        () ->
-                            Constants.SHOULD_PASS.apply(drive.getPose().getX())
-                                ? Superstructure.WantedState.PASSING
-                                : Superstructure.WantedState.SHOOTING))
-                .until(() -> controller.leftBumper().getAsBoolean()))
+            Commands.sequence(
+                intakePivot.setIntakeAngle(() -> Degrees.of(45)),
+                Commands.parallel(
+                        DriveCommands.joystickDriveAtAngle(
+                            drive,
+                            () -> -controller.getLeftY(),
+                            () -> -controller.getLeftX(),
+                            () -> superstructure.getShotSetpoint().robotPose.getRotation()),
+                        superstructure.setWantedSuperStateCommand(
+                            () ->
+                                Constants.SHOULD_PASS.apply(drive.getPose().getX())
+                                    ? Superstructure.WantedState.PASSING
+                                    : Superstructure.WantedState.SHOOTING))
+                    .until(() -> controller.leftBumper().getAsBoolean())))
         .onFalse(superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.IDLE));
 
     // Intake and Reverse Intake
-    controller.leftTrigger().onTrue(intake.reverseIntake()).onFalse(intake.stopIntake());
-    controller.leftBumper().toggleOnTrue(Commands.sequence(intake.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())), intake.runIntake()));
+    controller
+        .leftTrigger()
+        .onTrue(intakeRoller.reverseIntake())
+        .onFalse(intakeRoller.stopIntake());
+    controller
+        .leftBumper()
+        .toggleOnTrue(
+            Commands.sequence(
+                intakePivot.setIntakeAngle(
+                    () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
+                intakeRoller.runIntake()));
 
     // Intake Flip Position
     controller
         .a()
         .onTrue(
             Commands.either(
-                intake.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
-                intake.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_UP_VALUE.get())),
+                intakePivot.setIntakeAngle(
+                    () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
+                intakePivot.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_UP_VALUE.get())),
                 () ->
-                    intake.targetAngle.equals(Degrees.of(IntakeConstants.INTAKE_UP_VALUE.get()))));
+                    intakePivot.targetAngle.equals(
+                        Degrees.of(IntakeConstants.INTAKE_UP_VALUE.get()))));
 
     controller
         .y()
         .whileTrue(
             Commands.repeatingSequence(
-                intake.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_UP_VALUE.get())),
+                intakePivot.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_UP_VALUE.get())),
                 Commands.waitSeconds(0.4),
-                intake.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
+                intakePivot.setIntakeAngle(
+                    () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
                 Commands.waitSeconds(0.4)));
 
     controller
         .x()
-        .whileTrue(intake.setIntakeArmVoltage(() -> Volts.of(-3)))
-        .onFalse(intake.setIntakeArmVoltage(() -> Volts.of(0)));
+        .whileTrue(intakePivot.setIntakeArmVoltage(() -> Volts.of(-3)))
+        .onFalse(intakePivot.setIntakeArmVoltage(() -> Volts.of(0)));
 
     // Intake Reset
-    controller.back().onTrue(intake.reset());
+    controller.back().onTrue(intakePivot.reset());
 
     // Driver override: any stick movement cancels automation
     BooleanSupplier driverOverride =
@@ -327,7 +441,7 @@ public class RobotContainer {
         .povRight()
         .whileTrue(
             Commands.parallel(
-                Commands.defer(() -> intake.spinIntake(), Set.of()),
+                Commands.defer(() -> intakeRoller.spinIntake(), Set.of()),
                 DriveCommands.joystickDriveAtAngle(
                     drive,
                     () -> -0.4,

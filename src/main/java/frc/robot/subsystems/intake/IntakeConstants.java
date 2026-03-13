@@ -29,7 +29,7 @@ public class IntakeConstants {
   public static final LoggedNetworkNumber INTAKE_UP_VALUE =
       new LoggedNetworkNumber("INTAKE_UP_ANGLE", 70.0);
   public static final LoggedNetworkPIDFeedforwardGains INTAKE_ARM_GAINS =
-      new LoggedNetworkPIDFeedforwardGains(2.2, 0.12, 0, 0.32, 5.64, 0, 0.16, "Intake_ARM");
+      new LoggedNetworkPIDFeedforwardGains(2.6, 0.06, 0, 0.34, 5.64, 0, 0.27, "Intake_ARM");
   public static final MotionMagicConfigs INTAKE_ARM_MOTION_MAGIC_CONFIGS =
       new MotionMagicConfigs()
           .withMotionMagicCruiseVelocity(RotationsPerSecond.of(1))

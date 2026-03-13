@@ -4,26 +4,21 @@ import static edu.wpi.first.units.Units.*;
 
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
-import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.util.AlertUtils;
-import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
-public class Intake extends SubsystemBase {
+public class IntakeRoller extends SubsystemBase {
   public Alert intakeMotorConnectedAlert =
       new Alert("Critical", "Intake Motor Disconnected", AlertType.kError);
 
-  public IntakeIO io;
-  public IntakeIOInputsAutoLogged inputs;
-
-  public Angle targetAngle = Degrees.of(-100);
+  public IntakeRollerIO io;
+  public IntakeRollerIOInputsAutoLogged inputs;
 
   // Jam prevention state
   private AngularVelocity desiredIntakeVelocity = RotationsPerSecond.of(0);
@@ -33,21 +28,23 @@ public class Intake extends SubsystemBase {
       new Debouncer(IntakeConstants.STALL_DEBOUNCE_SECONDS, DebounceType.kRising);
   private final Runnable onJamDetected;
 
-  public Intake(IntakeIO io) {
+  public IntakeRoller(IntakeRollerIO io) {
     this(io, () -> {});
   }
 
-  public Intake(IntakeIO io, Runnable onJamDetected) {
+  public IntakeRoller(IntakeRollerIO io, Runnable onJamDetected) {
     this.io = io;
-    this.inputs = new IntakeIOInputsAutoLogged();
+    this.inputs = new IntakeRollerIOInputsAutoLogged();
     this.onJamDetected = onJamDetected;
   }
 
+  @Override
   public void periodic() {
     io.updateInputs(inputs);
-    Logger.processInputs("Intake", inputs);
+    Logger.processInputs("IntakeRoller", inputs);
 
-    Logger.recordOutput("currentVelocity", inputs.intakeVelocity.in(RotationsPerSecond));
+    Logger.recordOutput(
+        "IntakeRoller/currentVelocity", inputs.intakeVelocity.in(RotationsPerSecond));
 
     AlertUtils.processCriticalAlert(intakeMotorConnectedAlert, !inputs.intakeTalonConnected);
 
@@ -78,7 +75,7 @@ public class Intake extends SubsystemBase {
       }
     }
 
-    Logger.recordOutput("Intake/isJamReversing", isJamReversing);
+    Logger.recordOutput("IntakeRoller/isJamReversing", isJamReversing);
   }
 
   public Command spinIntake() {
@@ -121,24 +118,5 @@ public class Intake extends SubsystemBase {
           isJamReversing = false;
           io.setIntakeVelocity(desiredIntakeVelocity);
         });
-  }
-
-  public Command setIntakeAngle(Supplier<Angle> angleSupplier) {
-    return runOnce(
-        () -> {
-          targetAngle = angleSupplier.get();
-          io.setIntakePosition(angleSupplier.get());
-        });
-  }
-
-  public Command setIntakeArmVoltage(Supplier<Voltage> voltageSupplier) {
-    return runOnce(
-        () -> {
-          io.setIntakeArmVoltage(voltageSupplier.get());
-        });
-  }
-
-  public Command reset() {
-    return runOnce(() -> io.resetArmAngle());
   }
 }

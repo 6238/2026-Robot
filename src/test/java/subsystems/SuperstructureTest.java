@@ -10,7 +10,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.hopper.Hopper;
-import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intake.IntakePivot;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.Superstructure.CurrentState;
@@ -26,7 +26,7 @@ public class SuperstructureTest {
   Superstructure superstructure;
   Shooter mockShooter;
   Hopper mockHopper;
-  Intake mockIntake;
+  IntakePivot mockIntake;
   Drive mockDrive;
   SwerveDriveSimulation mockDriveSimulation;
 
@@ -35,7 +35,7 @@ public class SuperstructureTest {
   void setup() {
     mockShooter = Mockito.mock(Shooter.class);
     mockHopper = Mockito.mock(Hopper.class);
-    mockIntake = Mockito.mock(Intake.class);
+    mockIntake = Mockito.mock(IntakePivot.class);
     mockDrive = Mockito.mock(Drive.class);
     mockDriveSimulation = Mockito.mock(SwerveDriveSimulation.class);
 

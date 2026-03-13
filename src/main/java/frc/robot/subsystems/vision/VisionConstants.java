@@ -49,7 +49,14 @@ public class VisionConstants {
 
   // Basic filtering thresholds
   public static double maxAmbiguity = 0.07;
-  public static double maxZError = 0.75;
+  public static double maxZError = 0.65;
+  public static double maxTagDistance = 4; // Meters
+  public static double maxTagDistanceStraightOn =
+      10.0; // Meters, when tag is within straight-on angle threshold
+  public static double straightOnAngleThresholdDeg = 12.0; // Degrees
+
+  // X coordinate exclusion zones (robot pose X ranges to reject, e.g. field structures)
+  public static double[][] xExclusionZones = new double[][] {{4.0, 5.292}, {11.5, 12.5}};
 
   // Standard deviation baselines, for 1 meter distance and 1 tag
   // (Adjusted automatically based on distance and # of tags)
@@ -61,5 +68,6 @@ public class VisionConstants {
   public static double[] cameraStdDevFactors =
       new double[] {
         1.0, // Camera 0
+        1.4,
       };
 }

@@ -15,8 +15,7 @@ import frc.robot.Constants.Mode;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.hopper.Hopper;
 import frc.robot.subsystems.hopper.HopperConstants;
-import frc.robot.subsystems.intake.Intake;
-import frc.robot.subsystems.intake.IntakeConstants;
+import frc.robot.subsystems.intake.IntakePivot;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.ShooterConstants;
 import frc.robot.subsystems.superstructure.ShotPlanner.ShotSetpoint;
@@ -32,7 +31,7 @@ public class Superstructure extends SubsystemBase {
   public Drive drive;
   public Shooter shooter;
   public Hopper hopper;
-  public Intake intake;
+  public IntakePivot intake;
 
   public SwerveDriveSimulation swerveDriveSimulation;
 
@@ -62,7 +61,7 @@ public class Superstructure extends SubsystemBase {
       Drive drive,
       Shooter shooter,
       Hopper hopper,
-      Intake intake,
+      IntakePivot intake,
       SwerveDriveSimulation swerveDriveSimulation) {
     this.drive = drive;
     this.shooter = shooter;
@@ -129,10 +128,6 @@ public class Superstructure extends SubsystemBase {
         }
         if (wantedSuperState == WantedState.SHOOTING) {
           currentSuperState = CurrentState.SHOOTING;
-          CommandScheduler.getInstance()
-              .schedule(
-                  intake.setIntakeAngle(
-                      () -> Degrees.of(IntakeConstants.INTAKE_UP_VALUE.get() / 2)));
           CommandScheduler.getInstance()
               .schedule(Commands.sequence(hopper.spinIndexer(), hopper.oscillateTopIndexer()));
         } else if (wantedSuperState == WantedState.PASSING) {
