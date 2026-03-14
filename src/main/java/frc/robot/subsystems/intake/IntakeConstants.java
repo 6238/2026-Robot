@@ -18,18 +18,18 @@ public class IntakeConstants {
   public static final InvertedValue INTAKE_MOTOR_DIRECTION =
       InvertedValue.CounterClockwise_Positive;
   public static final LoggedNetworkPIDFeedforwardGains INTAKE_GAINS =
-      new LoggedNetworkPIDFeedforwardGains(0.01, 0, 0.00, 0, 0.17, 0, 0, "intake");
+      new LoggedNetworkPIDFeedforwardGains(0.03, 0, 0.00, 0, 0.17, 0, 0, "intake");
 
   public static final double INTAKE_ARM_GEARING = 25 * 2;
   public static final InvertedValue INTAKE_ARM_MOTOR_DIRECTION =
       InvertedValue.CounterClockwise_Positive;
   public static final Angle INTAKE_START_VALUE = Degrees.of(120.0);
   public static final LoggedNetworkNumber INTAKE_DOWN_VALUE =
-      new LoggedNetworkNumber("INTAKE_DOWN_ANGLE", -35.0);
+      new LoggedNetworkNumber("INTAKE_DOWN_ANGLE", -40.0);
   public static final LoggedNetworkNumber INTAKE_UP_VALUE =
       new LoggedNetworkNumber("INTAKE_UP_ANGLE", 70.0);
   public static final LoggedNetworkPIDFeedforwardGains INTAKE_ARM_GAINS =
-      new LoggedNetworkPIDFeedforwardGains(2.6, 0.06, 0, 0.34, 5.64, 0, 0.27, "Intake_ARM");
+      new LoggedNetworkPIDFeedforwardGains(2.6, 0.03, 0, 0.30, 5.44, 0, 0.3, "Intake_ARM");
   public static final MotionMagicConfigs INTAKE_ARM_MOTION_MAGIC_CONFIGS =
       new MotionMagicConfigs()
           .withMotionMagicCruiseVelocity(RotationsPerSecond.of(1))
@@ -42,5 +42,5 @@ public class IntakeConstants {
   public static final double STALL_CURRENT_THRESHOLD_AMPS = 35.0;
   public static final double STALL_VELOCITY_THRESHOLD_RPS = 8.0;
   public static final double STALL_DEBOUNCE_SECONDS = 0.25;
-  public static final double JAM_REVERSE_MIN_DURATION_SECONDS = 0.125;
+  public static final double JAM_REVERSE_MIN_DURATION_SECONDS = 0.1875;
 }

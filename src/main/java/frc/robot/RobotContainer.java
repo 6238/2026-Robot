@@ -19,6 +19,7 @@ import static frc.robot.subsystems.vision.VisionConstants.*;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.FileVersionException;
+import edu.wpi.first.hal.HALUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.Alert;
@@ -32,6 +33,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.drive.Drive;
@@ -217,7 +219,7 @@ public class RobotContainer {
   private Command shootCommand() {
     return Commands.sequence(
             intakeRoller.spinIntake(),
-            intakePivot.setIntakeAngle(() -> Degrees.of(45)),
+            intakePivot.setIntakeAngle(() -> Degrees.of(50)),
             Commands.parallel(
                 DriveCommands.joystickDriveAtAngle(
                     drive,
@@ -226,17 +228,17 @@ public class RobotContainer {
                     () -> superstructure.getShotSetpoint().robotPose.getRotation()),
                 superstructure.setWantedSuperStateCommand(
                     () -> Superstructure.WantedState.SHOOTING)))
-        .withTimeout(3)
+        .withTimeout(4)
         .andThen(
             Commands.deadline(
-                Commands.waitSeconds(2),
+                Commands.waitSeconds(3),
                 Commands.repeatingSequence(
                     intakePivot.setIntakeAngle(
-                        () -> Degrees.of(IntakeConstants.INTAKE_UP_VALUE.get())),
-                    Commands.waitSeconds(0.4),
-                    intakePivot.setIntakeAngle(
                         () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
-                    Commands.waitSeconds(0.125))));
+                    Commands.waitSeconds(0.2),
+                    intakePivot.setIntakeAngle(
+                        () -> Degrees.of(IntakeConstants.INTAKE_UP_VALUE.get())),
+                    Commands.waitSeconds(0.4))));
   }
 
   private SendableChooser<Command> buildAutoChooser()
@@ -245,37 +247,31 @@ public class RobotContainer {
 
     PathPlannerPath lowerTrenchToShoot =
         PathPlannerPath.fromPathFile("Lower Trench to Lower Shoot");
-    PathPlannerPath lowerTrenchBackCycle = PathPlannerPath.fromPathFile("Lower Trench Back Cycle");
     PathPlannerPath lowerTrenchCycle = PathPlannerPath.fromPathFile("Lower Trench Cycle");
     PathPlannerPath upperTrenchCycle = PathPlannerPath.fromPathFile("Upper Trench Cycle");
-    PathPlannerPath upperTrenchBackCycle = PathPlannerPath.fromPathFile("Upper Trench Back Cycle");
     PathPlannerPath upperTrenchToShoot =
         PathPlannerPath.fromPathFile("Upper Trench to Upper Shoot");
-    PathPlannerPath outpostGrab = PathPlannerPath.fromPathFile("Outpost Grab");
 
     autoChooser.addOption("Do Nothing", Commands.none());
     autoChooser.addOption(
         "Right Trench Mid Rush (single)",
         Commands.sequence(
+            intakeRoller.spinIntake(),
             resetPoseCommand(lowerTrenchToShoot),
-            intakeRoller.spinIntake(),
-            AutoBuilder.followPath(lowerTrenchToShoot),
-            shootCommand()));
-    autoChooser.addOption(
-        "Wait Right Trench Mid Rush (single)",
-        Commands.sequence(
-            resetPoseCommand(lowerTrenchBackCycle),
-            Commands.waitSeconds(5),
-            intakeRoller.spinIntake(),
-            AutoBuilder.followPath(lowerTrenchBackCycle),
+            Commands.parallel(
+                AutoBuilder.followPath(lowerTrenchToShoot),
+                intakePivot.setIntakeAngle(
+                    () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get()))),
             shootCommand()));
     autoChooser.addOption(
         "Right Trench Mid Rush (double)",
         Commands.sequence(
             intakeRoller.spinIntake(),
             resetPoseCommand(lowerTrenchToShoot),
-            intakePivot.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
-            AutoBuilder.followPath(lowerTrenchToShoot),
+            Commands.parallel(
+                AutoBuilder.followPath(lowerTrenchToShoot),
+                intakePivot.setIntakeAngle(
+                    () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get()))),
             shootCommand(),
             intakePivot.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
             intakeRoller.spinIntake(),
@@ -284,17 +280,12 @@ public class RobotContainer {
     autoChooser.addOption(
         "Left Trench Mid Rush (single)",
         Commands.sequence(
-            resetPoseCommand(upperTrenchCycle),
-            Commands.waitSeconds(5),
             intakeRoller.spinIntake(),
-            AutoBuilder.followPath(upperTrenchCycle),
-            shootCommand()));
-    autoChooser.addOption(
-        "Wait Left Trench Mid Rush (single)",
-        Commands.sequence(
-            resetPoseCommand(upperTrenchBackCycle),
-            intakeRoller.spinIntake(),
-            AutoBuilder.followPath(upperTrenchBackCycle),
+            resetPoseCommand(upperTrenchToShoot),
+            Commands.parallel(
+                AutoBuilder.followPath(upperTrenchToShoot),
+                intakePivot.setIntakeAngle(
+                    () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get()))),
             shootCommand()));
     autoChooser.addOption(
         "Left Trench Mid Rush (double)",
@@ -303,26 +294,12 @@ public class RobotContainer {
             resetPoseCommand(upperTrenchToShoot),
             Commands.parallel(
                 AutoBuilder.followPath(upperTrenchToShoot),
-                Commands.sequence(
-                    Commands.waitSeconds(0.1),
-                    intakePivot.setIntakeAngle(
-                        () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())))),
+                intakePivot.setIntakeAngle(
+                    () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get()))),
             shootCommand(),
             intakePivot.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
             intakeRoller.spinIntake(),
             AutoBuilder.followPath(upperTrenchCycle)));
-
-    autoChooser.addOption(
-        "Outpost Trench Mid Rush",
-        Commands.sequence(
-            resetPoseCommand(lowerTrenchToShoot),
-            intakePivot.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
-            intakeRoller.spinIntake(),
-            AutoBuilder.followPath(lowerTrenchToShoot),
-            shootCommand(),
-            intakeRoller.spinIntake(),
-            AutoBuilder.followPath(outpostGrab),
-            shootCommand()));
 
     return autoChooser;
   }
@@ -420,6 +397,7 @@ public class RobotContainer {
 
     // Intake Reset
     controller.back().onTrue(intakePivot.reset());
+    new Trigger(() -> HALUtil.getFPGAButton()).onTrue(intakePivot.toggleBrakeMode());
 
     // Driver override: any stick movement cancels automation
     BooleanSupplier driverOverride =

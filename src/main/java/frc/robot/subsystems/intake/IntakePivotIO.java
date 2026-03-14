@@ -28,4 +28,6 @@ public interface IntakePivotIO {
   public default void setIntakeArmVoltage(Voltage voltage) {}
 
   public default void resetArmAngle() {}
+
+  public default void setBrakeMode(boolean brake) {}
 }

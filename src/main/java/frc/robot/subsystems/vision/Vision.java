@@ -128,7 +128,7 @@ public class Vision extends SubsystemBase {
         boolean hasIgnoredTag = false;
         if (cameraIndex == 0) {
           for (int tagId : inputs[cameraIndex].tagIds) {
-            if (tagId == 13 || tagId == 14) {
+            if (tagId == 13 || tagId == 14 || tagId == 29 || tagId == 30) {
               hasIgnoredTag = true;
               break;
             }

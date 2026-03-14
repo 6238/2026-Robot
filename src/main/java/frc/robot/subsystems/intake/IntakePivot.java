@@ -20,6 +20,7 @@ public class IntakePivot extends SubsystemBase {
   public IntakePivotIOInputsAutoLogged inputs;
 
   public Angle targetAngle = Degrees.of(-100);
+  private boolean isBrakeMode = true;
 
   public IntakePivot(IntakePivotIO io) {
     this.io = io;
@@ -48,5 +49,15 @@ public class IntakePivot extends SubsystemBase {
 
   public Command reset() {
     return runOnce(() -> io.resetArmAngle());
+  }
+
+  public Command toggleBrakeMode() {
+    return runOnce(
+            () -> {
+              isBrakeMode = !isBrakeMode;
+              io.setBrakeMode(isBrakeMode);
+              Logger.recordOutput("IntakePivot/IsBrakeMode", isBrakeMode);
+            })
+        .ignoringDisable(true);
   }
 }

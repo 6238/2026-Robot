@@ -8,7 +8,9 @@
       "Bash(./gradlew build)",
       "Bash(./gradlew compileJava)",
       "Bash(./gradlew build -x test)",
-      "Bash(./gradlew classes)"
+      "Bash(./gradlew classes)",
+      "WebSearch",
+      "WebFetch(domain:docs.wpilib.org)"
     ]
   }
 }

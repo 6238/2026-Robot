@@ -109,4 +109,9 @@ public class IntakePivotIOTalonFX implements IntakePivotIO {
   public void resetArmAngle() {
     intakeArmTalon.setPosition(Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get()));
   }
+
+  @Override
+  public void setBrakeMode(boolean brake) {
+    intakeArmTalon.setNeutralMode(brake ? NeutralModeValue.Brake : NeutralModeValue.Coast);
+  }
 }

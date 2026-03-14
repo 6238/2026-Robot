@@ -131,6 +131,40 @@ public class Robot extends LoggedRobot {
     // Return to non-RT thread priority (do not modify the first argument)
     // Threads.setCurrentThreadPriority(false, 10);
 
+    // Log current shift name and time remaining in the current shift
+    double matchTime = DriverStation.getMatchTime();
+    String shiftName;
+    double shiftTimeRemaining;
+    if (DriverStation.isAutonomous()) {
+      shiftName = "AUTO";
+      shiftTimeRemaining = matchTime;
+    } else if (DriverStation.isTeleop()) {
+      if (matchTime > 130) {
+        shiftName = "TRANSITION";
+        shiftTimeRemaining = matchTime - 130;
+      } else if (matchTime > 105) {
+        shiftName = "SHIFT_1";
+        shiftTimeRemaining = matchTime - 105;
+      } else if (matchTime > 80) {
+        shiftName = "SHIFT_2";
+        shiftTimeRemaining = matchTime - 80;
+      } else if (matchTime > 55) {
+        shiftName = "SHIFT_3";
+        shiftTimeRemaining = matchTime - 55;
+      } else if (matchTime > 30) {
+        shiftName = "SHIFT_4";
+        shiftTimeRemaining = matchTime - 30;
+      } else {
+        shiftName = "END_GAME";
+        shiftTimeRemaining = matchTime;
+      }
+    } else {
+      shiftName = "DISABLED";
+      shiftTimeRemaining = matchTime;
+    }
+    Logger.recordOutput("Match/CurrentShift", shiftName);
+    Logger.recordOutput("Match/ShiftTimeRemaining", shiftTimeRemaining);
+
     String gameData;
     gameData = DriverStation.getGameSpecificMessage();
     if (gameData.length() > 0) {
