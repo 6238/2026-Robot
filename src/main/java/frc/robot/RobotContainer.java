@@ -256,46 +256,65 @@ public class RobotContainer {
     autoChooser.addOption(
         "Right Trench Mid Rush (single)",
         Commands.sequence(
+            intakePivot.preloadPivot(),
             intakeRoller.spinIntake(),
             resetPoseCommand(lowerTrenchToShoot),
             Commands.parallel(
                 AutoBuilder.followPath(lowerTrenchToShoot),
-                intakePivot.setIntakeAngle(
-                    () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get()))),
+                Commands.sequence(
+                    Commands.waitSeconds(0.3),
+                    intakePivot.setIntakeAngle(
+                        () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())))),
             shootCommand()));
     autoChooser.addOption(
         "Right Trench Mid Rush (double)",
         Commands.sequence(
-            intakeRoller.spinIntake(),
+            intakePivot.preloadPivot(),
             resetPoseCommand(lowerTrenchToShoot),
             Commands.parallel(
                 AutoBuilder.followPath(lowerTrenchToShoot),
-                intakePivot.setIntakeAngle(
-                    () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get()))),
+                Commands.sequence(
+                    Commands.waitSeconds(0.25),
+                    intakePivot.setIntakeAngle(
+                        () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
+                    intakeRoller.spinIntake())),
             shootCommand(),
             intakePivot.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
             intakeRoller.spinIntake(),
             AutoBuilder.followPath(lowerTrenchCycle)));
 
     autoChooser.addOption(
+        "lower_test",
+        Commands.sequence(
+            intakePivot.preloadPivot(),
+            Commands.waitSeconds(0.3),
+            intakePivot.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get()))));
+
+    autoChooser.addOption(
         "Left Trench Mid Rush (single)",
         Commands.sequence(
+            intakePivot.preloadPivot(),
             intakeRoller.spinIntake(),
             resetPoseCommand(upperTrenchToShoot),
             Commands.parallel(
                 AutoBuilder.followPath(upperTrenchToShoot),
-                intakePivot.setIntakeAngle(
-                    () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get()))),
+                Commands.sequence(
+                    Commands.waitSeconds(0.3),
+                    intakePivot.setIntakeAngle(
+                        () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())))),
             shootCommand()));
     autoChooser.addOption(
         "Left Trench Mid Rush (double)",
         Commands.sequence(
-            intakeRoller.spinIntake(),
+            intakePivot.preloadPivot(),
             resetPoseCommand(upperTrenchToShoot),
             Commands.parallel(
                 AutoBuilder.followPath(upperTrenchToShoot),
-                intakePivot.setIntakeAngle(
-                    () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get()))),
+                Commands.sequence(
+                    Commands.waitSeconds(0.25),
+                    intakePivot.setIntakeAngle(
+                        () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
+                    intakeRoller.spinIntake())),
             shootCommand(),
             intakePivot.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
             intakeRoller.spinIntake(),

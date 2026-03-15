@@ -38,6 +38,11 @@ public class IntakeConstants {
   public static final LoggedNetworkNumber INTAKE_SPEED =
       new LoggedNetworkNumber("Intake/INTAKE_SPEED", 70);
 
+  // Pivot backlash preload (run into hard stop before auto)
+  public static final double PIVOT_PRELOAD_VOLTAGE_VOLTS = 2.0;
+  public static final double PIVOT_PRELOAD_CURRENT_THRESHOLD_AMPS = 10.0;
+  public static final double PIVOT_PRELOAD_TIMEOUT_SECONDS = 1.0;
+
   // Jam prevention
   public static final double STALL_CURRENT_THRESHOLD_AMPS = 35.0;
   public static final double STALL_VELOCITY_THRESHOLD_RPS = 8.0;
