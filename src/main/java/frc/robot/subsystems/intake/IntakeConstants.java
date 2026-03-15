@@ -25,7 +25,7 @@ public class IntakeConstants {
       InvertedValue.CounterClockwise_Positive;
   public static final Angle INTAKE_START_VALUE = Degrees.of(120.0);
   public static final LoggedNetworkNumber INTAKE_DOWN_VALUE =
-      new LoggedNetworkNumber("INTAKE_DOWN_ANGLE", -40.0);
+      new LoggedNetworkNumber("INTAKE_DOWN_ANGLE", -45.0);
   public static final LoggedNetworkNumber INTAKE_UP_VALUE =
       new LoggedNetworkNumber("INTAKE_UP_ANGLE", 70.0);
   public static final LoggedNetworkPIDFeedforwardGains INTAKE_ARM_GAINS =
