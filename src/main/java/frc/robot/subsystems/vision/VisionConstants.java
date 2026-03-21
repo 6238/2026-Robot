@@ -34,7 +34,7 @@ public class VisionConstants {
   // Robot to camera transforms
   public static Transform3d robotToCamera0 =
       new Transform3d(
-          new Translation3d(Inches.of(29.5 / 2), Inches.of(-9.5), Inches.of(18)),
+          new Translation3d(Inches.of(29.5 / 2 - 0.5), Inches.of(-13), Inches.of(15)),
           new Rotation3d(
               Degrees.of(0).in(Radians), Degrees.of(15).in(Radians), Degrees.of(0).in(Radians)));
 
@@ -43,7 +43,7 @@ public class VisionConstants {
   // Robot to camera transforms
   public static Transform3d robotToCamera1 =
       new Transform3d(
-          new Translation3d(Inches.of(29.5 / 2 - 2), Inches.of(7.5), Inches.of(18)),
+          new Translation3d(Inches.of(29.5 / 2 - 2), Inches.of(11), Inches.of(15)),
           new Rotation3d(
               Degrees.of(0).in(Radians), Degrees.of(0).in(Radians), Degrees.of(90).in(Radians)));
 

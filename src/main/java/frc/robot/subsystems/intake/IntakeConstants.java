@@ -12,6 +12,7 @@ import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 public class IntakeConstants {
   public static final CANBus CAN_BUS = CANBus.roboRIO();
   public static final int INTAKE_MOTOR_ID = 55;
+  public static final int INTAKE_FOLLOWER_MOTOR_ID = 59;
   public static final int INTAKE_ARM_MOTOR_ID = 54;
 
   public static final double INTAKE_GEARING = 34 / 12 * 18 / 34;

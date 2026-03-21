@@ -23,8 +23,8 @@ public class ShooterConstants {
   public static final Distance SHOOTER_WHEEL_RADIUS = Inches.of(2.0);
   public static final Distance SHOOTER_HOOD_HEIGHT = Inches.of(28.0);
 
-  public static final double FEEDER_GEARING = 1;
-  public static final double FLYWHEEL_GEARING = 2;
+  public static final double FEEDER_GEARING = 18 / 12;
+  public static final double FLYWHEEL_GEARING = 18 / 24;
 
   public static final LoggedNetworkPIDFeedforwardGains FLYWHEEL_GAINS =
       new LoggedNetworkPIDFeedforwardGains(

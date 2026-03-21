@@ -42,8 +42,6 @@ public class HopperIOTalonFX implements HopperIO {
 
   public HopperIOTalonFX() {
     this.indexerTalon = new TalonFX(HopperConstants.INDEXER_MOTOR_ID, HopperConstants.CAN_BUS);
-    this.topIndexerTalon =
-        new TalonFX(HopperConstants.TOP_INDEXER_MOTOR_ID, HopperConstants.CAN_BUS);
 
     // Configure TalonFX Motors
     TalonFXConfiguration indexerConfig = new TalonFXConfiguration();
@@ -57,40 +55,50 @@ public class HopperIOTalonFX implements HopperIO {
       indexerConfigAlert.set(true);
     }
 
-    // Configure Top Indexer TalonFX
-    TalonFXConfiguration topIndexerConfig = new TalonFXConfiguration();
-    topIndexerConfig.Feedback.SensorToMechanismRatio = HopperConstants.TOP_INDEXER_GEARING;
-    topIndexerConfig.MotorOutput.Inverted = HopperConstants.TOP_INDEXER_MOTOR_DIRECTION;
-
-    AlertUtils.processCriticalAlert(
-        indexerConfigAlert,
-        !tryUntilOk(
-            Constants.MAX_PHEONIX_RETRIES,
-            () -> topIndexerTalon.getConfigurator().apply(topIndexerConfig)));
-
     // Status Signals
     indexerVelocity = indexerTalon.getVelocity();
     indexerAcceleration = indexerTalon.getAcceleration();
     indexerCurrent = indexerTalon.getStatorCurrent();
     indexerVoltage = indexerTalon.getMotorVoltage();
 
-    topIndexerVelocity = topIndexerTalon.getVelocity();
-    topIndexerAcceleration = topIndexerTalon.getAcceleration();
-    topIndexerCurrent = topIndexerTalon.getStatorCurrent();
-    topIndexerVoltage = topIndexerTalon.getMotorVoltage();
+    if (HopperConstants.USE_TOP_INDEXER) {
+      this.topIndexerTalon =
+          new TalonFX(HopperConstants.TOP_INDEXER_MOTOR_ID, HopperConstants.CAN_BUS);
 
-    statusSignalCollector =
-        new BetterStatusSignalCollection(
-            indexerVelocity,
-            indexerAcceleration,
-            indexerCurrent,
-            indexerVoltage,
-            topIndexerVelocity,
-            topIndexerAcceleration,
-            topIndexerCurrent,
-            topIndexerVoltage);
+      // Configure Top Indexer TalonFX
+      TalonFXConfiguration topIndexerConfig = new TalonFXConfiguration();
+      topIndexerConfig.Feedback.SensorToMechanismRatio = HopperConstants.TOP_INDEXER_GEARING;
+      topIndexerConfig.MotorOutput.Inverted = HopperConstants.TOP_INDEXER_MOTOR_DIRECTION;
+
+      AlertUtils.processCriticalAlert(
+          indexerConfigAlert,
+          !tryUntilOk(
+              Constants.MAX_PHEONIX_RETRIES,
+              () -> topIndexerTalon.getConfigurator().apply(topIndexerConfig)));
+
+      topIndexerVelocity = topIndexerTalon.getVelocity();
+      topIndexerAcceleration = topIndexerTalon.getAcceleration();
+      topIndexerCurrent = topIndexerTalon.getStatorCurrent();
+      topIndexerVoltage = topIndexerTalon.getMotorVoltage();
+
+      statusSignalCollector =
+          new BetterStatusSignalCollection(
+              indexerVelocity,
+              indexerAcceleration,
+              indexerCurrent,
+              indexerVoltage,
+              topIndexerVelocity,
+              topIndexerAcceleration,
+              topIndexerCurrent,
+              topIndexerVoltage);
+      ParentDevice.optimizeBusUtilizationForAll(indexerTalon, topIndexerTalon);
+    } else {
+      statusSignalCollector =
+          new BetterStatusSignalCollection(
+              indexerVelocity, indexerAcceleration, indexerCurrent, indexerVoltage);
+      ParentDevice.optimizeBusUtilizationForAll(indexerTalon);
+    }
     statusSignalCollector.setUpdateFrequencyForAll(50);
-    ParentDevice.optimizeBusUtilizationForAll(indexerTalon, topIndexerTalon);
   }
 
   @Override
@@ -106,17 +114,19 @@ public class HopperIOTalonFX implements HopperIO {
     }
 
     inputs.indexerTalonConnected = indexerTalon.isConnected();
-    inputs.topIndexerTalonConnected = topIndexerTalon.isConnected();
 
     inputs.indexerVelocity = indexerVelocity.getValue();
     inputs.indexerAcceleration = indexerAcceleration.getValue();
     inputs.indexerAppliedCurrent = indexerCurrent.getValue();
     inputs.indexerAppliedVoltage = indexerVoltage.getValue();
 
-    inputs.topIndexerVelocity = topIndexerVelocity.getValue();
-    inputs.topIndexerAcceleration = topIndexerAcceleration.getValue();
-    inputs.topIndexerAppliedCurrent = topIndexerCurrent.getValue();
-    inputs.topIndexerAppliedVoltage = topIndexerVoltage.getValue();
+    if (HopperConstants.USE_TOP_INDEXER) {
+      inputs.topIndexerTalonConnected = topIndexerTalon.isConnected();
+      inputs.topIndexerVelocity = topIndexerVelocity.getValue();
+      inputs.topIndexerAcceleration = topIndexerAcceleration.getValue();
+      inputs.topIndexerAppliedCurrent = topIndexerCurrent.getValue();
+      inputs.topIndexerAppliedVoltage = topIndexerVoltage.getValue();
+    }
   }
 
   public void setIndexerVoltage(Voltage voltage) {
@@ -125,6 +135,8 @@ public class HopperIOTalonFX implements HopperIO {
   }
 
   public void setTopIndexerVoltage(Voltage voltage) {
-    topIndexerTalon.setVoltage(voltage.in(Volts));
+    if (HopperConstants.USE_TOP_INDEXER) {
+      topIndexerTalon.setVoltage(voltage.in(Volts));
+    }
   }
 }

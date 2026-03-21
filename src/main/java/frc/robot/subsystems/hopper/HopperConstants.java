@@ -8,9 +8,11 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 public class HopperConstants {
+  public static final boolean USE_TOP_INDEXER = false;
+
   public static final CANBus CAN_BUS = CANBus.roboRIO();
-  public static final int INDEXER_MOTOR_ID = 46;
-  public static final int TOP_INDEXER_MOTOR_ID = 41;
+  public static final int INDEXER_MOTOR_ID = 41;
+  public static final int TOP_INDEXER_MOTOR_ID = 46;
 
   public static final double INDEXER_GEARING = 1.0;
   public static final InvertedValue INDEXER_MOTOR_DIRECTION = InvertedValue.Clockwise_Positive;

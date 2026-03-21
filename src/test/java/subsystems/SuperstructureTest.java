@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.drive.Drive;
@@ -52,6 +53,7 @@ public class SuperstructureTest {
     // Default: drive pose/rotation at origin — within the 3.5° hub tolerance
     when(mockDrive.getPose()).thenReturn(new Pose2d());
     when(mockDrive.getRotation()).thenReturn(Rotation2d.kZero);
+    when(mockDrive.getChassisSpeeds()).thenReturn(new ChassisSpeeds());
 
     superstructure =
         new Superstructure(mockDrive, mockShooter, mockHopper, mockIntake, mockDriveSimulation);

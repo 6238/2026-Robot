@@ -5,9 +5,11 @@ import static frc.robot.util.PhoenixUtil.tryUntilOk;
 
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
@@ -25,6 +27,7 @@ public class IntakeRollerIOTalonFX implements IntakeRollerIO {
       new Alert("CRITICAL", "Failed To Configure Intake Motor", AlertType.kError);
 
   public TalonFX intakeTalon;
+  public TalonFX intakeFollowerTalon;
 
   public BetterStatusSignalCollection statusSignalCollector;
 
@@ -38,6 +41,8 @@ public class IntakeRollerIOTalonFX implements IntakeRollerIO {
 
   public IntakeRollerIOTalonFX() {
     this.intakeTalon = new TalonFX(IntakeConstants.INTAKE_MOTOR_ID, IntakeConstants.CAN_BUS);
+    this.intakeFollowerTalon =
+        new TalonFX(IntakeConstants.INTAKE_FOLLOWER_MOTOR_ID, IntakeConstants.CAN_BUS);
 
     TalonFXConfiguration intakeConfig = new TalonFXConfiguration();
     intakeConfig.Feedback.SensorToMechanismRatio = IntakeConstants.INTAKE_GEARING;
@@ -50,6 +55,9 @@ public class IntakeRollerIOTalonFX implements IntakeRollerIO {
             Constants.MAX_PHEONIX_RETRIES,
             () -> intakeTalon.getConfigurator().apply(intakeConfig)));
 
+    intakeFollowerTalon.setControl(
+        new Follower(IntakeConstants.INTAKE_MOTOR_ID, MotorAlignmentValue.Opposed));
+
     intakeVelocity = intakeTalon.getVelocity();
     intakeAcceleration = intakeTalon.getAcceleration();
     intakeCurrent = intakeTalon.getStatorCurrent();
@@ -60,7 +68,7 @@ public class IntakeRollerIOTalonFX implements IntakeRollerIO {
         new BetterStatusSignalCollection(
             intakeVelocity, intakeAcceleration, intakeCurrent, intakeVoltage, intakeTemperature);
     statusSignalCollector.setUpdateFrequencyForAll(50);
-    ParentDevice.optimizeBusUtilizationForAll(intakeTalon);
+    ParentDevice.optimizeBusUtilizationForAll(intakeTalon, intakeFollowerTalon);
   }
 
   @Override

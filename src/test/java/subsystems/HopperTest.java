@@ -68,12 +68,12 @@ class HopperTest {
   }
 
   @Test
-  void stopTopIndexer_setsTopIndexerVoltageToZero() {
+  void stopTopIndexer_setsTopIndexerVoltageToOne() {
     hopper.stopTopIndexer().initialize();
 
     ArgumentCaptor<Voltage> captor = ArgumentCaptor.forClass(Voltage.class);
     verify(mockHopperIO).setTopIndexerVoltage(captor.capture());
-    assertEquals(0.0, captor.getValue().in(Volts), DELTA);
+    assertEquals(1.0, captor.getValue().in(Volts), DELTA);
   }
 
   // ── spinFullIndexer / stopFullIndexer ────────────────────────────────────

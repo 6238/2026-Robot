@@ -48,14 +48,18 @@ public class Hopper extends SubsystemBase {
   public Command spinTopIndexer() {
     return runOnce(
         () -> {
-          io.setTopIndexerVoltage(Volts.of(HopperConstants.TOP_INDEXER_VOLTAGE.get()));
+          if (HopperConstants.USE_TOP_INDEXER) {
+            io.setTopIndexerVoltage(Volts.of(HopperConstants.TOP_INDEXER_VOLTAGE.get()));
+          }
         });
   }
 
   public Command stopTopIndexer() {
     return runOnce(
         () -> {
-          io.setTopIndexerVoltage(Volts.of(1));
+          if (HopperConstants.USE_TOP_INDEXER) {
+            io.setTopIndexerVoltage(Volts.of(1));
+          }
         });
   }
 
@@ -63,7 +67,9 @@ public class Hopper extends SubsystemBase {
     return runOnce(
         () -> {
           io.setIndexerVoltage(Volts.of(HopperConstants.INDEXER_VOLTAGE.get()));
-          io.setTopIndexerVoltage(Volts.of(HopperConstants.TOP_INDEXER_VOLTAGE.get()));
+          if (HopperConstants.USE_TOP_INDEXER) {
+            io.setTopIndexerVoltage(Volts.of(HopperConstants.TOP_INDEXER_VOLTAGE.get()));
+          }
         });
   }
 
@@ -71,11 +77,16 @@ public class Hopper extends SubsystemBase {
     return runOnce(
         () -> {
           io.setIndexerVoltage(Volts.of(a));
-          io.setTopIndexerVoltage(Volts.of(b));
+          if (HopperConstants.USE_TOP_INDEXER) {
+            io.setTopIndexerVoltage(Volts.of(b));
+          }
         });
   }
 
   public Command oscillateTopIndexer() {
+    if (!HopperConstants.USE_TOP_INDEXER) {
+      return Commands.none();
+    }
     return Commands.repeatingSequence(
         runOnce(() -> io.setTopIndexerVoltage(Volts.of(0))),
         Commands.waitSeconds(0.2),
@@ -88,7 +99,9 @@ public class Hopper extends SubsystemBase {
     return runOnce(
         () -> {
           io.setIndexerVoltage(Volts.of(0));
-          io.setTopIndexerVoltage(Volts.of(0));
+          if (HopperConstants.USE_TOP_INDEXER) {
+            io.setTopIndexerVoltage(Volts.of(0));
+          }
         });
   }
 }
