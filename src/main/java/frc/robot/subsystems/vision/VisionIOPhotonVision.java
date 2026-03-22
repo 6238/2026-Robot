@@ -64,68 +64,28 @@ public class VisionIOPhotonVision implements VisionIO {
       if (result.multitagResult.isPresent()) { // Multitag result
         var multitagResult = result.multitagResult.get();
 
-        Transform3d fieldToRobotBest =
-            multitagResult.estimatedPose.best.plus(robotToCamera.inverse());
-        Transform3d fieldToRobotWorst =
-            multitagResult.estimatedPose.alt.plus(robotToCamera.inverse());
+        Pose3d fieldToRobotBest = Pose3d.kZero.plus(multitagResult.estimatedPose.best).relativeTo(aprilTagLayout.getOrigin()).plus(robotToCamera.inverse());
 
-        double bestDistance =
-            fieldToRobotBest
-                .getTranslation()
-                .getDistance(
-                    new Translation3d(currentPoseEstimate.getX(), currentPoseEstimate.getY(), 0.0));
-        double worstDistance =
-            fieldToRobotWorst
-                .getTranslation()
-                .getDistance(
-                    new Translation3d(currentPoseEstimate.getX(), currentPoseEstimate.getY(), 0.0));
-
-        Pose3d robotPose;
         double totalTagDistance;
 
-        if (bestDistance < worstDistance) {
-          robotPose = new Pose3d(fieldToRobotBest.getTranslation(), fieldToRobotBest.getRotation());
-
-          // Calculate average tag distance
-          totalTagDistance = 0.0;
-          for (var target : result.targets) {
-            totalTagDistance += target.bestCameraToTarget.getTranslation().getNorm();
-          }
-
-          // Add tag IDs
-          tagIds.addAll(multitagResult.fiducialIDsUsed);
-
-          // Add observation
-          poseObservations.add(
-              new PoseObservation(
-                  result.getTimestampSeconds(), // Timestamp
-                  robotPose, // 3D pose estimate
-                  multitagResult.estimatedPose.ambiguity, // Ambiguity
-                  multitagResult.fiducialIDsUsed.size(), // Tag count
-                  totalTagDistance / result.targets.size(), // Average tag distance
-                  PoseObservationType.PHOTONVISION)); // Observation type
-        } else {
-          robotPose = new Pose3d(fieldToRobotBest.getTranslation(), fieldToRobotBest.getRotation());
-
-          // Calculate average tag distance
-          totalTagDistance = 0.0;
-          for (var target : result.targets) {
-            totalTagDistance += target.altCameraToTarget.getTranslation().getNorm();
-          }
-
-          // Add tag IDs
-          tagIds.addAll(multitagResult.fiducialIDsUsed);
-
-          // Add observation
-          poseObservations.add(
-              new PoseObservation(
-                  result.getTimestampSeconds(), // Timestamp
-                  robotPose, // 3D pose estimate
-                  multitagResult.estimatedPose.ambiguity, // Ambiguity
-                  multitagResult.fiducialIDsUsed.size(), // Tag count
-                  totalTagDistance / result.targets.size(), // Average tag distance
-                  PoseObservationType.PHOTONVISION)); // Observation type
+        // Calculate average tag distance
+        totalTagDistance = 0.0;
+        for (var target : result.targets) {
+          totalTagDistance += target.bestCameraToTarget.getTranslation().getNorm();
         }
+
+        // Add tag IDs
+        tagIds.addAll(multitagResult.fiducialIDsUsed);
+
+        // Add observation
+        poseObservations.add(
+            new PoseObservation(
+                result.getTimestampSeconds(), // Timestamp
+                fieldToRobotBest, // 3D pose estimate
+                multitagResult.estimatedPose.ambiguity, // Ambiguity
+                multitagResult.fiducialIDsUsed.size(), // Tag count
+                totalTagDistance / result.targets.size(), // Average tag distance
+                PoseObservationType.PHOTONVISION)); // Observation type
       } else if (!result.targets.isEmpty()) { // Single tag result
         var target = result.targets.get(0);
 
