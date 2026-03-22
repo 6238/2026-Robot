@@ -12,6 +12,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.util.AlertUtils;
+import frc.robot.util.BatteryLogger;
 import org.littletonrobotics.junction.Logger;
 
 public class IntakeRoller extends SubsystemBase {
@@ -28,6 +29,12 @@ public class IntakeRoller extends SubsystemBase {
   private final Debouncer stallDebouncer =
       new Debouncer(IntakeConstants.STALL_DEBOUNCE_SECONDS, DebounceType.kRising);
   private final Runnable onJamDetected;
+
+  private BatteryLogger batteryLogger;
+
+  public void setBatteryLogger(BatteryLogger batteryLogger) {
+    this.batteryLogger = batteryLogger;
+  }
 
   public IntakeRoller(IntakeRollerIO io) {
     this(io, () -> {});
@@ -47,6 +54,10 @@ public class IntakeRoller extends SubsystemBase {
     Logger.recordOutput(
         "IntakeRoller/currentVelocity", inputs.intakeVelocity.in(RotationsPerSecond));
 
+    if (batteryLogger != null) {
+      batteryLogger.reportCurrentUsage("Intake/Roller", inputs.intakeSupplyCurrent.in(Amps));
+    }
+
     AlertUtils.processCriticalAlert(intakeMotorConnectedAlert, !inputs.intakeTalonConnected);
 
     // Jam prevention
@@ -54,7 +65,7 @@ public class IntakeRoller extends SubsystemBase {
         desiredIntakeVelocity.in(RotationsPerSecond) > 0
             && Math.abs(inputs.intakeVelocity.in(RotationsPerSecond))
                 < IntakeConstants.STALL_VELOCITY_THRESHOLD_RPS
-            && inputs.intakeAppliedCurrent.in(Amps) > IntakeConstants.STALL_CURRENT_THRESHOLD_AMPS;
+            && inputs.intakeSupplyCurrent.in(Amps) > IntakeConstants.STALL_CURRENT_THRESHOLD_AMPS;
 
     boolean stalled = stallDebouncer.calculate(stallCondition);
 

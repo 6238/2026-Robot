@@ -33,7 +33,7 @@ public class IntakePivotIOTalonFX implements IntakePivotIO {
   public StatusSignal<Angle> intakeArmPosition;
   public StatusSignal<AngularVelocity> intakeArmVelocity;
   public StatusSignal<AngularAcceleration> intakeArmAcceleration;
-  public StatusSignal<Current> intakeArmCurrent;
+  public StatusSignal<Current> intakeArmSupplyCurrent;
   public StatusSignal<Voltage> intakeArmVoltage;
 
   public MotionMagicVoltage motionMagicVoltageArm = new MotionMagicVoltage(0).withSlot(0);
@@ -60,7 +60,7 @@ public class IntakePivotIOTalonFX implements IntakePivotIO {
     intakeArmPosition = intakeArmTalon.getPosition();
     intakeArmVelocity = intakeArmTalon.getVelocity();
     intakeArmAcceleration = intakeArmTalon.getAcceleration();
-    intakeArmCurrent = intakeArmTalon.getStatorCurrent();
+    intakeArmSupplyCurrent = intakeArmTalon.getSupplyCurrent();
     intakeArmVoltage = intakeArmTalon.getMotorVoltage();
 
     statusSignalCollector =
@@ -68,7 +68,7 @@ public class IntakePivotIOTalonFX implements IntakePivotIO {
             intakeArmPosition,
             intakeArmVelocity,
             intakeArmAcceleration,
-            intakeArmCurrent,
+            intakeArmSupplyCurrent,
             intakeArmVoltage);
     statusSignalCollector.setUpdateFrequencyForAll(50);
     ParentDevice.optimizeBusUtilizationForAll(intakeArmTalon);
@@ -91,7 +91,7 @@ public class IntakePivotIOTalonFX implements IntakePivotIO {
     inputs.intakeArmPosition = intakeArmPosition.getValue();
     inputs.intakeArmVelocity = intakeArmVelocity.getValue();
     inputs.intakeArmAcceleration = intakeArmAcceleration.getValue();
-    inputs.intakeArmAppliedCurrent = intakeArmCurrent.getValue();
+    inputs.intakeArmSupplyCurrent = intakeArmSupplyCurrent.getValue();
     inputs.intakeArmAppliedVoltage = intakeArmVoltage.getValue();
   }
 

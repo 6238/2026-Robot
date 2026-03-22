@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.util.AlertUtils;
+import frc.robot.util.BatteryLogger;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
@@ -23,6 +24,12 @@ public class IntakePivot extends SubsystemBase {
   public Angle targetAngle = Degrees.of(-100);
   private boolean isBrakeMode = true;
 
+  private BatteryLogger batteryLogger;
+
+  public void setBatteryLogger(BatteryLogger batteryLogger) {
+    this.batteryLogger = batteryLogger;
+  }
+
   public IntakePivot(IntakePivotIO io) {
     this.io = io;
     this.inputs = new IntakePivotIOInputsAutoLogged();
@@ -32,6 +39,10 @@ public class IntakePivot extends SubsystemBase {
   public void periodic() {
     io.updateInputs(inputs);
     Logger.processInputs("IntakePivot", inputs);
+
+    if (batteryLogger != null) {
+      batteryLogger.reportCurrentUsage("Intake/Pivot", inputs.intakeArmSupplyCurrent.in(Amps));
+    }
 
     AlertUtils.processCriticalAlert(intakeArmMotorConnectedAlert, !inputs.intakeArmTalonConnected);
   }
@@ -62,7 +73,7 @@ public class IntakePivot extends SubsystemBase {
             this)
         .until(
             () ->
-                inputs.intakeArmAppliedCurrent.in(Amps)
+                inputs.intakeArmSupplyCurrent.in(Amps)
                     >= IntakeConstants.PIVOT_PRELOAD_CURRENT_THRESHOLD_AMPS)
         .withTimeout(IntakeConstants.PIVOT_PRELOAD_TIMEOUT_SECONDS)
         .finallyDo(() -> io.setIntakeArmVoltage(Volts.of(0)));
@@ -111,7 +122,7 @@ public class IntakePivot extends SubsystemBase {
                 boolean aboveDeadzone =
                     positionDeg > IntakeConstants.INTAKE_DOWN_VALUE.get() + 10.0;
                 if (aboveDeadzone
-                    && inputs.intakeArmAppliedCurrent.in(Amps) >= scaledCurrentThreshold) {
+                    && inputs.intakeArmSupplyCurrent.in(Amps) >= scaledCurrentThreshold) {
                   isBackingOff[0] = true;
                   backoffTriggered[0] = true;
                   backoffTimer[0] = 0.0;

@@ -28,11 +28,11 @@ public class ShooterConstants {
 
   public static final LoggedNetworkPIDFeedforwardGains FLYWHEEL_GAINS =
       new LoggedNetworkPIDFeedforwardGains(
-          0.14, // kP
+          0.20, // kP
           0.01, // kI
           0.03, // kD
           0.0, // kA
-          0.123, // kV
+          0.12, // kV
           0, // kS
           0.0, // kG
           "ShooterFlywheel");
@@ -87,16 +87,19 @@ public class ShooterConstants {
   // SHOT SETPOINTS
   public static final Angle FIXED_HOOD_ANGLE_DEGREES = Degrees.of(60.5);
   public static final AngularVelocity FLYWHEEL_TOLERANCE_BEFORE_SHOT = RotationsPerSecond.of(0.5);
+  public static final AngularVelocity FEEDER_TOLERANCE_BEFORE_SHOT = RotationsPerSecond.of(2.0);
+  public static final LoggedNetworkNumber FEEDER_REVERSE_VOLTAGE =
+      new LoggedNetworkNumber("Shooter/FeederReverseVolts", 3.0);
   public static final AngularVelocity BIG_FLYWHEEL_TOLERANCE_BEFORE_SHOT =
       RotationsPerSecond.of(0.8);
   public static final Distance HUB_POSITION_TOLERANCE = Meters.of(0.04);
-  public static final Angle HUB_ROTATION_TOLERANCE = Degrees.of(3.0);
+  public static final Angle HUB_ROTATION_TOLERANCE = Degrees.of(1.5);
   public static final Angle HUB_ROTATION_TOLERANCE_TIGHT = Degrees.of(1.7);
   public static final double HUB_NEAR_DISTANCE_METERS = 3.0;
   public static final double HUB_HIGH_ROBOT_SPEED_MPS = 2.5;
 
-  public static final double FLYWHEEL_DIST_OFFSET = 19.3;
-  public static final double FLYWHEEL_DIST_SLOPE = 5.2;
+  public static final double FLYWHEEL_DIST_OFFSET = 19.6;
+  public static final double FLYWHEEL_DIST_SLOPE = 5.3;
 
   public static final double LEAD_TIME_DIST_OFFSET = 0.35; // 1.27 - 0.9125
   public static final double LEAD_TIME_DIST_SLOPE = 0.14;

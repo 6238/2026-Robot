@@ -82,4 +82,6 @@ public final class Constants {
   public static final double LEFT_RIGHT_SPLIT = Constants.HUB_POSE_3D.get().getY();
 
   public static final LoggedNetworkNumber driveMult = new LoggedNetworkNumber("driveMult", 1);
+
+  public static final double loopPeriodSecs = 0.02;
 }

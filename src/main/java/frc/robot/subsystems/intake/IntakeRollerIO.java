@@ -18,7 +18,7 @@ public interface IntakeRollerIO {
     public Angle intakePosition = Rotations.of(0.0);
     public AngularVelocity intakeVelocity = RotationsPerSecond.of(0.0);
     public AngularAcceleration intakeAcceleration = RotationsPerSecondPerSecond.of(0.0);
-    public Current intakeAppliedCurrent = Amps.of(0.0);
+    public Current intakeSupplyCurrent = Amps.of(0.0);
     public Voltage intakeAppliedVoltage = Volts.of(0.0);
     public Temperature intakeTemperature = Celsius.of(0.0);
   }

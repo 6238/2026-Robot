@@ -156,4 +156,12 @@ public class Module {
   public double getFFCharacterizationVelocity() {
     return Units.radiansToRotations(inputs.driveVelocityRadPerSec);
   }
+
+  public double getDriveSupplyCurrentAmps() {
+    return inputs.driveSupplyCurrentAmps;
+  }
+
+  public double getTurnSupplyCurrentAmps() {
+    return inputs.turnSupplyCurrentAmps;
+  }
 }

@@ -63,6 +63,7 @@ import frc.robot.subsystems.vision.VisionIOPhotonVision;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.util.AlertUtils;
 import frc.robot.util.AutomaticCommands;
+import frc.robot.util.BatteryLogger;
 import frc.robot.util.RobotIdentity;
 import java.io.IOException;
 import java.util.Set;
@@ -88,6 +89,8 @@ public class RobotContainer {
   private final IntakeRoller intakeRoller;
   private final IntakePivot intakePivot;
   private final Superstructure superstructure;
+
+  private final BatteryLogger batteryLogger = new BatteryLogger();
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -182,6 +185,12 @@ public class RobotContainer {
     }
 
     superstructure = new Superstructure(drive, shooter, hopper, intakePivot, swerveDriveSimulation);
+
+    drive.setBatteryLogger(batteryLogger);
+    shooter.setBatteryLogger(batteryLogger);
+    hopper.setBatteryLogger(batteryLogger);
+    intakeRoller.setBatteryLogger(batteryLogger);
+    intakePivot.setBatteryLogger(batteryLogger);
 
     // Set up auto routines
     LoggedDashboardChooser<Command> tempChooser;
@@ -475,6 +484,10 @@ public class RobotContainer {
         "FieldSimulation/RobotPosition", swerveDriveSimulation.getSimulatedDriveTrainPose());
     Logger.recordOutput(
         "FieldSimulation/Fuel", SimulatedArena.getInstance().getGamePiecesArrayByType("Fuel"));
+  }
+
+  public BatteryLogger getBatteryLogger() {
+    return batteryLogger;
   }
 
   public static boolean isRed() {

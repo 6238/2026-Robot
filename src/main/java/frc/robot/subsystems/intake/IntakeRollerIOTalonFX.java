@@ -35,7 +35,7 @@ public class IntakeRollerIOTalonFX implements IntakeRollerIO {
   public StatusSignal<Angle> intakePosition;
   public StatusSignal<AngularVelocity> intakeVelocity;
   public StatusSignal<AngularAcceleration> intakeAcceleration;
-  public StatusSignal<Current> intakeCurrent;
+  public StatusSignal<Current> intakeSupplyCurrent;
   public StatusSignal<Voltage> intakeVoltage;
   public StatusSignal<Temperature> intakeTemperature;
 
@@ -63,7 +63,7 @@ public class IntakeRollerIOTalonFX implements IntakeRollerIO {
     intakePosition = intakeTalon.getPosition();
     intakeVelocity = intakeTalon.getVelocity();
     intakeAcceleration = intakeTalon.getAcceleration();
-    intakeCurrent = intakeTalon.getStatorCurrent();
+    intakeSupplyCurrent = intakeTalon.getSupplyCurrent();
     intakeVoltage = intakeTalon.getMotorVoltage();
     intakeTemperature = intakeTalon.getDeviceTemp();
 
@@ -72,7 +72,7 @@ public class IntakeRollerIOTalonFX implements IntakeRollerIO {
             intakePosition,
             intakeVelocity,
             intakeAcceleration,
-            intakeCurrent,
+            intakeSupplyCurrent,
             intakeVoltage,
             intakeTemperature);
     statusSignalCollector.setUpdateFrequencyForAll(50);
@@ -96,7 +96,7 @@ public class IntakeRollerIOTalonFX implements IntakeRollerIO {
     inputs.intakePosition = intakePosition.getValue();
     inputs.intakeVelocity = intakeVelocity.getValue();
     inputs.intakeAcceleration = intakeAcceleration.getValue();
-    inputs.intakeAppliedCurrent = intakeCurrent.getValue();
+    inputs.intakeSupplyCurrent = intakeSupplyCurrent.getValue();
     inputs.intakeAppliedVoltage = intakeVoltage.getValue();
     inputs.intakeTemperature = intakeTemperature.getValue();
   }

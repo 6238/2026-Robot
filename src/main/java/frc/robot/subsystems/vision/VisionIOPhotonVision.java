@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import org.littletonrobotics.junction.Logger;
 import org.photonvision.PhotonCamera;
 
 /** IO implementation for real PhotonVision hardware. */
@@ -171,6 +172,8 @@ public class VisionIOPhotonVision implements VisionIO {
    * coordinates by applying the inverse of the robot-to-camera transform.
    */
   public static Pose3d computeRobotPose(Transform3d fieldToCamera, Transform3d robotToCamera) {
+    Logger.recordOutput("inverse", robotToCamera.inverse());
+
     return Pose3d.kZero
         .plus(fieldToCamera)
         .relativeTo(aprilTagLayout.getOrigin())

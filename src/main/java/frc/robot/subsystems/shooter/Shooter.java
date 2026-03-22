@@ -1,5 +1,6 @@
 package frc.robot.subsystems.shooter;
 
+import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -9,6 +10,7 @@ import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.util.AlertUtils;
+import frc.robot.util.BatteryLogger;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
@@ -18,6 +20,12 @@ public class Shooter extends SubsystemBase {
 
   public AngularVelocity targetFlywheelVelocity;
   public AngularVelocity targetFeederVelocity;
+
+  private BatteryLogger batteryLogger;
+
+  public void setBatteryLogger(BatteryLogger batteryLogger) {
+    this.batteryLogger = batteryLogger;
+  }
 
   public Alert shooterMotorConnectedAlert =
       new Alert("Critical", "Shooter Flywheel Motor Disconnected", AlertType.kError);
@@ -55,6 +63,11 @@ public class Shooter extends SubsystemBase {
     Logger.recordOutput(
         "Shooter/compensatedVelocity", compensatedFlywheelVelocity.in(RotationsPerSecond));
     Logger.recordOutput("Shooter/currentVelocity", inputs.flywheelVelocity.in(RotationsPerSecond));
+
+    if (batteryLogger != null) {
+      batteryLogger.reportCurrentUsage("Shooter/Flywheel", inputs.flywheelSupplyCurrent.in(Amps));
+      batteryLogger.reportCurrentUsage("Shooter/Feeder", inputs.feederSupplyCurrent.in(Amps));
+    }
 
     // update alerts based on motor connection status
     AlertUtils.processCriticalAlert(shooterMotorConnectedAlert, !inputs.flywheelTalonConnected);
@@ -111,6 +124,11 @@ public class Shooter extends SubsystemBase {
 
   public boolean flywheelUpToSpeed(AngularVelocity tolerance) {
     return inputs.flywheelVelocity.isNear(this.targetFlywheelVelocity, tolerance);
+  }
+
+  public boolean feederUpToSpeed() {
+    return inputs.feederVelocity.isNear(
+        this.targetFeederVelocity, ShooterConstants.FEEDER_TOLERANCE_BEFORE_SHOT);
   }
 
   public AngularVelocity getCurrentFlywheelSpeed() {

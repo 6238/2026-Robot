@@ -61,6 +61,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
+import frc.robot.util.BatteryLogger;
 import frc.robot.util.LocalADStarAK;
 import frc.robot.util.RobotIdentity;
 import java.util.Optional;
@@ -139,6 +140,12 @@ public class Drive extends SubsystemBase {
   private SwerveDriveSimulation sim;
   private final Field2d m_field = new Field2d();
 
+  private BatteryLogger batteryLogger;
+
+  public void setBatteryLogger(BatteryLogger batteryLogger) {
+    this.batteryLogger = batteryLogger;
+  }
+
   public Drive(
       GyroIO gyroIO,
       ModuleIO flModuleIO,
@@ -212,6 +219,16 @@ public class Drive extends SubsystemBase {
       module.periodic();
     }
     odometryLock.unlock();
+
+    if (batteryLogger != null) {
+      String[] moduleNames = {"Module0", "Module1", "Module2", "Module3"};
+      for (int i = 0; i < 4; i++) {
+        batteryLogger.reportCurrentUsage(
+            "Drive/" + moduleNames[i] + "-Drive", modules[i].getDriveSupplyCurrentAmps());
+        batteryLogger.reportCurrentUsage(
+            "Drive/" + moduleNames[i] + "-Turn", modules[i].getTurnSupplyCurrentAmps());
+      }
+    }
 
     // Stop moving when disabled
     if (DriverStation.isDisabled()) {

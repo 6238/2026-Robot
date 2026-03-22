@@ -6,6 +6,7 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -44,6 +45,7 @@ public class Superstructure extends SubsystemBase {
   public enum CurrentState {
     IDLE,
     SPINNING_UP,
+    REVERSING,
     SHOOTING,
     PASSING
   }
@@ -54,6 +56,7 @@ public class Superstructure extends SubsystemBase {
   private ShotSetpoint shotSetpoint = new ShotSetpoint();
 
   private double shotSimulationTime = 0.0;
+  private final Timer reversingTimer = new Timer();
 
   public boolean indxererMode = false;
 
@@ -89,7 +92,8 @@ public class Superstructure extends SubsystemBase {
         currentSuperState = CurrentState.IDLE;
         break;
       case SHOOTING:
-        if (currentSuperState != CurrentState.SHOOTING)
+        if (currentSuperState != CurrentState.SHOOTING
+            && currentSuperState != CurrentState.REVERSING)
           currentSuperState = CurrentState.SPINNING_UP;
         break;
       case PASSING:
@@ -114,24 +118,34 @@ public class Superstructure extends SubsystemBase {
         CommandScheduler.getInstance()
             .schedule(
                 hopper.stopIndexer(),
-                shooter.setFeederVoltage(() -> Volts.of(0)),
+                shooter.setFeederSpeed(
+                    () -> RotationsPerSecond.of(ShooterConstants.FEEDER_SPEED.get())),
                 shooter.setFlywheelRPM(() -> shotSetpoint.flywheelSpeed));
-
-        // if (!readyToSpinTopIndexer()) {
-        //   CommandScheduler.getInstance().schedule(hopper.stopTopIndexer());
-        //   break;
-        // }
-        // CommandScheduler.getInstance().schedule(hopper.spinTopIndexer());
 
         if (!readyToShoot()) {
           break;
         }
         if (wantedSuperState == WantedState.SHOOTING) {
+          currentSuperState = CurrentState.REVERSING;
+          reversingTimer.restart();
+        } else if (wantedSuperState == WantedState.PASSING) {
+          currentSuperState = CurrentState.PASSING;
+        }
+        break;
+      case REVERSING:
+        // Briefly reverse feeder and indexer to prevent jams before the shot
+        CommandScheduler.getInstance()
+            .schedule(
+                hopper.spinFullIndexer(
+                    -HopperConstants.INDEXER_VOLTAGE.get(),
+                    -HopperConstants.TOP_INDEXER_VOLTAGE.get()),
+                shooter.setFeederVoltage(
+                    () -> Volts.of(-ShooterConstants.FEEDER_REVERSE_VOLTAGE.get())));
+        if (reversingTimer.hasElapsed(0.1)) {
+          reversingTimer.stop();
           currentSuperState = CurrentState.SHOOTING;
           CommandScheduler.getInstance()
               .schedule(Commands.sequence(hopper.spinIndexer(), hopper.oscillateTopIndexer()));
-        } else if (wantedSuperState == WantedState.PASSING) {
-          currentSuperState = CurrentState.PASSING;
         }
         break;
       case PASSING:
@@ -244,7 +258,7 @@ public class Superstructure extends SubsystemBase {
   }
 
   public boolean readyToShoot() {
-    boolean shooterSpeedSetpoint = shooter.flywheelUpToSpeed();
+    boolean shooterSpeedSetpoint = shooter.flywheelUpToSpeed() && shooter.feederUpToSpeed();
     boolean hubSetpoint = checkHubTolerance();
 
     Logger.recordOutput("Superstructure/ShooterSpeedSetpoint", shooterSpeedSetpoint);
