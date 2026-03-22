@@ -160,6 +160,26 @@ class ShooterTest {
     assertEquals(0.0, captor.getValue().in(Volts), DELTA);
   }
 
+  // ── setFeederSpeed ────────────────────────────────────────────────────────
+
+  @Test
+  void setFeederSpeed_callsSetFeederSpeed() {
+    shooter.setFeederSpeed(RotationsPerSecond.of(50.0));
+
+    ArgumentCaptor<AngularVelocity> captor = ArgumentCaptor.forClass(AngularVelocity.class);
+    verify(mockShooterIO).setFeederSpeed(captor.capture());
+    assertEquals(50.0, captor.getValue().in(RotationsPerSecond), DELTA);
+  }
+
+  @Test
+  void setFeederSpeed_commandVersion_callsSetFeederSpeed() {
+    shooter.setFeederSpeed(() -> RotationsPerSecond.of(50.0)).initialize();
+
+    ArgumentCaptor<AngularVelocity> captor = ArgumentCaptor.forClass(AngularVelocity.class);
+    verify(mockShooterIO).setFeederSpeed(captor.capture());
+    assertEquals(50.0, captor.getValue().in(RotationsPerSecond), DELTA);
+  }
+
   // ── flywheelUpToSpeed ─────────────────────────────────────────────────────
 
   @Test

@@ -10,6 +10,7 @@ import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
@@ -31,6 +32,7 @@ public class IntakeRollerIOTalonFX implements IntakeRollerIO {
 
   public BetterStatusSignalCollection statusSignalCollector;
 
+  public StatusSignal<Angle> intakePosition;
   public StatusSignal<AngularVelocity> intakeVelocity;
   public StatusSignal<AngularAcceleration> intakeAcceleration;
   public StatusSignal<Current> intakeCurrent;
@@ -58,6 +60,7 @@ public class IntakeRollerIOTalonFX implements IntakeRollerIO {
     intakeFollowerTalon.setControl(
         new Follower(IntakeConstants.INTAKE_MOTOR_ID, MotorAlignmentValue.Opposed));
 
+    intakePosition = intakeTalon.getPosition();
     intakeVelocity = intakeTalon.getVelocity();
     intakeAcceleration = intakeTalon.getAcceleration();
     intakeCurrent = intakeTalon.getStatorCurrent();
@@ -66,7 +69,12 @@ public class IntakeRollerIOTalonFX implements IntakeRollerIO {
 
     statusSignalCollector =
         new BetterStatusSignalCollection(
-            intakeVelocity, intakeAcceleration, intakeCurrent, intakeVoltage, intakeTemperature);
+            intakePosition,
+            intakeVelocity,
+            intakeAcceleration,
+            intakeCurrent,
+            intakeVoltage,
+            intakeTemperature);
     statusSignalCollector.setUpdateFrequencyForAll(50);
     ParentDevice.optimizeBusUtilizationForAll(intakeTalon, intakeFollowerTalon);
   }
@@ -85,6 +93,7 @@ public class IntakeRollerIOTalonFX implements IntakeRollerIO {
     }
 
     inputs.intakeTalonConnected = intakeTalon.isConnected();
+    inputs.intakePosition = intakePosition.getValue();
     inputs.intakeVelocity = intakeVelocity.getValue();
     inputs.intakeAcceleration = intakeAcceleration.getValue();
     inputs.intakeAppliedCurrent = intakeCurrent.getValue();

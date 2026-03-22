@@ -17,6 +17,7 @@ public class Shooter extends SubsystemBase {
   public ShooterIOInputsAutoLogged inputs;
 
   public AngularVelocity targetFlywheelVelocity;
+  public AngularVelocity targetFeederVelocity;
 
   public Alert shooterMotorConnectedAlert =
       new Alert("Critical", "Shooter Flywheel Motor Disconnected", AlertType.kError);
@@ -28,12 +29,31 @@ public class Shooter extends SubsystemBase {
     this.inputs = new ShooterIOInputsAutoLogged();
 
     this.targetFlywheelVelocity = RotationsPerSecond.of(0);
+    this.targetFeederVelocity = RotationsPerSecond.of(0);
   }
 
   public void periodic() {
     io.updateInputs(inputs);
     Logger.processInputs("Shooter", inputs);
+
+    // Feeder velocity compensation: boost flywheel speed proportional to feeder deficit
+    AngularVelocity compensatedFlywheelVelocity = targetFlywheelVelocity;
+    if (targetFlywheelVelocity.in(RotationsPerSecond) > 0
+        && targetFeederVelocity.in(RotationsPerSecond) > 0) {
+      double targetRPS = targetFeederVelocity.in(RotationsPerSecond);
+      double feederError = targetRPS - inputs.feederVelocity.in(RotationsPerSecond);
+      double compensation = 0;
+      if (feederError > 0.15 * targetRPS) {
+        compensation = feederError * ShooterConstants.FEEDER_COMPENSATION_GAIN.get();
+      }
+      compensatedFlywheelVelocity =
+          RotationsPerSecond.of(targetFlywheelVelocity.in(RotationsPerSecond) + compensation);
+      io.setFlywheelSpeed(compensatedFlywheelVelocity);
+    }
+
     Logger.recordOutput("Shooter/targetVelocity", targetFlywheelVelocity.in(RotationsPerSecond));
+    Logger.recordOutput(
+        "Shooter/compensatedVelocity", compensatedFlywheelVelocity.in(RotationsPerSecond));
     Logger.recordOutput("Shooter/currentVelocity", inputs.flywheelVelocity.in(RotationsPerSecond));
 
     // update alerts based on motor connection status
@@ -63,6 +83,7 @@ public class Shooter extends SubsystemBase {
   public void setFlywheelVoltage(Voltage voltage) {
     io.setFlywheelVoltage(voltage);
     this.targetFlywheelVelocity = RotationsPerSecond.of(0);
+    this.targetFeederVelocity = RotationsPerSecond.of(0);
   }
 
   public Command setFeederVoltage(Supplier<Voltage> voltage) {
@@ -71,6 +92,16 @@ public class Shooter extends SubsystemBase {
 
   public void setFeederVoltage(Voltage voltage) {
     io.setFeederVoltage(voltage);
+    this.targetFeederVelocity = RotationsPerSecond.of(0);
+  }
+
+  public Command setFeederSpeed(Supplier<AngularVelocity> speed) {
+    return runOnce(() -> setFeederSpeed(speed.get()));
+  }
+
+  public void setFeederSpeed(AngularVelocity speed) {
+    io.setFeederSpeed(speed);
+    this.targetFeederVelocity = speed;
   }
 
   public boolean flywheelUpToSpeed() {

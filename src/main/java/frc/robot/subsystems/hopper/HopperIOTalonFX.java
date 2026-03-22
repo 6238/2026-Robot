@@ -131,7 +131,9 @@ public class HopperIOTalonFX implements HopperIO {
 
   public void setIndexerVoltage(Voltage voltage) {
     indexerTalon.setVoltage(voltage.in(Volts));
-    topIndexerTalon.setVoltage(voltage.in(Volts));
+    if (HopperConstants.USE_TOP_INDEXER) {
+      topIndexerTalon.setVoltage(voltage.in(Volts));
+    }
   }
 
   public void setTopIndexerVoltage(Voltage voltage) {

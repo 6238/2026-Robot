@@ -16,7 +16,7 @@ public class ShooterConstants {
   public static final int FLYWHEEL2_MOTOR_ID = 48;
   public static final int FEEDER_MOTOR_ID = 40;
 
-  public static final InvertedValue FLYWHEEL_INVERTED = InvertedValue.CounterClockwise_Positive;
+  public static final InvertedValue FLYWHEEL_INVERTED = InvertedValue.Clockwise_Positive;
   public static final InvertedValue FEEDER_INVERTED = InvertedValue.CounterClockwise_Positive;
   public static final CANBus CAN_BUS = CANBus.roboRIO();
 
@@ -32,8 +32,8 @@ public class ShooterConstants {
           0.01, // kI
           0.03, // kD
           0.0, // kA
-          0.19, // kV
-          0, // kS // 6000rpm 100rps 6v
+          0.123, // kV
+          0, // kS
           0.0, // kG
           "ShooterFlywheel");
 
@@ -51,10 +51,36 @@ public class ShooterConstants {
   public static final MotionMagicConfigs FLYWHEEL_MOTION_MAGIC_CONFIGS =
       new MotionMagicConfigs().withMotionMagicCruiseVelocity(90).withMotionMagicAcceleration(130);
 
+  public static final LoggedNetworkPIDFeedforwardGains FEEDER_GAINS =
+      new LoggedNetworkPIDFeedforwardGains(
+          0.7, // kP
+          0.0, // kI
+          0.04, // kD
+          0.0, // kA
+          0.123, // kV
+          0.0, // kS
+          0.0, // kG
+          "ShooterFeeder");
+
+  public static final LoggedNetworkPIDFeedforwardGains SIM_FEEDER_GAINS =
+      new LoggedNetworkPIDFeedforwardGains(
+          0.5, // kP
+          0.0, // kI
+          0.0, // kD
+          0.0, // kA
+          0.24, // kV
+          0.1, // kS
+          0.0, // kG
+          "ShooterFeeder");
+
+  // RPS of flywheel speed added per RPS of feeder deficit (feeder below target → boost flywheel)
+  public static final LoggedNetworkNumber FEEDER_COMPENSATION_GAIN =
+      new LoggedNetworkNumber("Shooter/FeederCompensationGain", 0.5);
+
   public static final LoggedNetworkNumber SPINUP_FLYWHEEL_SPEED =
       new LoggedNetworkNumber("Shooter/SpinupFlywheelRPM", 70);
-  public static final LoggedNetworkNumber FEEDER_VOLTAGE =
-      new LoggedNetworkNumber("Shooter/FeederVoltage", 8);
+  public static final LoggedNetworkNumber FEEDER_SPEED =
+      new LoggedNetworkNumber("Shooter/FeederRPS", 60);
   public static final LoggedNetworkNumber LEAD_TIME_SEC =
       new LoggedNetworkNumber("Shooter/LEAD_TIME", 0.1);
 
@@ -69,8 +95,8 @@ public class ShooterConstants {
   public static final double HUB_NEAR_DISTANCE_METERS = 3.0;
   public static final double HUB_HIGH_ROBOT_SPEED_MPS = 2.5;
 
-  public static final double FLYWHEEL_DIST_OFFSET = 20.0;
-  public static final double FLYWHEEL_DIST_SLOPE = 5.5;
+  public static final double FLYWHEEL_DIST_OFFSET = 19.3;
+  public static final double FLYWHEEL_DIST_SLOPE = 5.2;
 
   public static final double LEAD_TIME_DIST_OFFSET = 0.35; // 1.27 - 0.9125
   public static final double LEAD_TIME_DIST_SLOPE = 0.14;

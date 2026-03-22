@@ -120,8 +120,8 @@ public class RobotContainer {
             new Vision(
                 drive::addVisionMeasurement,
                 drive::getPose,
-                new VisionIOPhotonVision(camera0Name, robotToCamera0),
-                new VisionIOPhotonVision(camera1Name, robotToCamera1));
+                new VisionIOPhotonVision(camera0Name, robotToCamera0));
+        // new VisionIOPhotonVision(camera1Name, robotToCamera1));
         shooter = new Shooter(new ShooterIOTalonFX());
         hopper = new Hopper(new HopperIOTalonFX());
         intakeRoller =
@@ -219,7 +219,7 @@ public class RobotContainer {
   private Command shootCommand() {
     return Commands.sequence(
             intakeRoller.spinIntake(),
-            intakePivot.setIntakeAngle(() -> Degrees.of(50)),
+            intakePivot.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
             Commands.parallel(
                 DriveCommands.joystickDriveAtAngle(
                     drive,
@@ -227,18 +227,14 @@ public class RobotContainer {
                     () -> 0,
                     () -> superstructure.getShotSetpoint().robotPose.getRotation()),
                 superstructure.setWantedSuperStateCommand(
-                    () -> Superstructure.WantedState.SHOOTING)))
+                    () -> Superstructure.WantedState.SHOOTING),
+                Commands.sequence(
+                    Commands.waitUntil(() -> superstructure.readyToShoot()), intakePivot.crawlUp()),
+                intakeRoller.slingshot()))
         .withTimeout(4)
         .andThen(
             Commands.deadline(
-                Commands.waitSeconds(3),
-                Commands.repeatingSequence(
-                    intakePivot.setIntakeAngle(
-                        () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
-                    Commands.waitSeconds(0.2),
-                    intakePivot.setIntakeAngle(
-                        () -> Degrees.of(IntakeConstants.INTAKE_UP_VALUE.get())),
-                    Commands.waitSeconds(0.4))));
+                Commands.waitSeconds(3), intakePivot.crawlUp(), intakeRoller.slingshot()));
   }
 
   private SendableChooser<Command> buildAutoChooser()
@@ -334,8 +330,8 @@ public class RobotContainer {
     drive.setDefaultCommand(
         DriveCommands.joystickDrive(
             drive,
+            () -> controller.getLeftX(),
             () -> -controller.getLeftY(),
-            () -> -controller.getLeftX(),
             () -> -controller.getRightX()));
 
     // Reset Drive Rotation
@@ -359,18 +355,23 @@ public class RobotContainer {
         .rightBumper()
         .whileTrue(
             Commands.sequence(
-                intakePivot.setIntakeAngle(() -> Degrees.of(45)),
+                intakePivot.setIntakeAngle(
+                    () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
                 Commands.parallel(
                         DriveCommands.joystickDriveAtAngle(
                             drive,
+                            () -> controller.getLeftX(),
                             () -> -controller.getLeftY(),
-                            () -> -controller.getLeftX(),
                             () -> superstructure.getShotSetpoint().robotPose.getRotation()),
                         superstructure.setWantedSuperStateCommand(
                             () ->
                                 Constants.SHOULD_PASS.apply(drive.getPose().getX())
                                     ? Superstructure.WantedState.PASSING
-                                    : Superstructure.WantedState.SHOOTING))
+                                    : Superstructure.WantedState.SHOOTING),
+                        Commands.sequence(
+                            Commands.waitUntil(() -> superstructure.readyToShoot()),
+                            intakePivot.crawlUp()),
+                        intakeRoller.slingshot())
                     .until(() -> controller.leftBumper().getAsBoolean())))
         .onFalse(superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.IDLE));
 

@@ -49,6 +49,7 @@ public class ShooterIOTalonFX implements ShooterIO {
 
   // Control Requests
   public VelocityVoltage flywheelVelocityVoltage = new VelocityVoltage(0).withSlot(0);
+  public VelocityVoltage feederVelocityVoltage = new VelocityVoltage(0).withSlot(0);
 
   public ShooterIOTalonFX() {
     flywheelTalon = new TalonFX(ShooterConstants.FLYWHEEL_MOTOR_ID, ShooterConstants.CAN_BUS);
@@ -67,6 +68,7 @@ public class ShooterIOTalonFX implements ShooterIO {
 
     TalonFXConfiguration feederConfig = new TalonFXConfiguration();
     feederConfig.Feedback.SensorToMechanismRatio = ShooterConstants.FEEDER_GEARING;
+    feederConfig.Slot0 = ShooterConstants.FEEDER_GAINS.toSlot0Configs();
     feederConfig.MotorOutput.Inverted = ShooterConstants.FEEDER_INVERTED;
 
     AlertUtils.processCriticalAlert(
@@ -143,5 +145,9 @@ public class ShooterIOTalonFX implements ShooterIO {
 
   public void setFeederVoltage(Voltage voltage) {
     feederTalon.setVoltage(voltage.in(Volts));
+  }
+
+  public void setFeederSpeed(AngularVelocity speed) {
+    feederTalon.setControl(feederVelocityVoltage.withVelocity(speed));
   }
 }

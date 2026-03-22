@@ -52,6 +52,7 @@ public class ShooterIOSim implements ShooterIO {
 
     TalonFXConfiguration feederConfig = new TalonFXConfiguration();
     feederConfig.Feedback.SensorToMechanismRatio = ShooterConstants.FEEDER_GEARING;
+    feederConfig.Slot0 = ShooterConstants.SIM_FEEDER_GAINS.toSlot0Configs();
     feederConfig.MotorOutput.Inverted = ShooterConstants.FEEDER_INVERTED;
 
     tryUntilOk(
@@ -143,5 +144,11 @@ public class ShooterIOSim implements ShooterIO {
   @Override
   public void setFeederVoltage(Voltage voltage) {
     feederTalon.setVoltage(voltage.in(Volts));
+  }
+
+  @Override
+  public void setFeederSpeed(AngularVelocity speed) {
+    feederTalon.setControl(
+        new com.ctre.phoenix6.controls.VelocityVoltage(0).withVelocity(speed).withSlot(0));
   }
 }

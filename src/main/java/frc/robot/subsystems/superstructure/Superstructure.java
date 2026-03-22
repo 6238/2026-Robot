@@ -114,7 +114,7 @@ public class Superstructure extends SubsystemBase {
         CommandScheduler.getInstance()
             .schedule(
                 hopper.stopIndexer(),
-                shooter.setFeederVoltage(() -> Volts.of(ShooterConstants.FEEDER_VOLTAGE.get())),
+                shooter.setFeederVoltage(() -> Volts.of(0)),
                 shooter.setFlywheelRPM(() -> shotSetpoint.flywheelSpeed));
 
         // if (!readyToSpinTopIndexer()) {
@@ -139,11 +139,12 @@ public class Superstructure extends SubsystemBase {
         CommandScheduler.getInstance()
             .schedule(
                 shooter.setFlywheelRPM(() -> shotSetpoint.flywheelSpeed),
-                shooter.setFeederVoltage(() -> Volts.of(ShooterConstants.FEEDER_VOLTAGE.get())));
-        if (!checkHubTolerance()) {
-          currentSuperState = CurrentState.SPINNING_UP;
-          break;
-        }
+                shooter.setFeederSpeed(
+                    () -> RotationsPerSecond.of(ShooterConstants.FEEDER_SPEED.get())));
+        // if (!checkHubTolerance()) {
+        //   currentSuperState = CurrentState.SPINNING_UP;
+        //   break;
+        // }
 
         simulateShot();
         // if (indxererMode) {

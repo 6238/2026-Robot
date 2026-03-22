@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.util.AlertUtils;
 import org.littletonrobotics.junction.Logger;
@@ -109,6 +110,36 @@ public class IntakeRoller extends SubsystemBase {
           isJamReversing = false;
           io.setIntakeVoltage(Volts.of(0));
         });
+  }
+
+  /**
+   * Repeatedly pulls the roller back 0.5 turns slowly then releases at full speed, creating a
+   * slingshot effect to push fuel through while shooting.
+   */
+  public Command slingshot() {
+    double[] pullbackTarget = {0.0};
+    return Commands.repeatingSequence(
+            runOnce(
+                () -> {
+                  pullbackTarget[0] =
+                      inputs.intakePosition.in(Rotations)
+                          - IntakeConstants.SLINGSHOT_PULLBACK_ROTATIONS;
+                  desiredIntakeVelocity =
+                      RotationsPerSecond.of(-IntakeConstants.SLINGSHOT_PULLBACK_SPEED_RPS.get());
+                  io.setIntakeVelocity(desiredIntakeVelocity);
+                }),
+            Commands.waitUntil(() -> inputs.intakePosition.in(Rotations) <= pullbackTarget[0]),
+            runOnce(
+                () -> {
+                  desiredIntakeVelocity = RotationsPerSecond.of(IntakeConstants.INTAKE_SPEED.get());
+                  io.setIntakeVelocity(desiredIntakeVelocity);
+                }),
+            Commands.waitSeconds(IntakeConstants.SLINGSHOT_FORWARD_WAIT_SECONDS.get()))
+        .finallyDo(
+            () -> {
+              desiredIntakeVelocity = RotationsPerSecond.of(0);
+              io.setIntakeVoltage(Volts.of(0));
+            });
   }
 
   public Command reverseIntake() {

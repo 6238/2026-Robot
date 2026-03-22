@@ -47,6 +47,7 @@ public class SuperstructureTest {
     when(mockHopper.oscillateTopIndexer()).thenReturn(Commands.none());
     when(mockShooter.setFlywheelVoltage(any(Supplier.class))).thenReturn(Commands.none());
     when(mockShooter.setFeederVoltage(any(Supplier.class))).thenReturn(Commands.none());
+    when(mockShooter.setFeederSpeed(any(Supplier.class))).thenReturn(Commands.none());
     when(mockShooter.setFlywheelRPM(any(Supplier.class))).thenReturn(Commands.none());
     when(mockIntake.setIntakeAngle(any(Supplier.class))).thenReturn(Commands.none());
 

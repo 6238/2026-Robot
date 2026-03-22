@@ -2,6 +2,7 @@ package frc.robot.subsystems.intake;
 
 import static edu.wpi.first.units.Units.*;
 
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
@@ -14,6 +15,7 @@ public interface IntakeRollerIO {
   public static class IntakeRollerIOInputs {
     public boolean intakeTalonConnected = false;
 
+    public Angle intakePosition = Rotations.of(0.0);
     public AngularVelocity intakeVelocity = RotationsPerSecond.of(0.0);
     public AngularAcceleration intakeAcceleration = RotationsPerSecondPerSecond.of(0.0);
     public Current intakeAppliedCurrent = Amps.of(0.0);

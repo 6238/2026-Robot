@@ -31,5 +31,7 @@ public interface ShooterIO {
 
   public default void setFeederVoltage(Voltage voltage) {}
 
+  public default void setFeederSpeed(AngularVelocity speed) {}
+
   public default void updateInputs(ShooterIOInputs inputs) {}
 }
