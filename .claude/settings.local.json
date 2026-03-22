@@ -10,7 +10,11 @@
       "Bash(./gradlew build -x test)",
       "Bash(./gradlew classes)",
       "WebSearch",
-      "WebFetch(domain:docs.wpilib.org)"
+      "WebFetch(domain:docs.wpilib.org)",
+      "Bash(./gradlew test --tests \"subsystems.VisionIOPhotonVisionTest\")",
+      "Bash(./gradlew test --tests \"subsystems.VisionIOPhotonVisionTest\" --stacktrace)",
+      "Bash(./gradlew test --tests \"subsystems.VisionIOPhotonVisionTest\" --no-daemon)",
+      "Bash(./gradlew compileTestJava --no-daemon)"
     ]
   }
 }

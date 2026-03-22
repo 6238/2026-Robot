@@ -91,9 +91,8 @@ public class Vision extends SubsystemBase {
       List<Pose3d> robotPosesAccepted = new LinkedList<>();
       List<Pose3d> robotPosesRejected = new LinkedList<>();
 
-      // Add tag poses (front camera excludes tags 13 and 14)
+      // Add tag poses
       for (int tagId : inputs[cameraIndex].tagIds) {
-        if (cameraIndex == 0 && (tagId == 13 || tagId == 14)) continue;
         var tagPose = aprilTagLayout.getTagPose(tagId);
         if (tagPose.isPresent()) {
           tagPoses.add(tagPose.get());
@@ -102,48 +101,15 @@ public class Vision extends SubsystemBase {
 
       // Loop over pose observations
       for (var observation : inputs[cameraIndex].poseObservations) {
-        // Check if any visible tag is nearly straight-on (within threshold angle of robot heading)
-        Pose2d robotPose2d = observation.pose().toPose2d();
-        boolean anyStraightOn = false;
-        for (int tagId : inputs[cameraIndex].tagIds) {
-          var tagPose = aprilTagLayout.getTagPose(tagId);
-          if (tagPose.isPresent()) {
-            double angleToTag =
-                Math.atan2(
-                    tagPose.get().getY() - robotPose2d.getY(),
-                    tagPose.get().getX() - robotPose2d.getX());
-            double relAngle = angleToTag - robotPose2d.getRotation().getRadians();
-            // Normalize to [-pi, pi]
-            relAngle = Math.atan2(Math.sin(relAngle), Math.cos(relAngle));
-            if (Math.abs(relAngle) < Math.toRadians(straightOnAngleThresholdDeg)) {
-              anyStraightOn = true;
-              break;
-            }
-          }
-        }
-        double effectiveMaxDistance = anyStraightOn ? maxTagDistanceStraightOn : maxTagDistance;
-
         // Check whether to reject pose
-        // Front camera ignores tags 13 and 14
-        boolean hasIgnoredTag = false;
-        if (cameraIndex == 0) {
-          for (int tagId : inputs[cameraIndex].tagIds) {
-            if (tagId == 13 || tagId == 14 || tagId == 29 || tagId == 30) {
-              hasIgnoredTag = true;
-              break;
-            }
-          }
-        }
-
         boolean rejectPose =
-            hasIgnoredTag // Front camera ignores tags 13 and 14
-                || observation.tagCount() == 0 // Must have at least one tag
+            observation.tagCount() == 0 // Must have at least one tag
                 || (observation.tagCount() == 1
                     && observation.ambiguity() > maxAmbiguity) // Cannot be high ambiguity
                 || Math.abs(observation.pose().getZ())
                     > maxZError // Must have realistic Z coordinate
                 || observation.averageTagDistance()
-                    > effectiveMaxDistance // Must be within max tag distance
+                    > maxTagDistance // Must be within max tag distance
                 // Must be within the field boundaries
                 || observation.pose().getX() < 0.0
                 || observation.pose().getX() > aprilTagLayout.getFieldLength()

@@ -34,7 +34,7 @@ public class VisionConstants {
   // Robot to camera transforms
   public static Transform3d robotToCamera0 =
       new Transform3d(
-          new Translation3d(Inches.of(27 / 2), Inches.of(-8), Inches.of(13.5)),
+          new Translation3d(Inches.of(12.978), Inches.of(-8.173559), Inches.of(13.847121)),
           new Rotation3d(
               Degrees.of(5.35).in(Radians), Degrees.of(15).in(Radians), Degrees.of(0).in(Radians)));
 
@@ -51,9 +51,6 @@ public class VisionConstants {
   public static double maxAmbiguity = 0.07;
   public static double maxZError = 0.65;
   public static double maxTagDistance = 4; // Meters
-  public static double maxTagDistanceStraightOn =
-      10.0; // Meters, when tag is within straight-on angle threshold
-  public static double straightOnAngleThresholdDeg = 12.0; // Degrees
 
   // X coordinate exclusion zones (robot pose X ranges to reject, e.g. field structures)
   public static double[][] xExclusionZones = new double[][] {{4.0, 5.292}, {11.5, 12.5}};

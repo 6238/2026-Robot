@@ -64,7 +64,8 @@ public class VisionIOPhotonVision implements VisionIO {
       if (result.multitagResult.isPresent()) { // Multitag result
         var multitagResult = result.multitagResult.get();
 
-        Pose3d fieldToRobotBest = Pose3d.kZero.plus(multitagResult.estimatedPose.best).relativeTo(aprilTagLayout.getOrigin()).plus(robotToCamera.inverse());
+        Pose3d fieldToRobotBest =
+            computeRobotPose(multitagResult.estimatedPose.best, robotToCamera);
 
         double totalTagDistance;
 
@@ -163,5 +164,16 @@ public class VisionIOPhotonVision implements VisionIO {
     for (int id : tagIds) {
       inputs.tagIds[i++] = id;
     }
+  }
+
+  /**
+   * Converts a field-to-camera transform (from a multitag PNP result) into the robot pose in field
+   * coordinates by applying the inverse of the robot-to-camera transform.
+   */
+  public static Pose3d computeRobotPose(Transform3d fieldToCamera, Transform3d robotToCamera) {
+    return Pose3d.kZero
+        .plus(fieldToCamera)
+        .relativeTo(aprilTagLayout.getOrigin())
+        .plus(robotToCamera.inverse());
   }
 }
