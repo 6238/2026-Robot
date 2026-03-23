@@ -51,6 +51,9 @@ public class SuperstructureTest {
     when(mockShooter.setFlywheelRPM(any(Supplier.class))).thenReturn(Commands.none());
     when(mockIntake.setIntakeAngle(any(Supplier.class))).thenReturn(Commands.none());
 
+    // Default: feeder up to speed (tests that need it false can override per-test)
+    when(mockShooter.feederUpToSpeed()).thenReturn(true);
+
     // Default: drive pose/rotation at origin — within the 3.5° hub tolerance
     when(mockDrive.getPose()).thenReturn(new Pose2d());
     when(mockDrive.getRotation()).thenReturn(Rotation2d.kZero);
@@ -133,6 +136,7 @@ public class SuperstructureTest {
   @Test
   void Spinning_Up_To_Shooting_Transition() {
     when(mockShooter.flywheelUpToSpeed()).thenReturn(true);
+    // feederUpToSpeed() defaults to true in @BeforeEach
     // drive.getRotation() = 0° (within tolerance) — already set in setup
 
     superstructure.wantedSuperState = WantedState.SHOOTING;
@@ -140,7 +144,8 @@ public class SuperstructureTest {
 
     superstructure.applyStates();
 
-    assertEquals(CurrentState.SHOOTING, superstructure.currentSuperState);
+    // SPINNING_UP → REVERSING (brief feeder/indexer reversal) → SHOOTING
+    assertEquals(CurrentState.REVERSING, superstructure.currentSuperState);
   }
 
   @Test

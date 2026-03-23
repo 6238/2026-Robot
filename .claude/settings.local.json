@@ -15,7 +15,8 @@
       "Bash(./gradlew test --tests \"subsystems.VisionIOPhotonVisionTest\" --stacktrace)",
       "Bash(./gradlew test --tests \"subsystems.VisionIOPhotonVisionTest\" --no-daemon)",
       "Bash(./gradlew compileTestJava --no-daemon)",
-      "Bash(./gradlew classes spotlessApply)"
+      "Bash(./gradlew classes spotlessApply)",
+      "Bash(./gradlew test --tests \"subsystems.SuperstructureTest.readyToShoot_returnsFalse_whenRotationOutOfTolerance\" --info)"
     ]
   }
 }

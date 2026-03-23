@@ -27,6 +27,7 @@ import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.sim.AIOpponentRobotSim;
+import frc.robot.testmode.TestModeHttpServer;
 import frc.robot.subsystems.shooter.ShooterConstants;
 import frc.robot.subsystems.superstructure.ShotPlanner.ShotSetpoint;
 import frc.robot.util.RobotIdentity;
@@ -242,13 +243,20 @@ public class Robot extends LoggedRobot {
   /** This function is called once when test mode is enabled. */
   @Override
   public void testInit() {
-    // Cancels all running commands at the start of test mode.
     CommandScheduler.getInstance().cancelAll();
+    TestModeHttpServer.start();
+    robotContainer.getTestCommand().schedule();
   }
 
   /** This function is called periodically during test mode. */
   @Override
   public void testPeriodic() {}
+
+  /** This function is called once when test mode is exited. */
+  @Override
+  public void testExit() {
+    TestModeHttpServer.stop();
+  }
 
   /** This function is caled once when the robot is first started up. */
   @Override

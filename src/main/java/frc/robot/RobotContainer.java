@@ -61,6 +61,7 @@ import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOPhotonVision;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
+import frc.robot.testmode.TestModeRunner;
 import frc.robot.util.AlertUtils;
 import frc.robot.util.AutomaticCommands;
 import frc.robot.util.BatteryLogger;
@@ -467,6 +468,12 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     return autoChooser.get();
+  }
+
+  /** Returns the test-mode command. Called once per {@code testInit()}. */
+  public Command getTestCommand() {
+    return new TestModeRunner()
+        .buildTestSequence(drive, shooter, hopper, intakeRoller, intakePivot);
   }
 
   public Drive getDriveSubsystem() {

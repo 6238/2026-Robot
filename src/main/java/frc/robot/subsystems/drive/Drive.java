@@ -385,6 +385,23 @@ public class Drive extends SubsystemBase {
     return output;
   }
 
+  /** Returns the drive motor velocity in rad/s for the given module index. Used by test mode. */
+  public double getModuleDriveVelocityRadPerSec(int index) {
+    return modules[index].getDriveVelocityRadPerSec();
+  }
+
+  /** Returns the steer motor velocity in rad/s for the given module index. Used by test mode. */
+  public double getModuleSteerVelocityRadPerSec(int index) {
+    return modules[index].getSteerVelocityRadPerSec();
+  }
+
+  /** Runs all steer motors open-loop. Used by test mode. */
+  public void runSteerOpenLoop(double output) {
+    for (int i = 0; i < 4; i++) {
+      modules[i].runSteerOpenLoop(output);
+    }
+  }
+
   /** Returns the current odometry pose. */
   @AutoLogOutput(key = "Odometry/Robot")
   public Pose2d getPose() {

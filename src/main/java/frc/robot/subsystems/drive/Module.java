@@ -157,6 +157,21 @@ public class Module {
     return Units.radiansToRotations(inputs.driveVelocityRadPerSec);
   }
 
+  /** Returns the drive motor velocity in rad/s. Used by test mode. */
+  public double getDriveVelocityRadPerSec() {
+    return inputs.driveVelocityRadPerSec;
+  }
+
+  /** Returns the steer motor velocity in rad/s. Used by test mode. */
+  public double getSteerVelocityRadPerSec() {
+    return inputs.turnVelocityRadPerSec;
+  }
+
+  /** Runs the steer motor open-loop. Used by test mode. */
+  public void runSteerOpenLoop(double output) {
+    io.setTurnOpenLoop(output);
+  }
+
   public double getDriveSupplyCurrentAmps() {
     return inputs.driveSupplyCurrentAmps;
   }
