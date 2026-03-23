@@ -97,7 +97,7 @@ public class AIOpponentRobotSim extends SubsystemBase {
     // Wrap it with the 2026 self-controlled helper (API varies by version).
     this.drive = new SelfControlledSwerveDriveSimulation(swerveDriveSimulation);
 
-    // Intake sim attached to the drivetrain; “touch it, get it” behavior. [page:0]
+    // Intake sim attached to the drivetrain; "touch it, get it" behavior. [page:0]
     this.fuelIntake =
         IntakeSimulation.InTheFrameIntake(
             "Fuel", // game piece type string

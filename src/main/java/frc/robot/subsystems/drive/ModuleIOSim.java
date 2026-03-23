@@ -108,7 +108,7 @@ public class ModuleIOSim implements ModuleIO {
     inputs.drivePositionRad = drivePosRad;
     inputs.driveVelocityRadPerSec = driveVelRadPerSec;
     inputs.driveAppliedVolts = driveVoltsClamped;
-    inputs.driveCurrentAmps = 0.0;
+    inputs.driveSupplyCurrentAmps = 0.0;
 
     inputs.turnConnected = true;
     inputs.turnEncoderConnected = true;
@@ -117,7 +117,7 @@ public class ModuleIOSim implements ModuleIO {
 
     inputs.turnVelocityRadPerSec = turnVelRadPerSec;
     inputs.turnAppliedVolts = turnVoltsClamped;
-    inputs.turnCurrentAmps = 0.0;
+    inputs.turnSupplyCurrentAmps = 0.0;
 
     inputs.odometryTimestamps = new double[] {now};
     inputs.odometryDrivePositionsRad = new double[] {inputs.drivePositionRad};

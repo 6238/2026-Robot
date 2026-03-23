@@ -8,6 +8,7 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
+import frc.robot.util.ExtrapolatingDoubleTreeMap;
 import frc.robot.util.LoggedNetworkPIDFeedforwardGains;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
@@ -28,12 +29,12 @@ public class ShooterConstants {
 
   public static final LoggedNetworkPIDFeedforwardGains FLYWHEEL_GAINS =
       new LoggedNetworkPIDFeedforwardGains(
-          0.20, // kP
-          0.01, // kI
-          0.03, // kD
+          0.065, // kP
+          0.0, // kI
+          0.02, // kD
           0.0, // kA
           0.12, // kV
-          0, // kS
+          0.01, // kS
           0.0, // kG
           "ShooterFlywheel");
 
@@ -42,7 +43,7 @@ public class ShooterConstants {
           0.3, // kP
           0.0, // kI
           0.08, // kD
-          0.0, // kA
+          1.85, // kA
           0.24, // kV
           0.1, // kS // 6000rpm 100rps 6v
           0.0, // kG
@@ -56,7 +57,7 @@ public class ShooterConstants {
           0.7, // kP
           0.0, // kI
           0.04, // kD
-          0.0, // kA
+          1.85, // kA
           0.123, // kV
           0.0, // kS
           0.0, // kG
@@ -98,15 +99,30 @@ public class ShooterConstants {
   public static final double HUB_NEAR_DISTANCE_METERS = 3.0;
   public static final double HUB_HIGH_ROBOT_SPEED_MPS = 2.5;
 
-  public static final double FLYWHEEL_DIST_OFFSET = 19.6;
-  public static final double FLYWHEEL_DIST_SLOPE = 5.3;
+  // distance (m) → flywheel speed (RPS)
+  public static final ExtrapolatingDoubleTreeMap FLYWHEEL_MAP;
+  // distance (m) → lead time (s)
+  public static final ExtrapolatingDoubleTreeMap LEAD_TIME_MAP;
+  // distance (m) → passing flywheel speed (RPS)
+  public static final ExtrapolatingDoubleTreeMap PASSING_FLYWHEEL_MAP;
+  // distance (m) → passing lead time (s)
+  public static final ExtrapolatingDoubleTreeMap PASSING_LEAD_TIME_MAP;
 
-  public static final double LEAD_TIME_DIST_OFFSET = 0.35; // 1.27 - 0.9125
-  public static final double LEAD_TIME_DIST_SLOPE = 0.14;
+  static {
+    FLYWHEEL_MAP = new ExtrapolatingDoubleTreeMap();
+    FLYWHEEL_MAP.put(1.5, 27.2);
+    FLYWHEEL_MAP.put(3.0, 35.0);
 
-  public static final double PASSING_FLYWHEEL_DIST_OFFSET = 27.8;
-  public static final double PASSING_FLYWHEEL_DIST_SLOPE = 3.8;
+    LEAD_TIME_MAP = new ExtrapolatingDoubleTreeMap();
+    LEAD_TIME_MAP.put(1.5, 0.56);
+    LEAD_TIME_MAP.put(3.0, 0.77);
 
-  public static final double PASSING_LEAD_TIME_DIST_OFFSET = 0.45; // 1.27 - 0.9125
-  public static final double PASSING_LEAD_TIME_DIST_SLOPE = 0.2;
+    PASSING_FLYWHEEL_MAP = new ExtrapolatingDoubleTreeMap();
+    PASSING_FLYWHEEL_MAP.put(1.5, 33.5);
+    PASSING_FLYWHEEL_MAP.put(3.0, 39.2);
+
+    PASSING_LEAD_TIME_MAP = new ExtrapolatingDoubleTreeMap();
+    PASSING_LEAD_TIME_MAP.put(1.5, 28.1);
+    PASSING_LEAD_TIME_MAP.put(3.0, 28.4);
+  }
 }

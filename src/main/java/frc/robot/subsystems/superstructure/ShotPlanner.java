@@ -24,9 +24,7 @@ public class ShotPlanner {
 
     Translation2d hubTranslation2d = Constants.HUB_POSE_3D.get().getTranslation().toTranslation2d();
     double distanceCurrently = drivePose.getTranslation().getDistance(hubTranslation2d);
-    double leadTimeSec =
-        ShooterConstants.LEAD_TIME_DIST_OFFSET
-            + ShooterConstants.LEAD_TIME_DIST_SLOPE * distanceCurrently;
+    double leadTimeSec = ShooterConstants.LEAD_TIME_MAP.get(distanceCurrently);
     Translation2d predictedTranslation =
         hubTranslation2d.plus(
             new Translation2d(
@@ -39,9 +37,7 @@ public class ShotPlanner {
 
     double predictedDistanceM = drivePose.getTranslation().getDistance(predictedTranslation);
 
-    double flywheelSpeed =
-        ShooterConstants.FLYWHEEL_DIST_OFFSET
-            + ShooterConstants.FLYWHEEL_DIST_SLOPE * predictedDistanceM;
+    double flywheelSpeed = ShooterConstants.FLYWHEEL_MAP.get(predictedDistanceM);
 
     Pose2d lookAtHubPose2d =
         new Pose2d(
@@ -67,9 +63,7 @@ public class ShotPlanner {
 
     Translation2d targetTranslation2d = targetPassPoint.getTranslation();
     double distanceCurrently = drivePose.getTranslation().getDistance(targetTranslation2d);
-    double leadTimeSec =
-        ShooterConstants.PASSING_FLYWHEEL_DIST_OFFSET
-            + ShooterConstants.PASSING_LEAD_TIME_DIST_SLOPE * distanceCurrently;
+    double leadTimeSec = ShooterConstants.PASSING_LEAD_TIME_MAP.get(distanceCurrently);
     Translation2d predictedTranslation =
         targetTranslation2d.plus(
             new Translation2d(
@@ -82,9 +76,7 @@ public class ShotPlanner {
 
     double predictedDistanceM = drivePose.getTranslation().getDistance(predictedTranslation);
 
-    double flywheelSpeed =
-        ShooterConstants.PASSING_FLYWHEEL_DIST_OFFSET
-            + ShooterConstants.PASSING_FLYWHEEL_DIST_SLOPE * predictedDistanceM;
+    double flywheelSpeed = ShooterConstants.PASSING_FLYWHEEL_MAP.get(predictedDistanceM);
 
     Pose2d lookAtHubPose2d =
         new Pose2d(

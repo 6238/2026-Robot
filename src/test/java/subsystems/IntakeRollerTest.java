@@ -197,7 +197,7 @@ class IntakeRollerTest {
               IntakeRollerIOInputs inputs = inv.getArgument(0);
               inputs.intakeTalonConnected = true;
               inputs.intakeVelocity = RotationsPerSecond.of(1.0);
-              inputs.intakeAppliedCurrent = Amps.of(60.0);
+              inputs.intakeSupplyCurrent = Amps.of(60.0);
               return null;
             })
         .when(mockIntakeRollerIO)
@@ -210,7 +210,7 @@ class IntakeRollerTest {
               IntakeRollerIOInputs inputs = inv.getArgument(0);
               inputs.intakeTalonConnected = true;
               inputs.intakeVelocity = RotationsPerSecond.of(20.0);
-              inputs.intakeAppliedCurrent = Amps.of(10.0);
+              inputs.intakeSupplyCurrent = Amps.of(10.0);
               return null;
             })
         .when(mockIntakeRollerIO)

@@ -121,12 +121,12 @@ public class ShooterIOSim implements ShooterIO {
     inputs.flywheelVelocity = flywheelTalon.getVelocity().getValue();
     inputs.flywheelAcceleration = flywheelTalon.getAcceleration().getValue();
     inputs.flywheelAppliedVoltage = flywheelTalon.getMotorVoltage().getValue();
-    inputs.flywheelAppliedCurrent = flywheelTalon.getSupplyCurrent().getValue();
+    inputs.flywheelSupplyCurrent = flywheelTalon.getSupplyCurrent().getValue();
 
     inputs.feederVelocity = feederTalon.getVelocity().getValue();
     inputs.feederAcceleration = feederTalon.getAcceleration().getValue();
     inputs.feederAppliedVoltage = feederTalon.getMotorVoltage().getValue();
-    inputs.feederAppliedCurrent = feederTalon.getSupplyCurrent().getValue();
+    inputs.feederSupplyCurrent = feederTalon.getSupplyCurrent().getValue();
   }
 
   @Override

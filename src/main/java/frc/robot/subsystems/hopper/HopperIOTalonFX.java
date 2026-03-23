@@ -47,6 +47,10 @@ public class HopperIOTalonFX implements HopperIO {
     TalonFXConfiguration indexerConfig = new TalonFXConfiguration();
     indexerConfig.Feedback.SensorToMechanismRatio = HopperConstants.INDEXER_GEARING;
     indexerConfig.MotorOutput.Inverted = HopperConstants.INDEXER_MOTOR_DIRECTION;
+    indexerConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
+    indexerConfig.CurrentLimits.SupplyCurrentLimit = 30;
+    indexerConfig.CurrentLimits.SupplyCurrentLowerLimit = 20;
+    indexerConfig.CurrentLimits.SupplyCurrentLowerTime = 0.35;
 
     if (tryUntilOk(
         Constants.MAX_PHEONIX_RETRIES, () -> indexerTalon.getConfigurator().apply(indexerConfig))) {
@@ -69,6 +73,10 @@ public class HopperIOTalonFX implements HopperIO {
       TalonFXConfiguration topIndexerConfig = new TalonFXConfiguration();
       topIndexerConfig.Feedback.SensorToMechanismRatio = HopperConstants.TOP_INDEXER_GEARING;
       topIndexerConfig.MotorOutput.Inverted = HopperConstants.TOP_INDEXER_MOTOR_DIRECTION;
+      topIndexerConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
+      topIndexerConfig.CurrentLimits.SupplyCurrentLimit = 30;
+      topIndexerConfig.CurrentLimits.SupplyCurrentLowerLimit = 20;
+      topIndexerConfig.CurrentLimits.SupplyCurrentLowerTime = 0.35;
 
       AlertUtils.processCriticalAlert(
           indexerConfigAlert,

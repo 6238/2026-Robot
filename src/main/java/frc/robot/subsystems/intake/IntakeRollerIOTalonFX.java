@@ -50,6 +50,10 @@ public class IntakeRollerIOTalonFX implements IntakeRollerIO {
     intakeConfig.Feedback.SensorToMechanismRatio = IntakeConstants.INTAKE_GEARING;
     intakeConfig.MotorOutput.Inverted = IntakeConstants.INTAKE_MOTOR_DIRECTION;
     intakeConfig.Slot0 = IntakeConstants.INTAKE_GAINS.toSlot0Configs();
+    intakeConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
+    intakeConfig.CurrentLimits.SupplyCurrentLimit = 30;
+    intakeConfig.CurrentLimits.SupplyCurrentLowerLimit = 20;
+    intakeConfig.CurrentLimits.SupplyCurrentLowerTime = 0.35;
 
     AlertUtils.processCriticalAlert(
         intakeConfigAlert,

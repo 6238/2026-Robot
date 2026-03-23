@@ -210,6 +210,7 @@ public class RobotContainer {
           "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
       tempChooser.addOption(
           "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+      tempChooser.addOption("Flywheel SysId", shooter.flywheelSysId());
     } catch (Exception e) {
       e.printStackTrace();
       Alert alert = new Alert("auto failed to load", AlertType.kError);
@@ -239,11 +240,11 @@ public class RobotContainer {
                     () -> Superstructure.WantedState.SHOOTING),
                 Commands.sequence(
                     Commands.waitUntil(() -> superstructure.readyToShoot()), intakePivot.crawlUp()),
-                intakeRoller.slingshot()))
+                intakeRoller.spinIntake()))
         .withTimeout(4)
         .andThen(
             Commands.deadline(
-                Commands.waitSeconds(3), intakePivot.crawlUp(), intakeRoller.slingshot()));
+                Commands.waitSeconds(3), intakePivot.crawlUp(), intakeRoller.spinIntake()));
   }
 
   private SendableChooser<Command> buildAutoChooser()
@@ -380,7 +381,7 @@ public class RobotContainer {
                         Commands.sequence(
                             Commands.waitUntil(() -> superstructure.readyToShoot()),
                             intakePivot.crawlUp()),
-                        intakeRoller.slingshot())
+                        intakeRoller.spinIntake())
                     .until(() -> controller.leftBumper().getAsBoolean())))
         .onFalse(superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.IDLE));
 

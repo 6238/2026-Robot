@@ -30,6 +30,7 @@ public class ShooterIOTalonFX implements ShooterIO {
 
   // Motor Controllers
   private TalonFX flywheelTalon;
+  private TalonFX flywheel2Talon;
   private TalonFX feederTalon;
 
   // Status Signal Management
@@ -39,6 +40,7 @@ public class ShooterIOTalonFX implements ShooterIO {
   public StatusSignal<AngularVelocity> flywheelVelocity;
   public StatusSignal<AngularAcceleration> flywheelAcceleration;
   public StatusSignal<Current> flywheelSupplyCurent;
+  public StatusSignal<Current> flywheel2SupplyCurent;
   public StatusSignal<Voltage> flywheelAppliedVoltage;
 
   // Feeder Inputs
@@ -62,8 +64,8 @@ public class ShooterIOTalonFX implements ShooterIO {
     flywheelConfig.MotionMagic = ShooterConstants.FLYWHEEL_MOTION_MAGIC_CONFIGS;
     flywheelConfig.MotorOutput.Inverted = ShooterConstants.FLYWHEEL_INVERTED;
 
-    TalonFX secondFlywheelMotor = new TalonFX(ShooterConstants.FLYWHEEL2_MOTOR_ID);
-    secondFlywheelMotor.setControl(
+    flywheel2Talon = new TalonFX(ShooterConstants.FLYWHEEL2_MOTOR_ID, ShooterConstants.CAN_BUS);
+    flywheel2Talon.setControl(
         new Follower(ShooterConstants.FLYWHEEL_MOTOR_ID, MotorAlignmentValue.Opposed));
 
     TalonFXConfiguration feederConfig = new TalonFXConfiguration();
@@ -86,6 +88,7 @@ public class ShooterIOTalonFX implements ShooterIO {
     flywheelVelocity = flywheelTalon.getVelocity();
     flywheelAcceleration = flywheelTalon.getAcceleration();
     flywheelSupplyCurent = flywheelTalon.getSupplyCurrent();
+    flywheel2SupplyCurent = flywheel2Talon.getSupplyCurrent();
     flywheelAppliedVoltage = flywheelTalon.getMotorVoltage();
 
     feederVelocity = feederTalon.getVelocity();
@@ -99,13 +102,14 @@ public class ShooterIOTalonFX implements ShooterIO {
             flywheelVelocity,
             flywheelAcceleration,
             flywheelSupplyCurent,
+            flywheel2SupplyCurent,
             flywheelAppliedVoltage,
             feederVelocity,
             feederAcceleration,
             feederSupplyCurent,
             feederAppliedVoltage);
     statusSignalCollector.setUpdateFrequencyForAll(50);
-    ParentDevice.optimizeBusUtilizationForAll(flywheelTalon, feederTalon);
+    ParentDevice.optimizeBusUtilizationForAll(flywheelTalon, flywheel2Talon, feederTalon);
   }
 
   public void updateInputs(ShooterIOInputs inputs) {
@@ -127,6 +131,7 @@ public class ShooterIOTalonFX implements ShooterIO {
     inputs.flywheelVelocity = flywheelVelocity.getValue();
     inputs.flywheelAcceleration = flywheelAcceleration.getValue();
     inputs.flywheelSupplyCurrent = flywheelSupplyCurent.getValue();
+    inputs.flywheel2SupplyCurrent = flywheel2SupplyCurent.getValue();
     inputs.flywheelAppliedVoltage = flywheelAppliedVoltage.getValue();
 
     inputs.feederVelocity = feederVelocity.getValue();
