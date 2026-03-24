@@ -51,23 +51,23 @@ public class Shooter extends SubsystemBase {
     Logger.processInputs("Shooter", inputs);
 
     // Feeder velocity compensation: boost flywheel speed proportional to feeder deficit
-    AngularVelocity compensatedFlywheelVelocity = targetFlywheelVelocity;
-    if (targetFlywheelVelocity.in(RotationsPerSecond) > 0
-        && targetFeederVelocity.in(RotationsPerSecond) > 0) {
-      double targetRPS = targetFeederVelocity.in(RotationsPerSecond);
-      double feederError = targetRPS - inputs.feederVelocity.in(RotationsPerSecond);
-      double compensation = 0;
-      if (feederError > 0.15 * targetRPS) {
-        compensation = feederError * ShooterConstants.FEEDER_COMPENSATION_GAIN.get();
-      }
-      compensatedFlywheelVelocity =
-          RotationsPerSecond.of(targetFlywheelVelocity.in(RotationsPerSecond) + compensation);
-      io.setFlywheelSpeed(compensatedFlywheelVelocity);
-    }
+    // AngularVelocity compensatedFlywheelVelocity = targetFlywheelVelocity;
+    // if (targetFlywheelVelocity.in(RotationsPerSecond) > 0
+    //     && targetFeederVelocity.in(RotationsPerSecond) > 0) {
+    //   double targetRPS = targetFeederVelocity.in(RotationsPerSecond);
+    //   double feederError = targetRPS - inputs.feederVelocity.in(RotationsPerSecond);
+    //   double compensation = 0;
+    //   if (feederError > 0.15 * targetRPS) {
+    //     compensation = feederError * ShooterConstants.FEEDER_COMPENSATION_GAIN.get();
+    //   }
+    //   compensatedFlywheelVelocity =
+    //       RotationsPerSecond.of(targetFlywheelVelocity.in(RotationsPerSecond) + compensation);
+    //   io.setFlywheelSpeed(compensatedFlywheelVelocity);
+    // }
 
     Logger.recordOutput("Shooter/targetVelocity", targetFlywheelVelocity.in(RotationsPerSecond));
-    Logger.recordOutput(
-        "Shooter/compensatedVelocity", compensatedFlywheelVelocity.in(RotationsPerSecond));
+    // Logger.recordOutput(
+    //     "Shooter/compensatedVelocity", compensatedFlywheelVelocity.in(RotationsPerSecond));
     Logger.recordOutput("Shooter/currentVelocity", inputs.flywheelVelocity.in(RotationsPerSecond));
 
     if (batteryLogger != null) {
@@ -158,7 +158,7 @@ public class Shooter extends SubsystemBase {
     final double QUASISTATIC_RAMP_RATE = 0.75; // V/s
     final double QUASISTATIC_DURATION = 12.0; // seconds (~9 V at end)
     final double QUASISTATIC_MIN_VELOCITY = 1.0; // RPS, skip dead-zone data
-    final double SPINDOWN_WAIT = 3.0; // seconds between phases
+    final double SPINDOWN_WAIT = 15.0; // seconds between phases
     final double DYNAMIC_VOLTAGE = 6.0; // V
     final double DYNAMIC_DURATION = 3.0; // seconds
 
@@ -175,7 +175,7 @@ public class Shooter extends SubsystemBase {
 
     return Commands.sequence(
             // ── Phase 1: Quasistatic ramp ────────────────────────────────────
-            Commands.runOnce(
+            runOnce(
                 () -> {
                   qsVoltages.clear();
                   qsVelocities.clear();
@@ -184,20 +184,18 @@ public class Shooter extends SubsystemBase {
                   startTime[0] = Timer.getFPGATimestamp();
                   System.out.println("[FlywheelSysId] Phase 1: quasistatic ramp starting...");
                 }),
-            Commands.run(
-                    () -> {
-                      double elapsed = Timer.getFPGATimestamp() - startTime[0];
-                      double voltage = QUASISTATIC_RAMP_RATE * elapsed;
-                      io.setFlywheelVoltage(Volts.of(voltage));
-                      double vel = inputs.flywheelVelocity.in(RotationsPerSecond);
-                      if (vel > QUASISTATIC_MIN_VELOCITY) {
-                        qsVoltages.add(inputs.flywheelAppliedVoltage.in(Volts));
-                        qsVelocities.add(vel);
-                      }
-                    },
-                    this)
+            run(() -> {
+                  double elapsed = Timer.getFPGATimestamp() - startTime[0];
+                  double voltage = QUASISTATIC_RAMP_RATE * elapsed;
+                  io.setFlywheelVoltage(Volts.of(voltage));
+                  double vel = inputs.flywheelVelocity.in(RotationsPerSecond);
+                  if (vel > QUASISTATIC_MIN_VELOCITY) {
+                    qsVoltages.add(inputs.flywheelAppliedVoltage.in(Volts));
+                    qsVelocities.add(vel);
+                  }
+                })
                 .withTimeout(QUASISTATIC_DURATION),
-            Commands.runOnce(
+            runOnce(
                 () -> {
                   io.setFlywheelVoltage(Volts.of(0));
                   System.out.println(
@@ -208,7 +206,7 @@ public class Shooter extends SubsystemBase {
             Commands.waitSeconds(SPINDOWN_WAIT),
 
             // ── Phase 2: Dynamic step ─────────────────────────────────────────
-            Commands.runOnce(
+            runOnce(
                 () -> {
                   dynVoltages.clear();
                   dynVelocities.clear();
@@ -218,26 +216,24 @@ public class Shooter extends SubsystemBase {
                   prevVelocity[0] = inputs.flywheelVelocity.in(RotationsPerSecond);
                   System.out.println("[FlywheelSysId] Phase 2: dynamic step starting...");
                 }),
-            Commands.run(
-                    () -> {
-                      io.setFlywheelVoltage(Volts.of(DYNAMIC_VOLTAGE));
-                      double now = Timer.getFPGATimestamp();
-                      double dt = now - prevTime[0];
-                      double vel = inputs.flywheelVelocity.in(RotationsPerSecond);
-                      if (dt > 0.005) {
-                        double accel = (vel - prevVelocity[0]) / dt;
-                        dynVoltages.add(inputs.flywheelAppliedVoltage.in(Volts));
-                        dynVelocities.add(vel);
-                        dynAccelerations.add(accel);
-                        prevTime[0] = now;
-                        prevVelocity[0] = vel;
-                      }
-                    },
-                    this)
+            run(() -> {
+                  io.setFlywheelVoltage(Volts.of(DYNAMIC_VOLTAGE));
+                  double now = Timer.getFPGATimestamp();
+                  double dt = now - prevTime[0];
+                  double vel = inputs.flywheelVelocity.in(RotationsPerSecond);
+                  if (dt > 0.005) {
+                    double accel = (vel - prevVelocity[0]) / dt;
+                    dynVoltages.add(inputs.flywheelAppliedVoltage.in(Volts));
+                    dynVelocities.add(vel);
+                    dynAccelerations.add(accel);
+                    prevTime[0] = now;
+                    prevVelocity[0] = vel;
+                  }
+                })
                 .withTimeout(DYNAMIC_DURATION),
 
             // ── Compute and print results ──────────────────────────────────────
-            Commands.runOnce(
+            runOnce(
                 () -> {
                   io.setFlywheelVoltage(Volts.of(0));
                   targetFlywheelVelocity = RotationsPerSecond.of(0);

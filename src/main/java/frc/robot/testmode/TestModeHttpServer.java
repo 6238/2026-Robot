@@ -23,8 +23,7 @@ public class TestModeHttpServer {
             + "<p>Refresh this page when the test sequence completes.</p>"
             + "</body></html>");
     WebServer.start(PORT, SERVE_DIR);
-    System.out.println(
-        "[TestMode] Report server started → http://roborio-6238-frc.local:" + PORT);
+    System.out.println("[TestMode] Report server started → http://roborio-6238-frc.local:" + PORT);
   }
 
   /** Stop the HTTP server. Called when leaving test mode. */

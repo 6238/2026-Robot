@@ -89,18 +89,35 @@ public class Superstructure extends SubsystemBase {
   public void handleWantedState() {
     switch (wantedSuperState) {
       case IDLE:
-        currentSuperState = CurrentState.IDLE;
+        if (currentSuperState != CurrentState.IDLE) {
+          currentSuperState = CurrentState.IDLE;
+          CommandScheduler.getInstance()
+              .schedule(
+                  hopper.stopFullIndexer(),
+                  shooter.setFlywheelVoltage(() -> Volts.of(0)),
+                  shooter.setFeederVoltage(() -> Volts.of(0)));
+        }
         break;
       case SHOOTING:
         if (currentSuperState != CurrentState.SHOOTING
-            && currentSuperState != CurrentState.REVERSING)
+            && currentSuperState != CurrentState.REVERSING
+            && currentSuperState != CurrentState.SPINNING_UP)
           currentSuperState = CurrentState.SPINNING_UP;
         break;
       case PASSING:
-        if (currentSuperState != CurrentState.PASSING) currentSuperState = CurrentState.SPINNING_UP;
+        if (currentSuperState != CurrentState.PASSING
+            && currentSuperState != CurrentState.SPINNING_UP)
+          currentSuperState = CurrentState.SPINNING_UP;
         break;
       default:
-        currentSuperState = CurrentState.IDLE;
+        if (currentSuperState != CurrentState.IDLE) {
+          currentSuperState = CurrentState.IDLE;
+          CommandScheduler.getInstance()
+              .schedule(
+                  hopper.stopFullIndexer(),
+                  shooter.setFlywheelVoltage(() -> Volts.of(0)),
+                  shooter.setFeederVoltage(() -> Volts.of(0)));
+        }
         break;
     }
   }
@@ -108,11 +125,6 @@ public class Superstructure extends SubsystemBase {
   public void applyStates() {
     switch (currentSuperState) {
       case IDLE:
-        CommandScheduler.getInstance()
-            .schedule(
-                hopper.stopFullIndexer(),
-                shooter.setFlywheelVoltage(() -> Volts.of(0)),
-                shooter.setFeederVoltage(() -> Volts.of(0)));
         break;
       case SPINNING_UP:
         CommandScheduler.getInstance()

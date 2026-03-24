@@ -220,7 +220,7 @@ public class TestModeReport {
   private static String statusColor(TestStatus status) {
     return switch (status) {
       case PASS -> "#2e7d32";
-      case WARN -> "#e65100";
+      case WARN -> "#f9cd08ff";
       case FAIL -> "#c62828";
       case NO_BASELINE -> "#757575";
     };

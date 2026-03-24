@@ -32,9 +32,9 @@ public class ShooterConstants {
           0.065, // kP
           0.0, // kI
           0.02, // kD
-          0.0, // kA
-          0.12, // kV
-          0.01, // kS
+          1.92, // kA
+          0.124, // kV
+          0.1, // kS
           0.0, // kG
           "ShooterFlywheel");
 
@@ -50,7 +50,7 @@ public class ShooterConstants {
           "ShooterFlywheel");
 
   public static final MotionMagicConfigs FLYWHEEL_MOTION_MAGIC_CONFIGS =
-      new MotionMagicConfigs().withMotionMagicCruiseVelocity(90).withMotionMagicAcceleration(130);
+      new MotionMagicConfigs().withMotionMagicAcceleration(200);
 
   public static final LoggedNetworkPIDFeedforwardGains FEEDER_GAINS =
       new LoggedNetworkPIDFeedforwardGains(
