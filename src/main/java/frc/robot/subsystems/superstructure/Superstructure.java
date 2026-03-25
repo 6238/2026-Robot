@@ -16,6 +16,7 @@ import frc.robot.Constants.Mode;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.hopper.Hopper;
 import frc.robot.subsystems.hopper.HopperConstants;
+import frc.robot.subsystems.intake.IntakeConstants;
 import frc.robot.subsystems.intake.IntakePivot;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.ShooterConstants;
@@ -57,6 +58,10 @@ public class Superstructure extends SubsystemBase {
 
   private double shotSimulationTime = 0.0;
   private final Timer reversingTimer = new Timer();
+  private final Timer noShotTimer = new Timer();
+  // Prevents jam-recovery from re-triggering for 1.5 s after it last fired
+  private final Timer noShotCooldownTimer = new Timer();
+  private boolean crawlUpScheduled = false;
 
   public boolean indxererMode = false;
 
@@ -71,6 +76,7 @@ public class Superstructure extends SubsystemBase {
     this.hopper = hopper;
     this.intake = intake;
     this.swerveDriveSimulation = swerveDriveSimulation;
+    noShotCooldownTimer.start(); // already-elapsed at match start
   }
 
   public void setWantedSuperState(WantedState wantedSuperState) {
@@ -91,6 +97,7 @@ public class Superstructure extends SubsystemBase {
       case IDLE:
         if (currentSuperState != CurrentState.IDLE) {
           currentSuperState = CurrentState.IDLE;
+          crawlUpScheduled = false;
           CommandScheduler.getInstance()
               .schedule(
                   hopper.stopFullIndexer(),
@@ -156,27 +163,48 @@ public class Superstructure extends SubsystemBase {
         if (reversingTimer.hasElapsed(0.1)) {
           reversingTimer.stop();
           currentSuperState = CurrentState.SHOOTING;
+          noShotTimer.restart();
           CommandScheduler.getInstance()
               .schedule(Commands.sequence(hopper.spinIndexer(), hopper.oscillateTopIndexer()));
         }
         break;
       case PASSING:
+        CommandScheduler.getInstance()
+            .schedule(
+                shooter.setFlywheelRPM(() -> shotSetpoint.flywheelSpeed),
+                shooter.setFeederSpeed(
+                    () -> RotationsPerSecond.of(ShooterConstants.FEEDER_SPEED.get())));
+        simulateShot();
+        break;
       case SHOOTING:
         CommandScheduler.getInstance()
             .schedule(
                 shooter.setFlywheelRPM(() -> shotSetpoint.flywheelSpeed),
                 shooter.setFeederSpeed(
                     () -> RotationsPerSecond.of(ShooterConstants.FEEDER_SPEED.get())));
-        // if (!checkHubTolerance()) {
-        //   currentSuperState = CurrentState.SPINNING_UP;
-        //   break;
-        // }
+
+        if (readyToShoot() && !crawlUpScheduled) {
+          crawlUpScheduled = true;
+          CommandScheduler.getInstance().schedule(intake.crawlUp());
+        }
+
+        // Reset no-shot timer whenever a ball exits (voltage spikes down: bang-through → PID/FF)
+        if (shooter.ballExitedFlywheel()) {
+          noShotTimer.restart();
+        }
+
+        // If no ball has been shot in 1.0 s and cooldown has passed, drop intake and restart
+        if (noShotTimer.hasElapsed(1.0) && noShotCooldownTimer.hasElapsed(1.5)) {
+          noShotTimer.restart();
+          noShotCooldownTimer.restart();
+          crawlUpScheduled = false;
+          currentSuperState = CurrentState.SPINNING_UP;
+          CommandScheduler.getInstance()
+              .schedule(
+                  intake.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())));
+        }
 
         simulateShot();
-        // if (indxererMode) {
-        //   CommandScheduler.getInstance().schedule(hopper.spinFullIndexer(3, 3));
-        //   break;
-        // }
         break;
       default:
         break;

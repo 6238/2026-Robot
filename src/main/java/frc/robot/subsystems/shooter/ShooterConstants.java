@@ -29,11 +29,11 @@ public class ShooterConstants {
 
   public static final LoggedNetworkPIDFeedforwardGains FLYWHEEL_GAINS =
       new LoggedNetworkPIDFeedforwardGains(
-          0.065, // kP
+          0.04, // kP
           0.0, // kI
           0.02, // kD
           1.92, // kA
-          0.124, // kV
+          0.12, // kV
           0.1, // kS
           0.0, // kG
           "ShooterFlywheel");
@@ -50,7 +50,7 @@ public class ShooterConstants {
           "ShooterFlywheel");
 
   public static final MotionMagicConfigs FLYWHEEL_MOTION_MAGIC_CONFIGS =
-      new MotionMagicConfigs().withMotionMagicAcceleration(200);
+      new MotionMagicConfigs().withMotionMagicAcceleration(400);
 
   public static final LoggedNetworkPIDFeedforwardGains FEEDER_GAINS =
       new LoggedNetworkPIDFeedforwardGains(
@@ -87,6 +87,8 @@ public class ShooterConstants {
 
   // SHOT SETPOINTS
   public static final Angle FIXED_HOOD_ANGLE_DEGREES = Degrees.of(60.5);
+  // Fraction below target at which bang-through (full 12 V) is applied instead of PID/FF
+  public static final double FLYWHEEL_BANG_THROUGH_THRESHOLD = 0.03;
   public static final AngularVelocity FLYWHEEL_TOLERANCE_BEFORE_SHOT = RotationsPerSecond.of(0.5);
   public static final AngularVelocity FEEDER_TOLERANCE_BEFORE_SHOT = RotationsPerSecond.of(2.0);
   public static final LoggedNetworkNumber FEEDER_REVERSE_VOLTAGE =

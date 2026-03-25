@@ -7,7 +7,6 @@ import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
-import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
@@ -51,8 +50,10 @@ public class ShooterIOTalonFX implements ShooterIO {
   public StatusSignal<Voltage> feederAppliedVoltage;
 
   // Control Requests
-  public MotionMagicVelocityVoltage flywheelVelocityVoltage = new MotionMagicVelocityVoltage(0).withSlot(0);
-  public MotionMagicVelocityVoltage feederVelocityVoltage = new MotionMagicVelocityVoltage(0).withSlot(0);
+  public MotionMagicVelocityVoltage flywheelVelocityVoltage =
+      new MotionMagicVelocityVoltage(0).withSlot(0);
+  public MotionMagicVelocityVoltage feederVelocityVoltage =
+      new MotionMagicVelocityVoltage(0).withSlot(0);
 
   public ShooterIOTalonFX() {
     flywheelTalon = new TalonFX(ShooterConstants.FLYWHEEL_MOTOR_ID, ShooterConstants.CAN_BUS);

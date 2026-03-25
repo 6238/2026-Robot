@@ -27,6 +27,9 @@ public class Shooter extends SubsystemBase {
   public AngularVelocity targetFlywheelVelocity;
   public AngularVelocity targetFeederVelocity;
 
+  private boolean bangThrough = false;
+  private boolean prevBangThrough = false;
+
   private BatteryLogger batteryLogger;
 
   public void setBatteryLogger(BatteryLogger batteryLogger) {
@@ -65,9 +68,24 @@ public class Shooter extends SubsystemBase {
     //   io.setFlywheelSpeed(compensatedFlywheelVelocity);
     // }
 
+    // Bang-through flywheel control: full 12 V when >4% below target, PID/FF when close
+    prevBangThrough = bangThrough;
+    double targetRPS = targetFlywheelVelocity.in(RotationsPerSecond);
+    if (targetRPS > 0) {
+      double currentRPS = inputs.flywheelVelocity.in(RotationsPerSecond);
+      bangThrough =
+          currentRPS < targetRPS * (1.0 - ShooterConstants.FLYWHEEL_BANG_THROUGH_THRESHOLD);
+      Logger.recordOutput("Shooter/bangThrough", bangThrough);
+      if (bangThrough) {
+        io.setFlywheelVoltage(Volts.of(12.0));
+      } else {
+        io.setFlywheelSpeed(targetFlywheelVelocity);
+      }
+    } else {
+      bangThrough = false;
+    }
+
     Logger.recordOutput("Shooter/targetVelocity", targetFlywheelVelocity.in(RotationsPerSecond));
-    // Logger.recordOutput(
-    //     "Shooter/compensatedVelocity", compensatedFlywheelVelocity.in(RotationsPerSecond));
     Logger.recordOutput("Shooter/currentVelocity", inputs.flywheelVelocity.in(RotationsPerSecond));
 
     if (batteryLogger != null) {
@@ -83,6 +101,19 @@ public class Shooter extends SubsystemBase {
     AlertUtils.processCriticalAlert(feederMotorConnectedAlert, !inputs.feederTalonConnected);
   }
 
+  /** True while the flywheel is >4% below target (12 V bang-through active). */
+  public boolean isBangThrough() {
+    return bangThrough;
+  }
+
+  /**
+   * Returns true on the loop when bang-through transitions false→false (voltage "spikes down"),
+   * indicating a ball just exited the flywheel.
+   */
+  public boolean ballExitedFlywheel() {
+    return prevBangThrough && !bangThrough;
+  }
+
   public Command setFlywheelRPM(Supplier<AngularVelocity> speed) {
     return runOnce(
         () -> {
@@ -91,7 +122,6 @@ public class Shooter extends SubsystemBase {
   }
 
   public void setFlywheelRPM(AngularVelocity speed) {
-    io.setFlywheelSpeed(speed);
     this.targetFlywheelVelocity = speed;
   }
 
