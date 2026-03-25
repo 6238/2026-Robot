@@ -117,4 +117,14 @@ public class Hopper extends SubsystemBase {
           }
         });
   }
+
+  public void setIndexerVolts(double volts) {
+    io.setIndexerVoltage(Volts.of(volts));
+  }
+
+  public void setTopIndexerVolts(double volts) {
+    if (HopperConstants.USE_TOP_INDEXER) {
+      io.setTopIndexerVoltage(Volts.of(volts));
+    }
+  }
 }

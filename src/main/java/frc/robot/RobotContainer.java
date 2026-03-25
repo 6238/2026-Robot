@@ -185,7 +185,8 @@ public class RobotContainer {
     }
 
     superstructure =
-        new Superstructure(drive, shooter, hopper, intakePivot, intakeRoller, swerveDriveSimulation);
+        new Superstructure(
+            drive, shooter, hopper, intakePivot, intakeRoller, swerveDriveSimulation);
 
     drive.setBatteryLogger(batteryLogger);
     shooter.setBatteryLogger(batteryLogger);

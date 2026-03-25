@@ -55,6 +55,11 @@ public class IntakePivot extends SubsystemBase {
         });
   }
 
+  public void setAngle(Angle angle) {
+    targetAngle = angle;
+    io.setIntakePosition(angle);
+  }
+
   public Command setIntakeArmVoltage(Supplier<Voltage> voltageSupplier) {
     return runOnce(() -> io.setIntakeArmVoltage(voltageSupplier.get()));
   }

@@ -153,6 +153,17 @@ public class IntakeRoller extends SubsystemBase {
             });
   }
 
+  public void spin() {
+    desiredIntakeVelocity = RotationsPerSecond.of(IntakeConstants.INTAKE_SPEED.get());
+    if (!isJamReversing) io.setIntakeVelocity(desiredIntakeVelocity);
+  }
+
+  public void stop() {
+    desiredIntakeVelocity = RotationsPerSecond.of(0);
+    isJamReversing = false;
+    io.setIntakeVoltage(Volts.of(0));
+  }
+
   public Command reverseIntake() {
     return runOnce(
         () -> {

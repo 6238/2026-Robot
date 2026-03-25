@@ -8,8 +8,6 @@ import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
@@ -67,6 +65,15 @@ public class Superstructure extends SubsystemBase {
   private final Timer noShotCooldownTimer = new Timer();
   private boolean crawlUpScheduled = false;
 
+  // Inlined crawlUp state
+  private double crawlBackoffTimer = 0.0;
+  private boolean crawlIsBackingOff = false;
+  private boolean crawlBackoffTriggered = false;
+
+  // Inlined top-indexer oscillation state
+  private final Timer topIndexerOscillateTimer = new Timer();
+  private boolean topIndexerHighPhase = false;
+
   public boolean indxererMode = false;
 
   public Superstructure(
@@ -104,17 +111,17 @@ public class Superstructure extends SubsystemBase {
         if (currentSuperState != CurrentState.IDLE) {
           currentSuperState = CurrentState.IDLE;
           crawlUpScheduled = false;
-          CommandScheduler.getInstance()
-              .schedule(
-                  hopper.stopFullIndexer(),
-                  shooter.setFlywheelVoltage(() -> Volts.of(0)),
-                  shooter.setFeederVoltage(() -> Volts.of(0)),
-                  intakeRoller.stopIntake());
+          crawlIsBackingOff = false;
+          hopper.setIndexerVolts(0);
+          hopper.setTopIndexerVolts(0);
+          shooter.setFlywheelVoltage(Volts.of(0));
+          shooter.setFeederVoltage(Volts.of(0));
+          intakeRoller.stop();
+          intake.io.setIntakeArmVoltage(Volts.of(0));
         }
         break;
       case INTAKING:
-        if (currentSuperState != CurrentState.INTAKING)
-          currentSuperState = CurrentState.INTAKING;
+        if (currentSuperState != CurrentState.INTAKING) currentSuperState = CurrentState.INTAKING;
         break;
       case SHOOTING:
         if (currentSuperState != CurrentState.SHOOTING
@@ -130,12 +137,14 @@ public class Superstructure extends SubsystemBase {
       default:
         if (currentSuperState != CurrentState.IDLE) {
           currentSuperState = CurrentState.IDLE;
-          CommandScheduler.getInstance()
-              .schedule(
-                  hopper.stopFullIndexer(),
-                  shooter.setFlywheelVoltage(() -> Volts.of(0)),
-                  shooter.setFeederVoltage(() -> Volts.of(0)),
-                  intakeRoller.stopIntake());
+          crawlUpScheduled = false;
+          crawlIsBackingOff = false;
+          hopper.setIndexerVolts(0);
+          hopper.setTopIndexerVolts(0);
+          shooter.setFlywheelVoltage(Volts.of(0));
+          shooter.setFeederVoltage(Volts.of(0));
+          intakeRoller.stop();
+          intake.io.setIntakeArmVoltage(Volts.of(0));
         }
         break;
     }
@@ -146,26 +155,16 @@ public class Superstructure extends SubsystemBase {
       case IDLE:
         break;
       case INTAKING:
-        CommandScheduler.getInstance()
-            .schedule(
-                intake.setIntakeAngle(
-                    () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
-                intakeRoller.spinIntake());
+        intake.setAngle(Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get()));
+        intakeRoller.spin();
         break;
       case SPINNING_UP:
-        CommandScheduler.getInstance()
-            .schedule(
-                intake.setIntakeAngle(
-                    () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
-                intakeRoller.spinIntake(),
-                hopper.stopIndexer(),
-                shooter.setFeederSpeed(
-                    () -> RotationsPerSecond.of(ShooterConstants.FEEDER_SPEED.get())),
-                shooter.setFlywheelRPM(() -> shotSetpoint.flywheelSpeed));
-
-        if (!readyToShoot()) {
-          break;
-        }
+        intake.setAngle(Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get()));
+        intakeRoller.spin();
+        hopper.setIndexerVolts(0);
+        shooter.setFeederSpeed(RotationsPerSecond.of(ShooterConstants.FEEDER_SPEED.get()));
+        shooter.setFlywheelRPM(shotSetpoint.flywheelSpeed);
+        if (!readyToShoot()) break;
         if (wantedSuperState == WantedState.SHOOTING) {
           currentSuperState = CurrentState.REVERSING;
           reversingTimer.restart();
@@ -175,56 +174,65 @@ public class Superstructure extends SubsystemBase {
         break;
       case REVERSING:
         // Briefly reverse feeder and indexer to prevent jams before the shot
-        CommandScheduler.getInstance()
-            .schedule(
-                intakeRoller.spinIntake(),
-                hopper.spinFullIndexer(
-                    -HopperConstants.INDEXER_VOLTAGE.get(),
-                    -HopperConstants.TOP_INDEXER_VOLTAGE.get()),
-                shooter.setFeederVoltage(
-                    () -> Volts.of(-ShooterConstants.FEEDER_REVERSE_VOLTAGE.get())));
+        intakeRoller.spin();
+        hopper.setIndexerVolts(-HopperConstants.INDEXER_VOLTAGE.get());
+        hopper.setTopIndexerVolts(-HopperConstants.TOP_INDEXER_VOLTAGE.get());
+        shooter.setFeederVoltage(Volts.of(-ShooterConstants.FEEDER_REVERSE_VOLTAGE.get()));
         if (reversingTimer.hasElapsed(0.1)) {
           reversingTimer.stop();
           currentSuperState = CurrentState.SHOOTING;
           noShotTimer.restart();
-          CommandScheduler.getInstance()
-              .schedule(Commands.sequence(hopper.spinIndexer(), hopper.oscillateTopIndexer()));
+          // Start indexer and reset oscillation / crawl state for SHOOTING
+          hopper.setIndexerVolts(HopperConstants.INDEXER_VOLTAGE.get());
+          hopper.setTopIndexerVolts(0);
+          topIndexerOscillateTimer.restart();
+          topIndexerHighPhase = false;
+          crawlIsBackingOff = false;
+          crawlBackoffTimer = 0.0;
+          crawlBackoffTriggered = false;
         }
         break;
       case PASSING:
-        CommandScheduler.getInstance()
-            .schedule(
-                shooter.setFlywheelRPM(() -> shotSetpoint.flywheelSpeed),
-                shooter.setFeederSpeed(
-                    () -> RotationsPerSecond.of(ShooterConstants.FEEDER_SPEED.get())));
+        shooter.setFlywheelRPM(shotSetpoint.flywheelSpeed);
+        shooter.setFeederSpeed(RotationsPerSecond.of(ShooterConstants.FEEDER_SPEED.get()));
         simulateShot();
         break;
       case SHOOTING:
-        CommandScheduler.getInstance()
-            .schedule(
-                intakeRoller.spinIntake(),
-                shooter.setFlywheelRPM(() -> shotSetpoint.flywheelSpeed),
-                shooter.setFeederSpeed(
-                    () -> RotationsPerSecond.of(ShooterConstants.FEEDER_SPEED.get())));
+        intakeRoller.spin();
+        shooter.setFlywheelRPM(shotSetpoint.flywheelSpeed);
+        shooter.setFeederSpeed(RotationsPerSecond.of(ShooterConstants.FEEDER_SPEED.get()));
+
+        // Top-indexer oscillation (inlined from hopper.oscillateTopIndexer())
+        if (!topIndexerHighPhase && topIndexerOscillateTimer.hasElapsed(0.2)) {
+          topIndexerHighPhase = true;
+          topIndexerOscillateTimer.restart();
+          hopper.setTopIndexerVolts(-HopperConstants.TOP_INDEXER_VOLTAGE.get());
+        } else if (topIndexerHighPhase && topIndexerOscillateTimer.hasElapsed(0.7)) {
+          topIndexerHighPhase = false;
+          topIndexerOscillateTimer.restart();
+          hopper.setTopIndexerVolts(0);
+        }
 
         if (readyToShoot() && !crawlUpScheduled) {
           crawlUpScheduled = true;
-          CommandScheduler.getInstance().schedule(intake.crawlUp());
+          crawlIsBackingOff = false;
+          crawlBackoffTimer = 0.0;
+          crawlBackoffTriggered = false;
         }
+        if (crawlUpScheduled) applyCrawlUp();
 
         // Reset no-shot timer whenever a ball exits (voltage spikes down: bang-through → PID/FF)
-        if (shooter.ballExitedFlywheel()) {
-          noShotTimer.restart();
-        }
+        if (shooter.ballExitedFlywheel()) noShotTimer.restart();
 
         // If no ball has been shot in 1.0 s and cooldown has passed, drop intake and restart
         if (noShotTimer.hasElapsed(1.0) && noShotCooldownTimer.hasElapsed(1.5)) {
           noShotTimer.restart();
           noShotCooldownTimer.restart();
           crawlUpScheduled = false;
-          CommandScheduler.getInstance()
-              .schedule(
-                  intake.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())));
+          crawlIsBackingOff = false;
+          crawlBackoffTimer = 0.0;
+          intake.io.setIntakeArmVoltage(Volts.of(0));
+          intake.setAngle(Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get()));
         }
 
         simulateShot();
@@ -232,6 +240,54 @@ public class Superstructure extends SubsystemBase {
       default:
         break;
     }
+  }
+
+  private void applyCrawlUp() {
+    double positionDeg = intake.inputs.intakeArmPosition.in(Degrees);
+    double maxDeg =
+        IntakeConstants.INTAKE_UP_VALUE.get() + IntakeConstants.CRAWL_MAX_OFFSET_DEGREES;
+
+    if (positionDeg >= maxDeg) {
+      intake.io.setIntakeArmVoltage(Volts.of(0));
+      return;
+    }
+
+    double cosScale = Math.cos(Math.toRadians(positionDeg));
+    double scaledVoltage =
+        Math.max(
+            IntakeConstants.CRAWL_UP_VOLTAGE_VOLTS.get() * cosScale,
+            IntakeConstants.CRAWL_UP_VOLTAGE_MIN_VOLTS.get());
+    double scaledCurrentThreshold =
+        Math.max(
+            IntakeConstants.CRAWL_CURRENT_THRESHOLD_AMPS.get() * cosScale,
+            IntakeConstants.CRAWL_CURRENT_THRESHOLD_MIN_AMPS.get());
+
+    if (crawlIsBackingOff) {
+      crawlBackoffTimer += 0.02;
+      intake.io.setIntakeArmVoltage(
+          Volts.of(-IntakeConstants.CRAWL_BACKOFF_VOLTAGE_VOLTS.get()));
+      if (crawlBackoffTimer >= IntakeConstants.CRAWL_BACKOFF_DURATION_SECONDS.get()
+          || positionDeg <= IntakeConstants.INTAKE_DOWN_VALUE.get()) {
+        crawlIsBackingOff = false;
+        crawlBackoffTimer = 0.0;
+      }
+    } else {
+      boolean aboveDeadzone = positionDeg > IntakeConstants.INTAKE_DOWN_VALUE.get() + 10.0;
+      if (aboveDeadzone
+          && intake.inputs.intakeArmSupplyCurrent.in(Amps) >= scaledCurrentThreshold) {
+        crawlIsBackingOff = true;
+        crawlBackoffTriggered = true;
+        crawlBackoffTimer = 0.0;
+      } else {
+        crawlBackoffTriggered = false;
+        intake.io.setIntakeArmVoltage(Volts.of(scaledVoltage));
+      }
+    }
+
+    Logger.recordOutput("IntakePivot/CrawlIsBackingOff", crawlIsBackingOff);
+    Logger.recordOutput("IntakePivot/CrawlBackoffTriggered", crawlBackoffTriggered);
+    Logger.recordOutput("IntakePivot/CrawlScaledVoltage", scaledVoltage);
+    Logger.recordOutput("IntakePivot/CrawlScaledCurrentThreshold", scaledCurrentThreshold);
   }
 
   public void simulateShot() {
