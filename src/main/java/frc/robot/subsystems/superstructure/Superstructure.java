@@ -18,6 +18,7 @@ import frc.robot.subsystems.hopper.Hopper;
 import frc.robot.subsystems.hopper.HopperConstants;
 import frc.robot.subsystems.intake.IntakeConstants;
 import frc.robot.subsystems.intake.IntakePivot;
+import frc.robot.subsystems.intake.IntakeRoller;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.ShooterConstants;
 import frc.robot.subsystems.superstructure.ShotPlanner.ShotSetpoint;
@@ -34,17 +35,20 @@ public class Superstructure extends SubsystemBase {
   public Shooter shooter;
   public Hopper hopper;
   public IntakePivot intake;
+  public IntakeRoller intakeRoller;
 
   public SwerveDriveSimulation swerveDriveSimulation;
 
   public enum WantedState {
     IDLE,
+    INTAKING,
     SHOOTING,
     PASSING
   }
 
   public enum CurrentState {
     IDLE,
+    INTAKING,
     SPINNING_UP,
     REVERSING,
     SHOOTING,
@@ -70,11 +74,13 @@ public class Superstructure extends SubsystemBase {
       Shooter shooter,
       Hopper hopper,
       IntakePivot intake,
+      IntakeRoller intakeRoller,
       SwerveDriveSimulation swerveDriveSimulation) {
     this.drive = drive;
     this.shooter = shooter;
     this.hopper = hopper;
     this.intake = intake;
+    this.intakeRoller = intakeRoller;
     this.swerveDriveSimulation = swerveDriveSimulation;
     noShotCooldownTimer.start(); // already-elapsed at match start
   }
@@ -102,8 +108,13 @@ public class Superstructure extends SubsystemBase {
               .schedule(
                   hopper.stopFullIndexer(),
                   shooter.setFlywheelVoltage(() -> Volts.of(0)),
-                  shooter.setFeederVoltage(() -> Volts.of(0)));
+                  shooter.setFeederVoltage(() -> Volts.of(0)),
+                  intakeRoller.stopIntake());
         }
+        break;
+      case INTAKING:
+        if (currentSuperState != CurrentState.INTAKING)
+          currentSuperState = CurrentState.INTAKING;
         break;
       case SHOOTING:
         if (currentSuperState != CurrentState.SHOOTING
@@ -123,7 +134,8 @@ public class Superstructure extends SubsystemBase {
               .schedule(
                   hopper.stopFullIndexer(),
                   shooter.setFlywheelVoltage(() -> Volts.of(0)),
-                  shooter.setFeederVoltage(() -> Volts.of(0)));
+                  shooter.setFeederVoltage(() -> Volts.of(0)),
+                  intakeRoller.stopIntake());
         }
         break;
     }
@@ -133,9 +145,19 @@ public class Superstructure extends SubsystemBase {
     switch (currentSuperState) {
       case IDLE:
         break;
+      case INTAKING:
+        CommandScheduler.getInstance()
+            .schedule(
+                intake.setIntakeAngle(
+                    () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
+                intakeRoller.spinIntake());
+        break;
       case SPINNING_UP:
         CommandScheduler.getInstance()
             .schedule(
+                intake.setIntakeAngle(
+                    () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
+                intakeRoller.spinIntake(),
                 hopper.stopIndexer(),
                 shooter.setFeederSpeed(
                     () -> RotationsPerSecond.of(ShooterConstants.FEEDER_SPEED.get())),
@@ -155,6 +177,7 @@ public class Superstructure extends SubsystemBase {
         // Briefly reverse feeder and indexer to prevent jams before the shot
         CommandScheduler.getInstance()
             .schedule(
+                intakeRoller.spinIntake(),
                 hopper.spinFullIndexer(
                     -HopperConstants.INDEXER_VOLTAGE.get(),
                     -HopperConstants.TOP_INDEXER_VOLTAGE.get()),
@@ -179,6 +202,7 @@ public class Superstructure extends SubsystemBase {
       case SHOOTING:
         CommandScheduler.getInstance()
             .schedule(
+                intakeRoller.spinIntake(),
                 shooter.setFlywheelRPM(() -> shotSetpoint.flywheelSpeed),
                 shooter.setFeederSpeed(
                     () -> RotationsPerSecond.of(ShooterConstants.FEEDER_SPEED.get())));
@@ -315,6 +339,12 @@ public class Superstructure extends SubsystemBase {
                 .getDegrees()));
 
     return shooterSpeedSetpoint && hubSetpoint;
+  }
+
+  public Command wantIntaking() {
+    return startEnd(
+        () -> setWantedSuperState(WantedState.INTAKING),
+        () -> setWantedSuperState(WantedState.IDLE));
   }
 
   public ShotSetpoint getShotSetpoint() {

@@ -67,7 +67,6 @@ import frc.robot.util.AutomaticCommands;
 import frc.robot.util.BatteryLogger;
 import frc.robot.util.RobotIdentity;
 import java.io.IOException;
-import java.util.Set;
 import java.util.function.BooleanSupplier;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
@@ -185,7 +184,8 @@ public class RobotContainer {
         break;
     }
 
-    superstructure = new Superstructure(drive, shooter, hopper, intakePivot, swerveDriveSimulation);
+    superstructure =
+        new Superstructure(drive, shooter, hopper, intakePivot, intakeRoller, swerveDriveSimulation);
 
     drive.setBatteryLogger(batteryLogger);
     shooter.setBatteryLogger(batteryLogger);
@@ -231,7 +231,6 @@ public class RobotContainer {
     return Commands.sequence(
         Commands.deadline(
             Commands.waitSeconds(4.5),
-            intakeRoller.spinIntake(),
             superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.SHOOTING),
             DriveCommands.joystickDriveAtAngle(
                 drive,
@@ -254,17 +253,15 @@ public class RobotContainer {
     autoChooser.addOption(
         "Left Trench Mid Rush (double)",
         Commands.sequence(
-            // intakePivot.preloadPivot(),
             resetPoseCommand(upperTrenchCycle1),
             Commands.parallel(
                 AutoBuilder.followPath(upperTrenchCycle1),
                 Commands.sequence(
                     Commands.waitSeconds(0.25),
-                    intakePivot.setIntakeAngle(
-                        () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
-                    intakeRoller.spinIntake())),
+                    superstructure.setWantedSuperStateCommand(
+                        () -> Superstructure.WantedState.INTAKING))),
             shootCommand(),
-            intakeRoller.spinIntake(),
+            superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.INTAKING),
             AutoBuilder.followPath(upperTrenchCycle2)));
     autoChooser.addOption(
         "Right Trench Mid Rush (double)",
@@ -275,12 +272,10 @@ public class RobotContainer {
                 AutoBuilder.followPath(lowerTrenchCycle1),
                 Commands.sequence(
                     Commands.waitSeconds(0.25),
-                    intakePivot.setIntakeAngle(
-                        () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
-                    intakeRoller.spinIntake())),
+                    superstructure.setWantedSuperStateCommand(
+                        () -> Superstructure.WantedState.INTAKING))),
             shootCommand(),
-            intakePivot.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
-            intakeRoller.spinIntake(),
+            superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.INTAKING),
             AutoBuilder.followPath(lowerTrenchCycle2)));
 
     return autoChooser;
@@ -321,25 +316,18 @@ public class RobotContainer {
     controller
         .rightBumper()
         .whileTrue(
-            Commands.sequence(
-                intakePivot.setIntakeAngle(
-                    () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
-                Commands.parallel(
-                        DriveCommands.joystickDriveAtAngle(
-                            drive,
-                            () -> -controller.getLeftY(),
-                            () -> -controller.getLeftX(),
-                            () -> superstructure.getShotSetpoint().robotPose.getRotation()),
-                        superstructure.setWantedSuperStateCommand(
-                            () ->
-                                Constants.SHOULD_PASS.apply(drive.getPose().getX())
-                                    ? Superstructure.WantedState.PASSING
-                                    : Superstructure.WantedState.SHOOTING),
-                        Commands.sequence(
-                            Commands.waitUntil(() -> superstructure.readyToShoot()),
-                            intakePivot.crawlUp()),
-                        intakeRoller.spinIntake())
-                    .until(() -> controller.leftBumper().getAsBoolean())))
+            Commands.parallel(
+                    DriveCommands.joystickDriveAtAngle(
+                        drive,
+                        () -> -controller.getLeftY(),
+                        () -> -controller.getLeftX(),
+                        () -> superstructure.getShotSetpoint().robotPose.getRotation()),
+                    superstructure.setWantedSuperStateCommand(
+                        () ->
+                            Constants.SHOULD_PASS.apply(drive.getPose().getX())
+                                ? Superstructure.WantedState.PASSING
+                                : Superstructure.WantedState.SHOOTING))
+                .until(() -> controller.leftBumper().getAsBoolean()))
         .onFalse(superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.IDLE));
 
     // Intake and Reverse Intake
@@ -347,13 +335,7 @@ public class RobotContainer {
         .leftTrigger()
         .onTrue(intakeRoller.reverseIntake())
         .onFalse(intakeRoller.stopIntake());
-    controller
-        .leftBumper()
-        .toggleOnTrue(
-            Commands.sequence(
-                intakePivot.setIntakeAngle(
-                    () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
-                intakeRoller.runIntake()));
+    controller.leftBumper().toggleOnTrue(superstructure.wantIntaking());
 
     // Intake Flip Position
     controller
@@ -406,7 +388,6 @@ public class RobotContainer {
         .povRight()
         .whileTrue(
             Commands.parallel(
-                Commands.defer(() -> intakeRoller.spinIntake(), Set.of()),
                 DriveCommands.joystickDriveAtAngle(
                     drive,
                     () -> -0.4,
