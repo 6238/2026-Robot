@@ -24,6 +24,10 @@ public class IntakePivot extends SubsystemBase {
   public Angle targetAngle = Degrees.of(-100);
   private boolean isBrakeMode = true;
 
+  // DRS (Dynamic Recovery System) — intake lower-block detection
+  private double drsStuckTimer = 0.0;
+  private boolean drsTriggered = false;
+
   private BatteryLogger batteryLogger;
 
   public void setBatteryLogger(BatteryLogger batteryLogger) {
@@ -45,6 +49,44 @@ public class IntakePivot extends SubsystemBase {
     }
 
     AlertUtils.processCriticalAlert(intakeArmMotorConnectedAlert, !inputs.intakeArmTalonConnected);
+
+    // DRS detection: pivot is targeting the ground setpoint, current is high, and it's stuck
+    boolean targetingDown =
+        Math.abs(targetAngle.in(Degrees) - IntakeConstants.INTAKE_DOWN_VALUE.get())
+            < IntakeConstants.DRS_TARGET_TOLERANCE_DEGREES;
+    boolean highCurrent =
+        inputs.intakeArmSupplyCurrent.in(Amps)
+            > IntakeConstants.DRS_CURRENT_THRESHOLD_AMPS.get();
+    boolean stuckAboveTarget =
+        inputs.intakeArmPosition.in(Degrees) - IntakeConstants.INTAKE_DOWN_VALUE.get()
+            > IntakeConstants.DRS_ANGLE_ERROR_THRESHOLD_DEGREES.get();
+    boolean drsCondition = targetingDown && highCurrent && stuckAboveTarget;
+
+    if (!drsTriggered) {
+      if (drsCondition) {
+        drsStuckTimer += 0.02;
+        if (drsStuckTimer >= IntakeConstants.DRS_STUCK_TIMEOUT_SECONDS) {
+          drsTriggered = true;
+        }
+      } else {
+        drsStuckTimer = 0.0;
+      }
+    }
+
+    Logger.recordOutput("IntakePivot/DRS/Triggered", drsTriggered);
+    Logger.recordOutput("IntakePivot/DRS/Condition", drsCondition);
+    Logger.recordOutput("IntakePivot/DRS/StuckTimerSecs", drsStuckTimer);
+  }
+
+  /** Returns true when a lower-block has been detected and DRS should fire. */
+  public boolean isDRSTriggered() {
+    return drsTriggered;
+  }
+
+  /** Clears the DRS latch and resets the stuck timer. Call after recovery is complete. */
+  public void resetDRS() {
+    drsTriggered = false;
+    drsStuckTimer = 0.0;
   }
 
   public Command setIntakeAngle(Supplier<Angle> angleSupplier) {

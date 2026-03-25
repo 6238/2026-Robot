@@ -35,6 +35,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.commands.DRSHelper;
 import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
@@ -67,6 +68,7 @@ import frc.robot.util.AutomaticCommands;
 import frc.robot.util.BatteryLogger;
 import frc.robot.util.RobotIdentity;
 import java.io.IOException;
+import java.util.Set;
 import java.util.function.BooleanSupplier;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
@@ -250,17 +252,25 @@ public class RobotContainer {
     PathPlannerPath lowerTrenchCycle1 = PathPlannerPath.fromPathFile("Lower Trench Cycle 1");
     PathPlannerPath lowerTrenchCycle2 = PathPlannerPath.fromPathFile("Lower Trench Cycle 2");
 
+    Set<edu.wpi.first.wpilibj2.command.Subsystem> driveAndSuperstructure =
+        Set.of(drive, superstructure);
+
     autoChooser.addOption("Do Nothing", Commands.none());
     autoChooser.addOption(
         "Left Trench Mid Rush (double)",
         Commands.sequence(
             resetPoseCommand(upperTrenchCycle1),
-            Commands.parallel(
-                AutoBuilder.followPath(upperTrenchCycle1),
-                Commands.sequence(
-                    Commands.waitSeconds(0.25),
-                    superstructure.setWantedSuperStateCommand(
-                        () -> Superstructure.WantedState.INTAKING))),
+            DRSHelper.wrapWithDRS(
+                () ->
+                    Commands.parallel(
+                        AutoBuilder.followPath(upperTrenchCycle1),
+                        Commands.sequence(
+                            Commands.waitSeconds(0.25),
+                            superstructure.setWantedSuperStateCommand(
+                                () -> Superstructure.WantedState.INTAKING))),
+                intakePivot,
+                drive,
+                driveAndSuperstructure),
             shootCommand(),
             superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.INTAKING),
             AutoBuilder.followPath(upperTrenchCycle2)));
@@ -269,12 +279,17 @@ public class RobotContainer {
         Commands.sequence(
             intakePivot.preloadPivot(),
             resetPoseCommand(lowerTrenchCycle1),
-            Commands.parallel(
-                AutoBuilder.followPath(lowerTrenchCycle1),
-                Commands.sequence(
-                    Commands.waitSeconds(0.25),
-                    superstructure.setWantedSuperStateCommand(
-                        () -> Superstructure.WantedState.INTAKING))),
+            DRSHelper.wrapWithDRS(
+                () ->
+                    Commands.parallel(
+                        AutoBuilder.followPath(lowerTrenchCycle1),
+                        Commands.sequence(
+                            Commands.waitSeconds(0.25),
+                            superstructure.setWantedSuperStateCommand(
+                                () -> Superstructure.WantedState.INTAKING))),
+                intakePivot,
+                drive,
+                driveAndSuperstructure),
             shootCommand(),
             superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.INTAKING),
             AutoBuilder.followPath(lowerTrenchCycle2)));

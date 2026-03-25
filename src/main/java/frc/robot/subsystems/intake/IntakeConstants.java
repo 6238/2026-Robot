@@ -64,6 +64,23 @@ public class IntakeConstants {
       new LoggedNetworkNumber("Intake/CrawlCurrentThresholdMin", 3.0);
   public static final double CRAWL_MAX_OFFSET_DEGREES = 10.0;
 
+  // DRS (Dynamic Recovery System) — intake lower block detection & mitigation
+  // Detection: pivot targeting DOWN, high current, AND stuck above target for DRS_STUCK_TIMEOUT_S
+  public static final LoggedNetworkNumber DRS_CURRENT_THRESHOLD_AMPS =
+      new LoggedNetworkNumber("DRS/CurrentThresholdAmps", 15.0);
+  public static final LoggedNetworkNumber DRS_ANGLE_ERROR_THRESHOLD_DEGREES =
+      new LoggedNetworkNumber("DRS/AngleErrorThresholdDeg", 15.0);
+  public static final double DRS_TARGET_TOLERANCE_DEGREES = 5.0;
+  public static final double DRS_STUCK_TIMEOUT_SECONDS = 0.25;
+  // Mitigation: lift to middle, drive backward, lower back down
+  public static final LoggedNetworkNumber DRS_MIDDLE_ANGLE_DEGREES =
+      new LoggedNetworkNumber("DRS/MiddleAngleDeg", 30.0);
+  public static final double DRS_MIDDLE_ANGLE_TOLERANCE_DEGREES = 5.0;
+  public static final double DRS_DOWN_ANGLE_TOLERANCE_DEGREES = 5.0;
+  public static final LoggedNetworkNumber DRS_BACKUP_SPEED_MPS =
+      new LoggedNetworkNumber("DRS/BackupSpeedMps", 1.0);
+  public static final double DRS_BACKUP_DURATION_SECONDS = 0.3;
+
   // Slingshot (roller pullback + release during shooting)
   public static final double SLINGSHOT_PULLBACK_ROTATIONS = 0.5;
   public static final LoggedNetworkNumber SLINGSHOT_PULLBACK_SPEED_RPS =
