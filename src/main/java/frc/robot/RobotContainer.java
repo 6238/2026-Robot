@@ -229,16 +229,15 @@ public class RobotContainer {
 
   private Command shootCommand() {
     return Commands.sequence(
-        Commands.parallel(
-                intakeRoller.spinIntake(),
-                superstructure.setWantedSuperStateCommand(
-                    () -> Superstructure.WantedState.SHOOTING),
-                DriveCommands.joystickDriveAtAngle(
-                    drive,
-                    () -> 0,
-                    () -> 0,
-                    () -> superstructure.getShotSetpoint().robotPose.getRotation()))
-            .withTimeout(4.5),
+        Commands.deadline(
+            Commands.waitSeconds(4.5),
+            intakeRoller.spinIntake(),
+            superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.SHOOTING),
+            DriveCommands.joystickDriveAtAngle(
+                drive,
+                () -> 0,
+                () -> 0,
+                () -> superstructure.getShotSetpoint().robotPose.getRotation())),
         superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.IDLE));
   }
 
@@ -265,7 +264,6 @@ public class RobotContainer {
                         () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
                     intakeRoller.spinIntake())),
             shootCommand(),
-            intakePivot.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
             intakeRoller.spinIntake(),
             AutoBuilder.followPath(upperTrenchCycle2)));
     autoChooser.addOption(

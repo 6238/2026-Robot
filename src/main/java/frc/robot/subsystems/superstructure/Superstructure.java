@@ -198,7 +198,6 @@ public class Superstructure extends SubsystemBase {
           noShotTimer.restart();
           noShotCooldownTimer.restart();
           crawlUpScheduled = false;
-          currentSuperState = CurrentState.SPINNING_UP;
           CommandScheduler.getInstance()
               .schedule(
                   intake.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())));
