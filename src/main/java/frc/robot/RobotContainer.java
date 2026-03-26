@@ -61,7 +61,6 @@ import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOPhotonVision;
-import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.testmode.TestModeRunner;
 import frc.robot.util.AlertUtils;
 import frc.robot.util.AutomaticCommands;
@@ -125,8 +124,8 @@ public class RobotContainer {
             new Vision(
                 drive::addVisionMeasurement,
                 drive::getPose,
-                new VisionIOPhotonVision(camera0Name, robotToCamera0));
-        // new VisionIOPhotonVision(camera1Name, robotToCamera1));
+                new VisionIOPhotonVision(camera0Name, robotToCamera0),
+                new VisionIOPhotonVision(camera1Name, robotToCamera1));
         shooter = new Shooter(new ShooterIOTalonFX());
         hopper = new Hopper(new HopperIOTalonFX());
         intakeRoller =
@@ -155,14 +154,11 @@ public class RobotContainer {
                 new ModuleIOSim(swerveDriveSimulation.getModules()[2]),
                 new ModuleIOSim(swerveDriveSimulation.getModules()[3]),
                 swerveDriveSimulation);
-        vision =
-            new Vision(
-                drive::addVisionMeasurement,
-                drive::getPose,
-                new VisionIOPhotonVisionSim(
-                    camera0Name,
-                    robotToCamera0,
-                    swerveDriveSimulation::getSimulatedDriveTrainPose));
+        vision = new Vision(drive::addVisionMeasurement, drive::getPose);
+        // new VisionIOPhotonVisionSim(
+        //     camera0Name,
+        //     robotToCamera0,
+        //     swerveDriveSimulation::getSimulatedDriveTrainPose));
         shooter = new Shooter(new ShooterIOSim() {});
         hopper = new Hopper(new HopperIO() {});
         intakeRoller = new IntakeRoller(new IntakeRollerIO() {});
@@ -230,10 +226,10 @@ public class RobotContainer {
     return path.getStartingHolonomicPose().map(AutoBuilder::resetOdom).orElse(Commands.none());
   }
 
-  private Command shootCommand() {
+  private Command shootCommand(double time) {
     return Commands.sequence(
         Commands.deadline(
-            Commands.waitSeconds(4.5),
+            Commands.waitSeconds(time),
             superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.SHOOTING),
             DriveCommands.joystickDriveAtAngle(
                 drive,
@@ -262,18 +258,19 @@ public class RobotContainer {
             resetPoseCommand(upperTrenchCycle1),
             DRSHelper.wrapWithDRS(
                 () ->
-                    Commands.parallel(
-                        AutoBuilder.followPath(upperTrenchCycle1),
-                        Commands.sequence(
-                            Commands.waitSeconds(0.25),
-                            superstructure.setWantedSuperStateCommand(
-                                () -> Superstructure.WantedState.INTAKING))),
-                intakePivot,
-                drive,
-                driveAndSuperstructure),
-            shootCommand(),
+            Commands.parallel(
+                AutoBuilder.followPath(upperTrenchCycle1),
+                Commands.sequence(
+                    Commands.waitSeconds(0.25),
+                    superstructure.setWantedSuperStateCommand(
+                        () -> Superstructure.WantedState.INTAKING))),
+            intakePivot,
+            drive,
+            driveAndSuperstructure),
+            shootCommand(4),
             superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.INTAKING),
-            AutoBuilder.followPath(upperTrenchCycle2)));
+            AutoBuilder.followPath(upperTrenchCycle2),
+            shootCommand(6)));
     autoChooser.addOption(
         "Right Trench Mid Rush (double)",
         Commands.sequence(
@@ -281,18 +278,19 @@ public class RobotContainer {
             resetPoseCommand(lowerTrenchCycle1),
             DRSHelper.wrapWithDRS(
                 () ->
-                    Commands.parallel(
-                        AutoBuilder.followPath(lowerTrenchCycle1),
-                        Commands.sequence(
-                            Commands.waitSeconds(0.25),
-                            superstructure.setWantedSuperStateCommand(
-                                () -> Superstructure.WantedState.INTAKING))),
-                intakePivot,
-                drive,
-                driveAndSuperstructure),
-            shootCommand(),
+            Commands.parallel(
+                AutoBuilder.followPath(lowerTrenchCycle1),
+                Commands.sequence(
+                    Commands.waitSeconds(0.25),
+                    superstructure.setWantedSuperStateCommand(
+                        () -> Superstructure.WantedState.INTAKING))),
+            intakePivot,
+            drive,
+            driveAndSuperstructure),
+            shootCommand(4),
             superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.INTAKING),
-            AutoBuilder.followPath(lowerTrenchCycle2)));
+            AutoBuilder.followPath(lowerTrenchCycle2),
+            shootCommand(6)));
 
     return autoChooser;
   }
@@ -381,7 +379,7 @@ public class RobotContainer {
         .onFalse(intakePivot.setIntakeArmVoltage(() -> Volts.of(0)));
 
     // Intake Reset
-    controller.back().onTrue(intakePivot.reset());
+    controller.back().onTrue(intakePivot.reset().ignoringDisable(true));
     new Trigger(() -> HALUtil.getFPGAButton()).onTrue(intakePivot.toggleBrakeMode());
 
     // Driver override: any stick movement cancels automation

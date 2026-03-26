@@ -40,10 +40,7 @@ public class DRSHelper {
    *     scheduler correctly allocates them for the deferred inner command
    */
   public static Command wrapWithDRS(
-      Supplier<Command> makeStep,
-      IntakePivot pivot,
-      Drive drive,
-      Set<Subsystem> stepRequirements) {
+      Supplier<Command> makeStep, IntakePivot pivot, Drive drive, Set<Subsystem> stepRequirements) {
 
     boolean[] stepCompleted = {false};
 
@@ -55,15 +52,13 @@ public class DRSHelper {
                 () ->
                     makeStep
                         .get()
-                        .finallyDo(interrupted -> {
-                          if (!interrupted) stepCompleted[0] = true;
-                        })
+                        .finallyDo(
+                            interrupted -> {
+                              if (!interrupted) stepCompleted[0] = true;
+                            })
                         .until(pivot::isDRSTriggered)
                         .andThen(
-                            Commands.either(
-                                recovery,
-                                Commands.none(),
-                                () -> !stepCompleted[0])),
+                            Commands.either(recovery, Commands.none(), () -> !stepCompleted[0])),
                 stepRequirements)
             .repeatedly()
             .until(() -> stepCompleted[0]));

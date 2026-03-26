@@ -25,11 +25,10 @@ public class ShotPlanner {
     Translation2d hubTranslation2d = Constants.HUB_POSE_3D.get().getTranslation().toTranslation2d();
     double distanceCurrently = drivePose.getTranslation().getDistance(hubTranslation2d);
     double leadTimeSec = ShooterConstants.LEAD_TIME_MAP.get(distanceCurrently);
-    Translation2d predictedTranslation =
-        hubTranslation2d.plus(
-            new Translation2d(
-                fieldSpeeds.vxMetersPerSecond * -leadTimeSec,
-                fieldSpeeds.vyMetersPerSecond * -leadTimeSec));
+    Translation2d predictedTranslation = hubTranslation2d; // .plus(
+    // new Translation2d(
+    //     fieldSpeeds.vxMetersPerSecond * -leadTimeSec,
+    //     fieldSpeeds.vyMetersPerSecond * -leadTimeSec));
 
     Logger.recordOutput(
         "ShotPlanner/predictedTranslation", new Pose2d(predictedTranslation, Rotation2d.kZero));

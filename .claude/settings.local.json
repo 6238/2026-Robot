@@ -16,7 +16,12 @@
       "Bash(./gradlew test --tests \"subsystems.VisionIOPhotonVisionTest\" --no-daemon)",
       "Bash(./gradlew compileTestJava --no-daemon)",
       "Bash(./gradlew classes spotlessApply)",
-      "Bash(./gradlew test --tests \"subsystems.SuperstructureTest.readyToShoot_returnsFalse_whenRotationOutOfTolerance\" --info)"
+      "Bash(./gradlew test --tests \"subsystems.SuperstructureTest.readyToShoot_returnsFalse_whenRotationOutOfTolerance\" --info)",
+      "Bash(xargs grep -l \"SimulatedArena\\\\|addGamePiece\\\\|addWall\\\\|addObstacle\")",
+      "Bash(xargs grep -l \"2026\\\\|REBUILT\\\\|Fuel\\\\|fuel\")",
+      "Bash(xargs grep -l \"resetFieldForAuto\\\\|getGamePieces\\\\|addGamePiece\\\\|Stage\\\\|Trench\\\\|Wall\")",
+      "Bash(xargs grep -l \"RebuiltFuel\\\\|Stage\\\\|Obstacle\\\\|setupField\\\\|addWall\\\\|addStage\")",
+      "Bash(python3:*)"
     ]
   }
 }

@@ -108,15 +108,15 @@ public class Vision extends SubsystemBase {
                     && observation.ambiguity() > maxAmbiguity) // Cannot be high ambiguity
                 || Math.abs(observation.pose().getZ())
                     > maxZError // Must have realistic Z coordinate
-                || observation.averageTagDistance()
-                    > maxTagDistance // Must be within max tag distance
+                // || observation.averageTagDistance()
+                //     > maxTagDistance // Must be within max tag distance
                 // Must be within the field boundaries
                 || observation.pose().getX() < 0.0
                 || observation.pose().getX() > aprilTagLayout.getFieldLength()
                 || observation.pose().getY() < 0.0
-                || observation.pose().getY() > aprilTagLayout.getFieldWidth()
-                // Must not be in an X exclusion zone
-                || isInXExclusionZone(observation.pose().getX());
+                || observation.pose().getY() > aprilTagLayout.getFieldWidth();
+        // Must not be in an X exclusion zone
+        // || isInXExclusionZone(observation.pose().getX());
 
         // Add pose to log
         robotPoses.add(observation.pose());

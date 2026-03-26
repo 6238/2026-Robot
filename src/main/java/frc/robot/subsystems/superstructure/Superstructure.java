@@ -178,15 +178,13 @@ public class Superstructure extends SubsystemBase {
         hopper.setIndexerVolts(-HopperConstants.INDEXER_VOLTAGE.get());
         hopper.setTopIndexerVolts(-HopperConstants.TOP_INDEXER_VOLTAGE.get());
         shooter.setFeederVoltage(Volts.of(-ShooterConstants.FEEDER_REVERSE_VOLTAGE.get()));
-        if (reversingTimer.hasElapsed(0.1)) {
+        if (reversingTimer.hasElapsed(0.10)) {
           reversingTimer.stop();
           currentSuperState = CurrentState.SHOOTING;
           noShotTimer.restart();
           // Start indexer and reset oscillation / crawl state for SHOOTING
-          hopper.setIndexerVolts(HopperConstants.INDEXER_VOLTAGE.get());
-          hopper.setTopIndexerVolts(0);
-          topIndexerOscillateTimer.restart();
-          topIndexerHighPhase = false;
+          // topIndexerOscillateTimer.restart();
+          // topIndexerHighPhase = false;
           crawlIsBackingOff = false;
           crawlBackoffTimer = 0.0;
           crawlBackoffTriggered = false;
@@ -201,17 +199,19 @@ public class Superstructure extends SubsystemBase {
         intakeRoller.spin();
         shooter.setFlywheelRPM(shotSetpoint.flywheelSpeed);
         shooter.setFeederSpeed(RotationsPerSecond.of(ShooterConstants.FEEDER_SPEED.get()));
+        hopper.setIndexerVolts(HopperConstants.INDEXER_VOLTAGE.get());
+        hopper.setTopIndexerVolts(HopperConstants.TOP_INDEXER_VOLTAGE.get());
 
         // Top-indexer oscillation (inlined from hopper.oscillateTopIndexer())
-        if (!topIndexerHighPhase && topIndexerOscillateTimer.hasElapsed(0.2)) {
-          topIndexerHighPhase = true;
-          topIndexerOscillateTimer.restart();
-          hopper.setTopIndexerVolts(-HopperConstants.TOP_INDEXER_VOLTAGE.get());
-        } else if (topIndexerHighPhase && topIndexerOscillateTimer.hasElapsed(0.7)) {
-          topIndexerHighPhase = false;
-          topIndexerOscillateTimer.restart();
-          hopper.setTopIndexerVolts(0);
-        }
+        // if (!topIndexerHighPhase && topIndexerOscillateTimer.hasElapsed(0.2)) {
+        //   topIndexerHighPhase = true;
+        //   topIndexerOscillateTimer.restart();
+        //   hopper.setTopIndexerVolts(-HopperConstants.TOP_INDEXER_VOLTAGE.get());
+        // } else if (topIndexerHighPhase && topIndexerOscillateTimer.hasElapsed(0.7)) {
+        //   topIndexerHighPhase = false;
+        //   topIndexerOscillateTimer.restart();
+        //   hopper.setTopIndexerVolts(0);
+        // }
 
         if (readyToShoot() && !crawlUpScheduled) {
           crawlUpScheduled = true;
@@ -223,6 +223,10 @@ public class Superstructure extends SubsystemBase {
 
         // Reset no-shot timer whenever a ball exits (voltage spikes down: bang-through → PID/FF)
         if (shooter.ballExitedFlywheel()) noShotTimer.restart();
+
+        if (!checkHubTolerance()) {
+          currentSuperState = CurrentState.SPINNING_UP;
+        }
 
         // If no ball has been shot in 1.0 s and cooldown has passed, drop intake and restart
         if (noShotTimer.hasElapsed(1.0) && noShotCooldownTimer.hasElapsed(1.5)) {
@@ -264,8 +268,7 @@ public class Superstructure extends SubsystemBase {
 
     if (crawlIsBackingOff) {
       crawlBackoffTimer += 0.02;
-      intake.io.setIntakeArmVoltage(
-          Volts.of(-IntakeConstants.CRAWL_BACKOFF_VOLTAGE_VOLTS.get()));
+      intake.io.setIntakeArmVoltage(Volts.of(-IntakeConstants.CRAWL_BACKOFF_VOLTAGE_VOLTS.get()));
       if (crawlBackoffTimer >= IntakeConstants.CRAWL_BACKOFF_DURATION_SECONDS.get()
           || positionDeg <= IntakeConstants.INTAKE_DOWN_VALUE.get()) {
         crawlIsBackingOff = false;
@@ -377,13 +380,13 @@ public class Superstructure extends SubsystemBase {
   }
 
   public boolean readyToShoot() {
-    boolean shooterSpeedSetpoint = shooter.flywheelUpToSpeed() && shooter.feederUpToSpeed();
+    boolean shooterSpeedSetpoint = shooter.flywheelUpToSpeed(); // && shooter.feederUpToSpeed();
     boolean hubSetpoint = checkHubTolerance();
 
     Logger.recordOutput("Superstructure/ShooterSpeedSetpoint", shooterSpeedSetpoint);
     Logger.recordOutput("Superstructure/HubRotationSetpoint", hubSetpoint);
-    Logger.recordOutput("Superstructure/HubRotationTarget", shotSetpoint.robotPose.getRotation());
-    Logger.recordOutput("Superstructure/HubRotationCurrent", drive.getPose().getRotation());
+    Logger.recordOutput("Superstructure/HubRotationTarget", shotSetpoint.robotPose);
+    Logger.recordOutput("Superstructure/HubRotationCurrent", drive.getPose());
     Logger.recordOutput("Superstructure/HubRotationToleranceDeg", getDynamicHubToleranceDegrees());
     Logger.recordOutput(
         "Superstructure/HubRotationError",

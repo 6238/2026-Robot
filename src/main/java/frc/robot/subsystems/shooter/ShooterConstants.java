@@ -24,17 +24,17 @@ public class ShooterConstants {
   public static final Distance SHOOTER_WHEEL_RADIUS = Inches.of(2.0);
   public static final Distance SHOOTER_HOOD_HEIGHT = Inches.of(28.0);
 
-  public static final double FEEDER_GEARING = 18 / 12;
-  public static final double FLYWHEEL_GEARING = 18 / 24;
+  public static final double FEEDER_GEARING = 18.0 / 12.0;
+  public static final double FLYWHEEL_GEARING = 18.0 / 24.0;
 
   public static final LoggedNetworkPIDFeedforwardGains FLYWHEEL_GAINS =
       new LoggedNetworkPIDFeedforwardGains(
-          0.04, // kP
+          0.04 * 0.75, // kP
           0.0, // kI
-          0.02, // kD
-          1.92, // kA
-          0.12, // kV
-          0.1, // kS
+          0, // kD
+          1.84 * 0.75, // kA
+          0.117 * 0.75, // kV
+          0.1 * 0.75, // kS
           0.0, // kG
           "ShooterFlywheel");
 
@@ -54,12 +54,12 @@ public class ShooterConstants {
 
   public static final LoggedNetworkPIDFeedforwardGains FEEDER_GAINS =
       new LoggedNetworkPIDFeedforwardGains(
-          0.7, // kP
+          0.04 * 1.5, // kP
           0.0, // kI
-          0.04, // kD
-          1.85, // kA
-          0.123, // kV
-          0.0, // kS
+          0, // kD
+          1.82 * 1.5, // kA
+          0.12 * 1.5, // kV
+          0.1 * 1.5, // kS
           0.0, // kG
           "ShooterFeeder");
 
@@ -88,16 +88,16 @@ public class ShooterConstants {
   // SHOT SETPOINTS
   public static final Angle FIXED_HOOD_ANGLE_DEGREES = Degrees.of(60.5);
   // Fraction below target at which bang-through (full 12 V) is applied instead of PID/FF
-  public static final double FLYWHEEL_BANG_THROUGH_THRESHOLD = 0.03;
+  public static final double FLYWHEEL_BANG_THROUGH_THRESHOLD = 0.06;
   public static final AngularVelocity FLYWHEEL_TOLERANCE_BEFORE_SHOT = RotationsPerSecond.of(0.5);
   public static final AngularVelocity FEEDER_TOLERANCE_BEFORE_SHOT = RotationsPerSecond.of(2.0);
   public static final LoggedNetworkNumber FEEDER_REVERSE_VOLTAGE =
-      new LoggedNetworkNumber("Shooter/FeederReverseVolts", 3.0);
+      new LoggedNetworkNumber("Shooter/FeederReverseVolts", 8.0);
   public static final AngularVelocity BIG_FLYWHEEL_TOLERANCE_BEFORE_SHOT =
       RotationsPerSecond.of(0.8);
   public static final Distance HUB_POSITION_TOLERANCE = Meters.of(0.04);
-  public static final Angle HUB_ROTATION_TOLERANCE = Degrees.of(1.5);
-  public static final Angle HUB_ROTATION_TOLERANCE_TIGHT = Degrees.of(1.7);
+  public static final Angle HUB_ROTATION_TOLERANCE = Degrees.of(1.25);
+  public static final Angle HUB_ROTATION_TOLERANCE_TIGHT = Degrees.of(1.25);
   public static final double HUB_NEAR_DISTANCE_METERS = 3.0;
   public static final double HUB_HIGH_ROBOT_SPEED_MPS = 2.5;
 
@@ -112,16 +112,16 @@ public class ShooterConstants {
 
   static {
     FLYWHEEL_MAP = new ExtrapolatingDoubleTreeMap();
-    FLYWHEEL_MAP.put(1.5, 27.2);
-    FLYWHEEL_MAP.put(3.0, 35.0);
+    FLYWHEEL_MAP.put(1.5, 26.2 / 0.75);
+    FLYWHEEL_MAP.put(3.0, 34.0 / 0.75);
 
     LEAD_TIME_MAP = new ExtrapolatingDoubleTreeMap();
     LEAD_TIME_MAP.put(1.5, 0.56);
     LEAD_TIME_MAP.put(3.0, 0.77);
 
     PASSING_FLYWHEEL_MAP = new ExtrapolatingDoubleTreeMap();
-    PASSING_FLYWHEEL_MAP.put(1.5, 33.5);
-    PASSING_FLYWHEEL_MAP.put(3.0, 39.2);
+    PASSING_FLYWHEEL_MAP.put(1.5, 33.5 * 1 / 0.75);
+    PASSING_FLYWHEEL_MAP.put(3.0, 39.2 * 1 / 0.75);
 
     PASSING_LEAD_TIME_MAP = new ExtrapolatingDoubleTreeMap();
     PASSING_LEAD_TIME_MAP.put(1.5, 28.1);

@@ -55,8 +55,7 @@ public class IntakePivot extends SubsystemBase {
         Math.abs(targetAngle.in(Degrees) - IntakeConstants.INTAKE_DOWN_VALUE.get())
             < IntakeConstants.DRS_TARGET_TOLERANCE_DEGREES;
     boolean highCurrent =
-        inputs.intakeArmSupplyCurrent.in(Amps)
-            > IntakeConstants.DRS_CURRENT_THRESHOLD_AMPS.get();
+        inputs.intakeArmSupplyCurrent.in(Amps) > IntakeConstants.DRS_CURRENT_THRESHOLD_AMPS.get();
     boolean stuckAboveTarget =
         inputs.intakeArmPosition.in(Degrees) - IntakeConstants.INTAKE_DOWN_VALUE.get()
             > IntakeConstants.DRS_ANGLE_ERROR_THRESHOLD_DEGREES.get();

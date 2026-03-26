@@ -50,9 +50,9 @@ public class VisionConstants {
               Degrees.of(0).in(Radians), Degrees.of(0).in(Radians), Degrees.of(90).in(Radians)));
 
   // Basic filtering thresholds
-  public static double maxAmbiguity = 0.07;
+  public static double maxAmbiguity = 0.14;
   public static double maxZError = 0.65;
-  public static double maxTagDistance = 4; // Meters
+  //   public static double maxTagDistance = 4; // Meters
 
   // X coordinate exclusion zones (robot pose X ranges to reject, e.g. field structures)
   public static double[][] xExclusionZones = new double[][] {{4.0, 5.292}, {11.5, 12.5}};

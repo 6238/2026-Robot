@@ -41,7 +41,7 @@ import java.util.function.Supplier;
 
 public class DriveCommands {
   public static final double DEADBAND = 0.07;
-  public static final double ANGLE_KP = 5.0;
+  public static final double ANGLE_KP = 5.3;
   public static final double ANGLE_KD = 0.1;
   public static final double ANGLE_MAX_VELOCITY = 20.0;
   public static final double ANGLE_MAX_ACCELERATION = 50.0;
@@ -155,7 +155,7 @@ public class DriveCommands {
     ProfiledPIDController angleController =
         new ProfiledPIDController(
             ANGLE_KP,
-            0.03,
+            0.1,
             ANGLE_KD,
             new TrapezoidProfile.Constraints(ANGLE_MAX_VELOCITY, ANGLE_MAX_ACCELERATION));
     angleController.enableContinuousInput(-Math.PI, Math.PI);
@@ -173,7 +173,10 @@ public class DriveCommands {
                       drive.getRotation().getRadians(), rotationSupplier.get().getRadians());
 
               // X-lock when stationary and already aimed to resist defense
-              if (linearVelocity.getNorm() == 0.0 && Math.abs(omega) < 0.1) {
+              if (linearVelocity.getNorm() == 0.0
+                  && Math.abs(
+                          drive.getRotation().getDegrees() - rotationSupplier.get().getDegrees())
+                      < 0.75) {
                 drive.stopWithX();
                 return;
               }

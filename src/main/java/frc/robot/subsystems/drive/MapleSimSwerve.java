@@ -19,8 +19,8 @@ public class MapleSimSwerve {
         new SwerveDriveSimulation(
             new DriveTrainSimulationConfig(
                 Pounds.of(90),
-                Inches.of(29.5 + 4),
-                Inches.of(29.5 + 4),
+                Inches.of(27),
+                Inches.of(27),
                 Meters.of(constants.FrontLeft.LocationX - constants.BackLeft.LocationX),
                 Meters.of(constants.FrontLeft.LocationY - constants.FrontRight.LocationY),
                 COTS.ofPigeon2(),
