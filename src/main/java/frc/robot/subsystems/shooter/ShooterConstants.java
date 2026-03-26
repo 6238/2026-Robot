@@ -32,7 +32,7 @@ public class ShooterConstants {
           0.04 * 0.75, // kP
           0.0, // kI
           0, // kD
-          1.84 * 0.75, // kA
+          1.87 * 0.75, // kA
           0.117 * 0.75, // kV
           0.1 * 0.75, // kS
           0.0, // kG
@@ -88,7 +88,7 @@ public class ShooterConstants {
   // SHOT SETPOINTS
   public static final Angle FIXED_HOOD_ANGLE_DEGREES = Degrees.of(60.5);
   // Fraction below target at which bang-through (full 12 V) is applied instead of PID/FF
-  public static final double FLYWHEEL_BANG_THROUGH_THRESHOLD = 0.06;
+  public static final double FLYWHEEL_BANG_THROUGH_THRESHOLD = 0.04;
   public static final AngularVelocity FLYWHEEL_TOLERANCE_BEFORE_SHOT = RotationsPerSecond.of(0.5);
   public static final AngularVelocity FEEDER_TOLERANCE_BEFORE_SHOT = RotationsPerSecond.of(2.0);
   public static final LoggedNetworkNumber FEEDER_REVERSE_VOLTAGE =
@@ -112,8 +112,8 @@ public class ShooterConstants {
 
   static {
     FLYWHEEL_MAP = new ExtrapolatingDoubleTreeMap();
-    FLYWHEEL_MAP.put(1.5, 26.2 / 0.75);
-    FLYWHEEL_MAP.put(3.0, 34.0 / 0.75);
+    FLYWHEEL_MAP.put(1.5, 25.7 / 0.75);
+    FLYWHEEL_MAP.put(3.0, 33.5 / 0.75);
 
     LEAD_TIME_MAP = new ExtrapolatingDoubleTreeMap();
     LEAD_TIME_MAP.put(1.5, 0.56);

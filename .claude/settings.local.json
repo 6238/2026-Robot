@@ -21,7 +21,8 @@
       "Bash(xargs grep -l \"2026\\\\|REBUILT\\\\|Fuel\\\\|fuel\")",
       "Bash(xargs grep -l \"resetFieldForAuto\\\\|getGamePieces\\\\|addGamePiece\\\\|Stage\\\\|Trench\\\\|Wall\")",
       "Bash(xargs grep -l \"RebuiltFuel\\\\|Stage\\\\|Obstacle\\\\|setupField\\\\|addWall\\\\|addStage\")",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(./gradlew compileJava -x test)"
     ]
   }
 }

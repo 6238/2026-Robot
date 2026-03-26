@@ -44,8 +44,6 @@ public class DRSHelper {
 
     boolean[] stepCompleted = {false};
 
-    Command recovery = buildRecovery(pivot, drive);
-
     return Commands.sequence(
         Commands.runOnce(() -> stepCompleted[0] = false),
         Commands.defer(
@@ -58,7 +56,10 @@ public class DRSHelper {
                             })
                         .until(pivot::isDRSTriggered)
                         .andThen(
-                            Commands.either(recovery, Commands.none(), () -> !stepCompleted[0])),
+                            Commands.either(
+                                buildRecovery(pivot, drive),
+                                Commands.none(),
+                                () -> !stepCompleted[0])),
                 stepRequirements)
             .repeatedly()
             .until(() -> stepCompleted[0]));

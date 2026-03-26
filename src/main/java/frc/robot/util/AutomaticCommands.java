@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.drive.Drive;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
+import org.littletonrobotics.junction.Logger;
 
 public class AutomaticCommands {
 
@@ -94,6 +95,9 @@ public class AutomaticCommands {
     Translation2d currentTrans = currentPose.getTranslation();
     Translation2d startPoint = currentTrans.getDistance(a) < currentTrans.getDistance(b) ? a : b;
     Translation2d endPoint = (startPoint == a) ? b : a;
+
+    Logger.recordOutput("entryTarget", startPoint);
+    Logger.recordOutput("exitTarget", endPoint);
 
     APTarget entryTarget =
         new APTarget(new Pose2d(startPoint, currentPose.getRotation())).withVelocity(1.0);
