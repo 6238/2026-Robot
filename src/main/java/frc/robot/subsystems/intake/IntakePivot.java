@@ -27,6 +27,9 @@ public class IntakePivot extends SubsystemBase {
   // DRS (Dynamic Recovery System) — intake lower-block detection
   private double drsStuckTimer = 0.0;
   private boolean drsTriggered = false;
+  // Ignore DRS for 0.3 s after a new setpoint is commanded (motor inrush looks like a block)
+  private double drsIgnoreTimer = 0.0;
+  private static final double DRS_IGNORE_SECONDS = 0.3;
 
   private BatteryLogger batteryLogger;
 
@@ -59,7 +62,11 @@ public class IntakePivot extends SubsystemBase {
     boolean stuckAboveTarget =
         inputs.intakeArmPosition.in(Degrees) - IntakeConstants.INTAKE_DOWN_VALUE.get()
             > IntakeConstants.DRS_ANGLE_ERROR_THRESHOLD_DEGREES.get();
-    boolean drsCondition = targetingDown && highCurrent && stuckAboveTarget;
+    if (drsIgnoreTimer > 0.0) {
+      drsIgnoreTimer -= 0.02;
+    }
+    boolean drsCondition =
+        targetingDown && highCurrent && stuckAboveTarget && drsIgnoreTimer <= 0.0;
 
     if (!drsTriggered) {
       if (drsCondition) {
@@ -75,6 +82,7 @@ public class IntakePivot extends SubsystemBase {
     Logger.recordOutput("IntakePivot/DRS/Triggered", drsTriggered);
     Logger.recordOutput("IntakePivot/DRS/Condition", drsCondition);
     Logger.recordOutput("IntakePivot/DRS/StuckTimerSecs", drsStuckTimer);
+    Logger.recordOutput("IntakePivot/DRS/IgnoreTimerSecs", drsIgnoreTimer);
   }
 
   /** Returns true when a lower-block has been detected and DRS should fire. */
@@ -86,6 +94,12 @@ public class IntakePivot extends SubsystemBase {
   public void resetDRS() {
     drsTriggered = false;
     drsStuckTimer = 0.0;
+    drsIgnoreTimer = DRS_IGNORE_SECONDS;
+  }
+
+  /** Force-triggers DRS immediately. For testing only. */
+  public void forceTriggerDRS() {
+    drsTriggered = true;
   }
 
   public Command setIntakeAngle(Supplier<Angle> angleSupplier) {
@@ -93,12 +107,16 @@ public class IntakePivot extends SubsystemBase {
         () -> {
           targetAngle = angleSupplier.get();
           io.setIntakePosition(angleSupplier.get());
+          drsIgnoreTimer = DRS_IGNORE_SECONDS;
+          drsStuckTimer = 0.0;
         });
   }
 
   public void setAngle(Angle angle) {
     targetAngle = angle;
     io.setIntakePosition(angle);
+    drsIgnoreTimer = DRS_IGNORE_SECONDS;
+    drsStuckTimer = 0.0;
   }
 
   public Command setIntakeArmVoltage(Supplier<Voltage> voltageSupplier) {

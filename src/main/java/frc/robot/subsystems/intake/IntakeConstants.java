@@ -16,7 +16,8 @@ public class IntakeConstants {
   public static final int INTAKE_ARM_MOTOR_ID = 54;
 
   public static final double INTAKE_GEARING = 34 / 12 * 18 / 34;
-  public static final InvertedValue INTAKE_MOTOR_DIRECTION = InvertedValue.Clockwise_Positive;
+  public static final InvertedValue INTAKE_MOTOR_DIRECTION =
+      InvertedValue.CounterClockwise_Positive;
   public static final LoggedNetworkPIDFeedforwardGains INTAKE_GAINS =
       new LoggedNetworkPIDFeedforwardGains(0.03, 0, 0.00, 0, 0.17, 0, 0, "intake");
 
@@ -69,9 +70,9 @@ public class IntakeConstants {
   public static final LoggedNetworkNumber DRS_CURRENT_THRESHOLD_AMPS =
       new LoggedNetworkNumber("DRS/CurrentThresholdAmps", 15.0);
   public static final LoggedNetworkNumber DRS_ANGLE_ERROR_THRESHOLD_DEGREES =
-      new LoggedNetworkNumber("DRS/AngleErrorThresholdDeg", 15.0);
+      new LoggedNetworkNumber("DRS/AngleErrorThresholdDeg", 30.0);
   public static final double DRS_TARGET_TOLERANCE_DEGREES = 5.0;
-  public static final double DRS_STUCK_TIMEOUT_SECONDS = 0.25;
+  public static final double DRS_STUCK_TIMEOUT_SECONDS = 0.15;
   // Mitigation: lift to middle, drive backward, lower back down
   public static final LoggedNetworkNumber DRS_MIDDLE_ANGLE_DEGREES =
       new LoggedNetworkNumber("DRS/MiddleAngleDeg", 30.0);

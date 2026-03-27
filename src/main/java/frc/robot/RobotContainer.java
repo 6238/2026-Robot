@@ -35,6 +35,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.commands.DRSHelper;
 import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
@@ -252,20 +253,33 @@ public class RobotContainer {
 
     autoChooser.addOption("Do Nothing", Commands.none());
     autoChooser.addOption(
+        "DRS Test (triggers after 1 s)",
+        DRSHelper.wrapWithDRS(
+            () ->
+                Commands.parallel(
+                    intakePivot.setIntakeAngle(
+                        () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
+                    Commands.sequence(
+                        Commands.waitSeconds(1.0), Commands.runOnce(intakePivot::forceTriggerDRS))),
+            intakePivot,
+            drive,
+            Set.of(drive, intakePivot)));
+    autoChooser.addOption(
         "Left Trench Mid Rush (double)",
         Commands.sequence(
+            // intakePivot.preloadPivot(),
             resetPoseCommand(upperTrenchCycle1),
-            // DRSHelper.wrapWithDRS(
-            //     () ->
-            Commands.parallel(
-                AutoBuilder.followPath(upperTrenchCycle1),
-                Commands.sequence(
-                    Commands.waitSeconds(0.25),
-                    superstructure.setWantedSuperStateCommand(
-                        () -> Superstructure.WantedState.INTAKING))),
-            // intakePivot,
-            // drive,
-            // driveAndSuperstructure),
+            DRSHelper.wrapWithDRS(
+                () ->
+                    Commands.parallel(
+                        AutoBuilder.followPath(upperTrenchCycle1),
+                        Commands.sequence(
+                            Commands.waitSeconds(0.25),
+                            superstructure.setWantedSuperStateCommand(
+                                () -> Superstructure.WantedState.INTAKING))),
+                intakePivot,
+                drive,
+                driveAndSuperstructure),
             shootCommand(4.6),
             superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.INTAKING),
             AutoBuilder.followPath(upperTrenchCycle2),
@@ -275,17 +289,17 @@ public class RobotContainer {
         Commands.sequence(
             intakePivot.preloadPivot(),
             resetPoseCommand(lowerTrenchCycle1),
-            // DRSHelper.wrapWithDRS(
-            //     () ->
-            Commands.parallel(
-                AutoBuilder.followPath(lowerTrenchCycle1),
-                Commands.sequence(
-                    Commands.waitSeconds(0.25),
-                    superstructure.setWantedSuperStateCommand(
-                        () -> Superstructure.WantedState.INTAKING))),
-            // intakePivot,
-            // drive,
-            // driveAndSuperstructure),
+            DRSHelper.wrapWithDRS(
+                () ->
+                    Commands.parallel(
+                        AutoBuilder.followPath(lowerTrenchCycle1),
+                        Commands.sequence(
+                            Commands.waitSeconds(0.25),
+                            superstructure.setWantedSuperStateCommand(
+                                () -> Superstructure.WantedState.INTAKING))),
+                intakePivot,
+                drive,
+                driveAndSuperstructure),
             shootCommand(4),
             superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.INTAKING),
             AutoBuilder.followPath(lowerTrenchCycle2),
@@ -362,15 +376,16 @@ public class RobotContainer {
                     intakePivot.targetAngle.equals(
                         Degrees.of(IntakeConstants.INTAKE_UP_VALUE.get()))));
 
-    controller
-        .y()
-        .whileTrue(
-            Commands.repeatingSequence(
-                intakePivot.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_UP_VALUE.get())),
-                Commands.waitSeconds(0.4),
-                intakePivot.setIntakeAngle(
-                    () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
-                Commands.waitSeconds(0.4)));
+    // controller
+    //     .y()
+    //     .whileTrue(
+    //         Commands.repeatingSequence(
+    //             intakePivot.setIntakeAngle(() ->
+    // Degrees.of(IntakeConstants.INTAKE_UP_VALUE.get())),
+    //             Commands.waitSeconds(0.4),
+    //             intakePivot.setIntakeAngle(
+    //                 () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
+    //             Commands.waitSeconds(0.4)));
 
     controller
         .x()
@@ -381,12 +396,14 @@ public class RobotContainer {
     controller.back().onTrue(intakePivot.reset().ignoringDisable(true));
     new Trigger(() -> HALUtil.getFPGAButton()).onTrue(intakePivot.toggleBrakeMode());
 
-    // Driver override: any stick movement cancels automation
+    // Driver override: intentional stick movement cancels automation.
+    // Uses a larger threshold than the drive deadband to avoid false triggers from controller
+    // drift.
+    final double OVERRIDE_DEADBAND = 0.7;
     BooleanSupplier driverOverride =
         () ->
-            Math.abs(controller.getLeftX()) > DriveCommands.DEADBAND
-                || Math.abs(controller.getLeftY()) > DriveCommands.DEADBAND
-                || Math.abs(controller.getRightX()) > DriveCommands.DEADBAND;
+            Math.hypot(controller.getLeftX(), controller.getLeftY()) > OVERRIDE_DEADBAND
+                || Math.abs(controller.getRightX()) > OVERRIDE_DEADBAND;
 
     // B button: context-aware trench / bump navigation
     controller.b().whileTrue(AutomaticCommands.automaticCommand(drive, driverOverride));

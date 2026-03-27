@@ -68,25 +68,43 @@ public class Shooter extends SubsystemBase {
     //   io.setFlywheelSpeed(compensatedFlywheelVelocity);
     // }
 
-    // Bang-through flywheel control: full 12 V when >4% below target, PID/FF when close
+    // Bang-through flywheel control: full 12 V when below threshold, holds until back at target
     prevBangThrough = bangThrough;
     double targetRPS = targetFlywheelVelocity.in(RotationsPerSecond);
+    double commandedVoltage = 0.0;
     if (targetRPS > 0) {
       double currentRPS = inputs.flywheelVelocity.in(RotationsPerSecond);
-      bangThrough =
+      boolean belowThreshold =
           currentRPS < targetRPS * (1.0 - ShooterConstants.FLYWHEEL_BANG_THROUGH_THRESHOLD);
-      Logger.recordOutput("Shooter/bangThrough", bangThrough);
+      // Latch on when below threshold, release only once velocity returns to target
+      if (belowThreshold) {
+        bangThrough = true;
+      } else if (bangThrough && currentRPS >= targetRPS) {
+        bangThrough = false;
+      }
       if (bangThrough) {
         io.setFlywheelVoltage(Volts.of(12.0));
+        commandedVoltage = 12.0;
       } else {
         io.setFlywheelSpeed(targetFlywheelVelocity);
       }
     } else {
       bangThrough = false;
     }
+    Logger.recordOutput("Shooter/bangThrough", bangThrough);
 
+    Logger.recordOutput("Shooter/commandedVoltage", commandedVoltage);
+    Logger.recordOutput("Shooter/prevBangThrough", prevBangThrough);
+    Logger.recordOutput("Shooter/ballExitedFlywheel", ballExitedFlywheel());
     Logger.recordOutput("Shooter/targetVelocity", targetFlywheelVelocity.in(RotationsPerSecond));
     Logger.recordOutput("Shooter/currentVelocity", inputs.flywheelVelocity.in(RotationsPerSecond));
+    Logger.recordOutput(
+        "Shooter/flywheelErrorPercent",
+        targetFlywheelVelocity.in(RotationsPerSecond) > 0
+            ? (targetFlywheelVelocity.in(RotationsPerSecond)
+                    - inputs.flywheelVelocity.in(RotationsPerSecond))
+                / targetFlywheelVelocity.in(RotationsPerSecond)
+            : 0.0);
 
     if (batteryLogger != null) {
       batteryLogger.reportCurrentUsage(

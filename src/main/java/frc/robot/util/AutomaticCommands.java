@@ -6,6 +6,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.drive.Drive;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
@@ -16,9 +17,6 @@ public class AutomaticCommands {
   // Trench
   public static final Translation2d trenchNeutralEntry = new Translation2d(3.4, 7.58);
   public static final Translation2d trenchAllianceEntry = new Translation2d(5.75, 7.58);
-
-  // Bump (TODO: measure on field)
-  public static final Pose2d bumpPose = new Pose2d(4.0, 4.1, Rotation2d.fromDegrees(0));
 
   // Hub back wall (TODO: measure on field)
   public static final Pose2d hubBackWallPose = new Pose2d(4.0, 5.5, Rotation2d.fromDegrees(180));
@@ -43,18 +41,18 @@ public class AutomaticCommands {
   }
 
   /**
-   * Context-aware command for B button. Navigates through the trench or over the bump depending on
-   * the robot's current field position.
+   * Context-aware command for B button. If the robot is in the neutral zone (closer to the neutral
+   * trench entry), drives to the position right under the trench. If the robot is in the alliance
+   * zone (closer to the alliance trench entry), drives through the trench into the neutral zone.
    */
   public static Command automaticCommand(Drive drive, BooleanSupplier driverOverride) {
     return Commands.defer(
         () -> {
           Pose2d pose = drive.getPose();
-          // Bump detection: near the horizontal midline (y ~ 4.1)
+          // Bump zone: near the horizontal midline (y ~ 4.1) → go to hub back wall
           if (Math.abs(pose.getY() - 4.1) < 1.0) {
-            return bumpCommand(drive, driverOverride);
+            return hubBackWallCommand(drive, driverOverride);
           }
-          // Trench navigation based on quadrant
           if (pose.getX() < 8 && pose.getY() > 4) {
             return trenchCommand(
                 drive, trenchNeutralEntry, trenchAllianceEntry, pose, driverOverride);
@@ -62,56 +60,91 @@ public class AutomaticCommands {
           if (pose.getX() < 8 && pose.getY() < 4) {
             return trenchCommand(
                 drive,
-                FieldFlipUtil.flipHorizontalMidline(trenchAllianceEntry),
                 FieldFlipUtil.flipHorizontalMidline(trenchNeutralEntry),
+                FieldFlipUtil.flipHorizontalMidline(trenchAllianceEntry),
                 pose,
                 driverOverride);
           }
           if (pose.getX() > 8 && pose.getY() > 4) {
             return trenchCommand(
                 drive,
-                FieldFlipUtil.flipVerticalMidline(trenchAllianceEntry),
                 FieldFlipUtil.flipVerticalMidline(trenchNeutralEntry),
+                FieldFlipUtil.flipVerticalMidline(trenchAllianceEntry),
                 pose,
                 driverOverride);
           }
           return trenchCommand(
               drive,
-              FieldFlipUtil.flipBothMidlines(trenchAllianceEntry),
               FieldFlipUtil.flipBothMidlines(trenchNeutralEntry),
+              FieldFlipUtil.flipBothMidlines(trenchAllianceEntry),
               pose,
               driverOverride);
         },
         Set.of(drive));
   }
 
-  /** Navigates through the trench from the nearest entry point to the far end. */
+  /**
+   * Context-aware trench command. If the robot is closer to the neutral entry it is in the neutral
+   * zone and drives to the position right under the trench. If the robot is closer to the alliance
+   * entry it is in the alliance zone and drives through the trench into the neutral zone.
+   */
   public static Command trenchCommand(
       Drive drive,
-      Translation2d a,
-      Translation2d b,
+      Translation2d neutralEntry,
+      Translation2d allianceEntry,
       Pose2d currentPose,
       BooleanSupplier driverOverride) {
     Translation2d currentTrans = currentPose.getTranslation();
-    Translation2d startPoint = currentTrans.getDistance(a) < currentTrans.getDistance(b) ? a : b;
-    Translation2d endPoint = (startPoint == a) ? b : a;
+    boolean inNeutralZone =
+        currentTrans.getDistance(neutralEntry) > currentTrans.getDistance(allianceEntry);
 
-    Logger.recordOutput("entryTarget", startPoint);
-    Logger.recordOutput("exitTarget", endPoint);
+    Logger.recordOutput("trench/neutralEntry", new Pose2d(neutralEntry, Rotation2d.kZero));
+    Logger.recordOutput("trench/allianceEntry", new Pose2d(allianceEntry, Rotation2d.kZero));
+    Logger.recordOutput("trench/inNeutralZone", inNeutralZone);
 
-    APTarget entryTarget =
-        new APTarget(new Pose2d(startPoint, currentPose.getRotation())).withVelocity(1.0);
-    APTarget exitTarget =
-        new APTarget(new Pose2d(endPoint, currentPose.getRotation())).withVelocity(0.0);
+    // Shooter faces toward the hub regardless of which side the robot starts on.
+    Rotation2d shooterFacing =
+        neutralEntry.getY() < 4 ? Rotation2d.fromDegrees(90) : Rotation2d.fromDegrees(270);
+    // Shift Y 18 cm toward the field center to stay clear of the wall.
+    double yOffset = allianceEntry.getY() > 4 ? -0.50 : 0.50;
+    Translation2d adjustedAlliance =
+        new Translation2d(allianceEntry.getX(), allianceEntry.getY() + yOffset);
 
-    return drive
-        .align(entryTarget, driverOverride)
-        .andThen(drive.align(exitTarget, driverOverride));
-  }
+    // Direction from alliance entry toward neutral entry (along the trench).
+    Translation2d wallDir = neutralEntry.minus(allianceEntry);
+    double wallDist = wallDir.getNorm();
+    double wallVx = wallDir.getX() / wallDist * 0.5;
+    double wallVy = wallDir.getY() / wallDist * 0.5;
 
-  /** Navigates the robot over the bump to the target crossing pose. */
-  public static Command bumpCommand(Drive drive, BooleanSupplier driverOverride) {
-    return drive.align(new APTarget(bumpPose).withVelocity(0.0), driverOverride);
+    Translation2d adjustedNeutral =
+        new Translation2d(neutralEntry.getX(), neutralEntry.getY() + yOffset);
+    Pose2d alignPose = new Pose2d(adjustedAlliance, shooterFacing);
+    Logger.recordOutput("AutomaticCommands/target", alignPose);
+
+    if (inNeutralZone) {
+      // Neutral zone: align to alliance entry, drive into the wall, then slide left 4 ft.
+      return drive
+          .align(new APTarget(alignPose).withVelocity(0.0), driverOverride)
+          .andThen(
+              DriveCommands.joystickDriveRobotRelative(drive, () -> -0.5, () -> 0, () -> 0)
+                  .withTimeout(0.3))
+          // .andThen(drive.driveIntoWall(wallVx, wallVy, driverOverride))
+          // .andThen(Commands.print("now!"))
+          .andThen(
+              DriveCommands.joystickDrive(drive, () -> -1, () -> 0, () -> 0).withTimeout(0.75));
+    } else {
+      // Alliance zone: robot points backwards (toward alliance wall) through the trench.
+      Rotation2d backwardsFacing =
+          neutralEntry.getX() < 8 ? Rotation2d.fromDegrees(180) : Rotation2d.fromDegrees(0);
+      Pose2d allianceAlignPose = new Pose2d(allianceEntry, backwardsFacing);
+      Pose2d exitPose = new Pose2d(neutralEntry, backwardsFacing);
+      Logger.recordOutput("AutomaticCommands/target", allianceAlignPose);
+      return drive
+          .align(new APTarget(allianceAlignPose).withVelocity(0.0), driverOverride)
+          .andThen(
+              Commands.runOnce(() -> Logger.recordOutput("AutomaticCommands/target", exitPose)))
+          .andThen(drive.align(new APTarget(exitPose).withVelocity(0.0), driverOverride));
+    }
   }
 
   /** D-Pad Up: Lines up against the back wall of the hub. */
@@ -120,6 +153,7 @@ public class AutomaticCommands {
         () -> {
           Pose2d target =
               drive.getPose().getX() > 8 ? flipVertical(hubBackWallPose) : hubBackWallPose;
+          Logger.recordOutput("AutomaticCommands/target", target);
           return drive.align(new APTarget(target).withVelocity(0.0), driverOverride);
         },
         Set.of(drive));
@@ -136,6 +170,7 @@ public class AutomaticCommands {
           double targetY =
               current.getY() > 4.1 ? WALL_SHOOT_SETUP_TOP_Y : WALL_SHOOT_SETUP_BOTTOM_Y;
           Pose2d setupPose = new Pose2d(current.getX(), targetY, current.getRotation());
+          Logger.recordOutput("AutomaticCommands/target", setupPose);
           return drive.align(new APTarget(setupPose).withVelocity(0.0), driverOverride);
         },
         Set.of(drive));
@@ -148,8 +183,11 @@ public class AutomaticCommands {
           boolean isRedSide = drive.getPose().getX() > 8;
           Pose2d entryPose = isRedSide ? flipVertical(towerEntryPose) : towerEntryPose;
           Pose2d exitPose = isRedSide ? flipVertical(towerExitPose) : towerExitPose;
+          Logger.recordOutput("AutomaticCommands/target", entryPose);
           return drive
               .align(new APTarget(entryPose).withVelocity(0.0), driverOverride)
+              .andThen(
+                  Commands.runOnce(() -> Logger.recordOutput("AutomaticCommands/target", exitPose)))
               .andThen(drive.align(new APTarget(exitPose).withVelocity(0.0), driverOverride));
         },
         Set.of(drive));

@@ -51,9 +51,9 @@ public final class Constants {
   public static final DoubleFunction<Boolean> SHOULD_PASS =
       (poseX) -> {
         if (RobotContainer.isRed()) {
-          return poseX < 12.0;
+          return poseX < 11.5;
         }
-        return poseX > 4.25;
+        return poseX > 4.75;
       };
 
   public static final Supplier<Pose3d> HUB_POSE_3D =

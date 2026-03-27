@@ -19,6 +19,7 @@ public interface ShooterIO {
     public Current flywheelSupplyCurrent = Amps.of(0);
     public Current flywheel2SupplyCurrent = Amps.of(0);
     public Voltage flywheelAppliedVoltage = Volts.of(0);
+    public Voltage flywheelSupplyVoltage = Volts.of(0);
 
     public AngularVelocity feederVelocity = RotationsPerSecond.of(0);
     public AngularAcceleration feederAcceleration = RotationsPerSecondPerSecond.of(0);

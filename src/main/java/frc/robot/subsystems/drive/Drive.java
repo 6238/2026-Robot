@@ -39,6 +39,7 @@ import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -57,6 +58,7 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
@@ -65,6 +67,7 @@ import frc.robot.util.BatteryLogger;
 import frc.robot.util.LocalADStarAK;
 import frc.robot.util.RobotIdentity;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -583,6 +586,13 @@ public class Drive extends SubsystemBase {
                       -getMaxAngularSpeedRadPerSec(),
                       getMaxAngularSpeedRadPerSec());
 
+              Logger.recordOutput("Autopilot/targetPose", target.getReference());
+              Logger.recordOutput("Autopilot/vx", output.vx().in(MetersPerSecond));
+              Logger.recordOutput("Autopilot/vy", output.vy().in(MetersPerSecond));
+              Logger.recordOutput("Autopilot/omega", omega);
+              Logger.recordOutput("Autopilot/atTarget", kAutopilot.atTarget(pose, target));
+              Logger.recordOutput("Autopilot/driverOverride", driverOverride.getAsBoolean());
+
               runVelocity(
                   ChassisSpeeds.fromFieldRelativeSpeeds(
                       output.vx().in(MetersPerSecond),
@@ -592,6 +602,52 @@ public class Drive extends SubsystemBase {
             })
         .until(() -> kAutopilot.atTarget(getPose(), target) || driverOverride.getAsBoolean())
         .finallyDo(() -> runVelocity(new ChassisSpeeds()));
+  }
+
+  /**
+   * Drives at a constant field-relative velocity until the robot stalls (wall contact) or the
+   * driver overrides. A debouncer prevents the stall check from firing before the robot has had a
+   * chance to accelerate.
+   */
+  public Command driveIntoWall(double fieldVx, double fieldVy, BooleanSupplier driverOverride) {
+    Debouncer stallDebouncer = new Debouncer(0.15, Debouncer.DebounceType.kRising);
+    return this.run(
+            () -> {
+              runVelocity(
+                  ChassisSpeeds.fromFieldRelativeSpeeds(
+                      fieldVx, fieldVy, 0, getPose().getRotation()));
+              ChassisSpeeds actual = getChassisSpeeds();
+              Logger.recordOutput(
+                  "DriveIntoWall/actualSpeed",
+                  Math.hypot(actual.vxMetersPerSecond, actual.vyMetersPerSecond));
+            })
+        .until(
+            () -> {
+              ChassisSpeeds actual = getChassisSpeeds();
+              boolean stalled =
+                  Math.hypot(actual.vxMetersPerSecond, actual.vyMetersPerSecond) < 0.05;
+              return stallDebouncer.calculate(stalled) || driverOverride.getAsBoolean();
+            })
+        .finallyDo(() -> runVelocity(new ChassisSpeeds()));
+  }
+
+  /**
+   * Drives at constant robot-relative speeds until the robot has traveled the given distance
+   * (measured via odometry) or the driver overrides.
+   */
+  public Command driveForDistance(
+      ChassisSpeeds robotRelative, double distanceMeters, BooleanSupplier driverOverride) {
+    return Commands.defer(
+        () -> {
+          Translation2d start = getPose().getTranslation();
+          return this.run(() -> runVelocity(robotRelative))
+              .until(
+                  () ->
+                      getPose().getTranslation().getDistance(start) >= distanceMeters
+                          || driverOverride.getAsBoolean())
+              .finallyDo(() -> runVelocity(new ChassisSpeeds()));
+        },
+        Set.of(this));
   }
 
   private static final APConstraints kConstraints =

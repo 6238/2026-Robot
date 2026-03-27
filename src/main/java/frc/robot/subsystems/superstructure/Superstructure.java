@@ -191,8 +191,18 @@ public class Superstructure extends SubsystemBase {
         }
         break;
       case PASSING:
+        intakeRoller.spin();
         shooter.setFlywheelRPM(shotSetpoint.flywheelSpeed);
         shooter.setFeederSpeed(RotationsPerSecond.of(ShooterConstants.FEEDER_SPEED.get()));
+        hopper.setIndexerVolts(HopperConstants.INDEXER_VOLTAGE.get());
+        hopper.setTopIndexerVolts(HopperConstants.TOP_INDEXER_VOLTAGE.get());
+        if (readyToShoot() && !crawlUpScheduled) {
+          crawlUpScheduled = true;
+          crawlIsBackingOff = false;
+          crawlBackoffTimer = 0.0;
+          crawlBackoffTriggered = false;
+        }
+        if (crawlUpScheduled) applyCrawlUp();
         simulateShot();
         break;
       case SHOOTING:

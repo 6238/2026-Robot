@@ -22,7 +22,31 @@
       "Bash(xargs grep -l \"resetFieldForAuto\\\\|getGamePieces\\\\|addGamePiece\\\\|Stage\\\\|Trench\\\\|Wall\")",
       "Bash(xargs grep -l \"RebuiltFuel\\\\|Stage\\\\|Obstacle\\\\|setupField\\\\|addWall\\\\|addStage\")",
       "Bash(python3:*)",
-      "Bash(./gradlew compileJava -x test)"
+      "Bash(./gradlew compileJava -x test)",
+      "Bash(cd /tmp)",
+      "Bash(jar xf \"C:/Users/ryan/.gradle/caches/modules-2/files-2.1/com.github.therekrab/autopilot/1.5.0/bfcf3d56d46ff35838893a91f66406d2ad6513ed/autopilot-1.5.0-sources.jar\")",
+      "Bash(xargs cat)",
+      "Bash(scp -o StrictHostKeyChecking=no -o ConnectTimeout=10 \"c:/Users/ryan/2026-Robot/hoppercam.py\" photonvision@10.62.38.200:/home/photonvision/hoppercam.py)",
+      "Bash(ssh-keygen -R 10.62.38.200)",
+      "Bash(sshpass -p vision scp -o StrictHostKeyChecking=no \"c:/Users/ryan/2026-Robot/hoppercam.py\" photon@10.62.38.200:/home/photon/hoppercam.py)",
+      "Bash(where sshpass)",
+      "Bash(where plink)",
+      "Bash(where pscp)",
+      "Bash(python -c \"import paramiko; print\\(''paramiko available''\\)\")",
+      "Bash(pip install paramiko)",
+      "Bash(python -:*)",
+      "Bash(where python)",
+      "Bash(C:/msys64/ucrt64/bin/python -c \"import paramiko; print\\(''ok''\\)\")",
+      "Bash(pip3 install paramiko -q)",
+      "Bash(C:/msys64/ucrt64/bin/pip install paramiko)",
+      "Bash(C:/msys64/ucrt64/bin/python -m pip install paramiko)",
+      "Bash(scp -o StrictHostKeyChecking=no -o PasswordAuthentication=yes \"c:/Users/ryan/2026-Robot/hoppercam.py\" photon@10.62.38.200:/home/photon/hoppercam.py)",
+      "Bash(wsl which sshpass)",
+      "Bash(wsl sshpass -p vision scp -o StrictHostKeyChecking=no /mnt/c/Users/ryan/2026-Robot/hoppercam.py photon@10.62.38.200:/home/photon/hoppercam.py)",
+      "Bash(wsl sudo apt-get install -y sshpass)",
+      "Bash(wsl apt-get install -y sshpass)",
+      "Bash(wsl uname -a)",
+      "Bash(wsl cat /etc/os-release)"
     ]
   }
 }

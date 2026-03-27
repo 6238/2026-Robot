@@ -34,10 +34,10 @@ public class VisionConstants {
   // Robot to camera transforms
   public static Transform3d robotToCamera0 =
       new Transform3d(
-          new Translation3d(Inches.of(12.978), Inches.of(-8.173559), Inches.of(13.847121)),
+          new Translation3d(Inches.of(12.978 - 6), Inches.of(-8.173559), Inches.of(20)),
           new Rotation3d(
               Degrees.of(0).in(Radians),
-              Degrees.of(15).in(Radians),
+              Degrees.of(14).in(Radians),
               Degrees.of(-5.35).in(Radians)));
 
   public static String camera1Name = "SIDE";
