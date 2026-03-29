@@ -40,7 +40,7 @@ public class TestModeRunner {
 
   // ── Test voltages / outputs ──────────────────────────────────────────────
   static final double DRIVE_TEST_VOLTAGE = 2.0; // V, open-loop via runCharacterization
-  static final double STEER_TEST_OUTPUT = 0.2; // duty-cycle (-1 to 1)
+  static final double STEER_TEST_OUTPUT = 2.0; // duty-cycle (-1 to 1)
   static final double FLYWHEEL_TEST_VOLTAGE = 3.0; // V
   static final double FEEDER_TEST_VOLTAGE = 3.0; // V
   static final double INDEXER_TEST_VOLTAGE = 5.0; // V
@@ -86,6 +86,7 @@ public class TestModeRunner {
             Commands.runOnce(
                 () -> {
                   loadBaseline();
+                  SmartDashboard.putBoolean("TestMode/SaveCurrentAsBaseline", false);
                   saveCurrentAsBaseline =
                       SmartDashboard.getBoolean("TestMode/SaveCurrentAsBaseline", false);
                   Logger.recordOutput("TestMode/ActiveStep", "INIT");

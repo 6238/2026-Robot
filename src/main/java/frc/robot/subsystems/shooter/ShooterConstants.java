@@ -112,16 +112,16 @@ public class ShooterConstants {
 
   static {
     FLYWHEEL_MAP = new ExtrapolatingDoubleTreeMap();
-    FLYWHEEL_MAP.put(1.5, 25.7 / 0.75);
-    FLYWHEEL_MAP.put(3.0, 33.5 / 0.75);
+    FLYWHEEL_MAP.put(1.5, 26.2 / 0.75);
+    FLYWHEEL_MAP.put(3.0, 34.0 / 0.75);
 
     LEAD_TIME_MAP = new ExtrapolatingDoubleTreeMap();
     LEAD_TIME_MAP.put(1.5, 0.56);
     LEAD_TIME_MAP.put(3.0, 0.77);
 
     PASSING_FLYWHEEL_MAP = new ExtrapolatingDoubleTreeMap();
-    PASSING_FLYWHEEL_MAP.put(1.5, 33.5 * 1 / 0.75);
-    PASSING_FLYWHEEL_MAP.put(3.0, 39.2 * 1 / 0.75);
+    PASSING_FLYWHEEL_MAP.put(1.5, 27.5 * 1 / 0.75);
+    PASSING_FLYWHEEL_MAP.put(3.0, 32.75 * 1 / 0.75);
 
     PASSING_LEAD_TIME_MAP = new ExtrapolatingDoubleTreeMap();
     PASSING_LEAD_TIME_MAP.put(1.5, 28.1);

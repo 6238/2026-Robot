@@ -11,8 +11,8 @@ import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 public class IntakeConstants {
   public static final CANBus CAN_BUS = CANBus.roboRIO();
-  public static final int INTAKE_MOTOR_ID = 55;
-  public static final int INTAKE_FOLLOWER_MOTOR_ID = 59;
+  public static final int INTAKE_MOTOR_ID = 59;
+  public static final int INTAKE_FOLLOWER_MOTOR_ID = 55;
   public static final int INTAKE_ARM_MOTOR_ID = 54;
 
   public static final double INTAKE_GEARING = 34 / 12 * 18 / 34;
@@ -26,7 +26,7 @@ public class IntakeConstants {
       InvertedValue.CounterClockwise_Positive;
   public static final Angle INTAKE_START_VALUE = Degrees.of(120.0);
   public static final LoggedNetworkNumber INTAKE_DOWN_VALUE =
-      new LoggedNetworkNumber("INTAKE_DOWN_ANGLE", -22.5);
+      new LoggedNetworkNumber("INTAKE_DOWN_ANGLE", -35.5);
   public static final LoggedNetworkNumber INTAKE_UP_VALUE =
       new LoggedNetworkNumber("INTAKE_UP_ANGLE", 70.0);
   public static final LoggedNetworkPIDFeedforwardGains INTAKE_ARM_GAINS =
@@ -52,7 +52,7 @@ public class IntakeConstants {
 
   // Pivot crawl-up (slow upward creep with current-spike backoff)
   public static final LoggedNetworkNumber CRAWL_UP_VOLTAGE_VOLTS =
-      new LoggedNetworkNumber("Intake/CrawlUpVoltage", 1.5);
+      new LoggedNetworkNumber("Intake/CrawlUpVoltage", 3.5);
   public static final LoggedNetworkNumber CRAWL_BACKOFF_VOLTAGE_VOLTS =
       new LoggedNetworkNumber("Intake/CrawlBackoffVoltage", 1.5);
   public static final LoggedNetworkNumber CRAWL_CURRENT_THRESHOLD_AMPS =
@@ -72,10 +72,10 @@ public class IntakeConstants {
   public static final LoggedNetworkNumber DRS_ANGLE_ERROR_THRESHOLD_DEGREES =
       new LoggedNetworkNumber("DRS/AngleErrorThresholdDeg", 30.0);
   public static final double DRS_TARGET_TOLERANCE_DEGREES = 5.0;
-  public static final double DRS_STUCK_TIMEOUT_SECONDS = 0.15;
+  public static final double DRS_STUCK_TIMEOUT_SECONDS = 0.1;
   // Mitigation: lift to middle, drive backward, lower back down
   public static final LoggedNetworkNumber DRS_MIDDLE_ANGLE_DEGREES =
-      new LoggedNetworkNumber("DRS/MiddleAngleDeg", 30.0);
+      new LoggedNetworkNumber("DRS/MiddleAngleDeg", 70.0);
   public static final double DRS_MIDDLE_ANGLE_TOLERANCE_DEGREES = 5.0;
   public static final double DRS_DOWN_ANGLE_TOLERANCE_DEGREES = 5.0;
   public static final LoggedNetworkNumber DRS_BACKUP_SPEED_MPS =

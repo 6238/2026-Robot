@@ -29,7 +29,7 @@ public class IntakePivot extends SubsystemBase {
   private boolean drsTriggered = false;
   // Ignore DRS for 0.3 s after a new setpoint is commanded (motor inrush looks like a block)
   private double drsIgnoreTimer = 0.0;
-  private static final double DRS_IGNORE_SECONDS = 0.3;
+  private static final double DRS_IGNORE_SECONDS = 0.25;
 
   private BatteryLogger batteryLogger;
 
@@ -65,18 +65,15 @@ public class IntakePivot extends SubsystemBase {
     if (drsIgnoreTimer > 0.0) {
       drsIgnoreTimer -= 0.02;
     }
-    boolean drsCondition =
-        targetingDown && highCurrent && stuckAboveTarget && drsIgnoreTimer <= 0.0;
-
-    if (!drsTriggered) {
-      if (drsCondition) {
-        drsStuckTimer += 0.02;
-        if (drsStuckTimer >= IntakeConstants.DRS_STUCK_TIMEOUT_SECONDS) {
-          drsTriggered = true;
-        }
-      } else {
-        drsStuckTimer = 0.0;
+    boolean drsCondition = targetingDown && stuckAboveTarget && drsIgnoreTimer <= 0.0;
+    if (drsCondition) {
+      drsStuckTimer += 0.02;
+      if (drsStuckTimer >= IntakeConstants.DRS_STUCK_TIMEOUT_SECONDS) {
+        drsTriggered = true;
       }
+    } else {
+      drsStuckTimer = 0.0;
+      drsTriggered = false;
     }
 
     Logger.recordOutput("IntakePivot/DRS/Triggered", drsTriggered);
@@ -105,18 +102,25 @@ public class IntakePivot extends SubsystemBase {
   public Command setIntakeAngle(Supplier<Angle> angleSupplier) {
     return runOnce(
         () -> {
-          targetAngle = angleSupplier.get();
-          io.setIntakePosition(angleSupplier.get());
-          drsIgnoreTimer = DRS_IGNORE_SECONDS;
-          drsStuckTimer = 0.0;
+          Angle newAngle = angleSupplier.get();
+          boolean changed = Math.abs(newAngle.in(Degrees) - targetAngle.in(Degrees)) > 2.0;
+          targetAngle = newAngle;
+          io.setIntakePosition(newAngle);
+          if (changed) {
+            drsIgnoreTimer = DRS_IGNORE_SECONDS;
+            drsStuckTimer = 0.0;
+          }
         });
   }
 
   public void setAngle(Angle angle) {
+    boolean changed = Math.abs(angle.in(Degrees) - targetAngle.in(Degrees)) > 2.0;
     targetAngle = angle;
     io.setIntakePosition(angle);
-    drsIgnoreTimer = DRS_IGNORE_SECONDS;
-    drsStuckTimer = 0.0;
+    if (changed) {
+      drsIgnoreTimer = DRS_IGNORE_SECONDS;
+      drsStuckTimer = 0.0;
+    }
   }
 
   public Command setIntakeArmVoltage(Supplier<Voltage> voltageSupplier) {

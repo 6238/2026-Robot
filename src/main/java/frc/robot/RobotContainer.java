@@ -35,7 +35,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import frc.robot.commands.DRSHelper;
 import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
@@ -252,34 +251,34 @@ public class RobotContainer {
         Set.of(drive, superstructure);
 
     autoChooser.addOption("Do Nothing", Commands.none());
-    autoChooser.addOption(
-        "DRS Test (triggers after 1 s)",
-        DRSHelper.wrapWithDRS(
-            () ->
-                Commands.parallel(
-                    intakePivot.setIntakeAngle(
-                        () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
-                    Commands.sequence(
-                        Commands.waitSeconds(1.0), Commands.runOnce(intakePivot::forceTriggerDRS))),
-            intakePivot,
-            drive,
-            Set.of(drive, intakePivot)));
+    // autoChooser.addOption(
+    //     "DRS Test (triggers after 1 s)",
+    // DRSHelper.wrapWithDRS(
+    //     () ->
+    // Commands.parallel(
+    //     intakePivot.setIntakeAngle(
+    //         () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
+    //     Commands.sequence(
+    //         Commands.waitSeconds(1.0), Commands.runOnce(intakePivot::forceTriggerDRS))),
+    // intakePivot,
+    // drive,
+    // Set.of(drive, intakePivot)));
     autoChooser.addOption(
         "Left Trench Mid Rush (double)",
         Commands.sequence(
             // intakePivot.preloadPivot(),
             resetPoseCommand(upperTrenchCycle1),
-            DRSHelper.wrapWithDRS(
-                () ->
-                    Commands.parallel(
-                        AutoBuilder.followPath(upperTrenchCycle1),
-                        Commands.sequence(
-                            Commands.waitSeconds(0.25),
-                            superstructure.setWantedSuperStateCommand(
-                                () -> Superstructure.WantedState.INTAKING))),
-                intakePivot,
-                drive,
-                driveAndSuperstructure),
+            // DRSHelper.wrapWithDRS(
+            //     () ->
+            Commands.parallel(
+                AutoBuilder.followPath(upperTrenchCycle1),
+                Commands.sequence(
+                    Commands.waitSeconds(0.25),
+                    superstructure.setWantedSuperStateCommand(
+                        () -> Superstructure.WantedState.INTAKING))),
+            // intakePivot,
+            // drive,
+            // driveAndSuperstructure),
             shootCommand(4.6),
             superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.INTAKING),
             AutoBuilder.followPath(upperTrenchCycle2),
@@ -289,17 +288,17 @@ public class RobotContainer {
         Commands.sequence(
             intakePivot.preloadPivot(),
             resetPoseCommand(lowerTrenchCycle1),
-            DRSHelper.wrapWithDRS(
-                () ->
-                    Commands.parallel(
-                        AutoBuilder.followPath(lowerTrenchCycle1),
-                        Commands.sequence(
-                            Commands.waitSeconds(0.25),
-                            superstructure.setWantedSuperStateCommand(
-                                () -> Superstructure.WantedState.INTAKING))),
-                intakePivot,
-                drive,
-                driveAndSuperstructure),
+            // DRSHelper.wrapWithDRS(
+            //     () ->
+            Commands.parallel(
+                AutoBuilder.followPath(lowerTrenchCycle1),
+                Commands.sequence(
+                    Commands.waitSeconds(0.25),
+                    superstructure.setWantedSuperStateCommand(
+                        () -> Superstructure.WantedState.INTAKING))),
+            // intakePivot,
+            // drive,
+            // driveAndSuperstructure),
             shootCommand(4),
             superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.INTAKING),
             AutoBuilder.followPath(lowerTrenchCycle2),

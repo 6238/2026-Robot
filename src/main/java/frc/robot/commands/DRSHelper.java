@@ -45,7 +45,11 @@ public class DRSHelper {
     boolean[] stepCompleted = {false};
 
     return Commands.sequence(
-        Commands.runOnce(() -> stepCompleted[0] = false),
+        Commands.runOnce(
+            () -> {
+              stepCompleted[0] = false;
+              pivot.resetDRS();
+            }),
         Commands.defer(
                 () ->
                     makeStep
@@ -59,7 +63,7 @@ public class DRSHelper {
                             Commands.either(
                                 buildRecovery(pivot, drive),
                                 Commands.none(),
-                                () -> !stepCompleted[0])),
+                                () -> !stepCompleted[0] && pivot.isDRSTriggered())),
                 stepRequirements)
             .repeatedly()
             .until(() -> stepCompleted[0]));
@@ -77,27 +81,29 @@ public class DRSHelper {
                   pivot.setAngle(Degrees.of(IntakeConstants.DRS_MIDDLE_ANGLE_DEGREES.get()));
                 }),
             Commands.waitUntil(
-                () ->
-                    Math.abs(
-                            pivot.inputs.intakeArmPosition.in(Degrees)
-                                - IntakeConstants.DRS_MIDDLE_ANGLE_DEGREES.get())
-                        < IntakeConstants.DRS_MIDDLE_ANGLE_TOLERANCE_DEGREES),
-            Commands.run(
+                    () ->
+                        Math.abs(
+                                pivot.inputs.intakeArmPosition.in(Degrees)
+                                    - IntakeConstants.DRS_MIDDLE_ANGLE_DEGREES.get())
+                            < IntakeConstants.DRS_MIDDLE_ANGLE_TOLERANCE_DEGREES)
+                .withTimeout(0.75),
+            Commands.runEnd(
                     () ->
                         drive.runVelocity(
                             new ChassisSpeeds(
-                                -IntakeConstants.DRS_BACKUP_SPEED_MPS.get(), 0.0, 0.0)),
+                                IntakeConstants.DRS_BACKUP_SPEED_MPS.get(), 0.0, 0.0)),
+                    () -> drive.stop(),
                     drive)
                 .withTimeout(IntakeConstants.DRS_BACKUP_DURATION_SECONDS),
-            Commands.runOnce(() -> drive.runVelocity(new ChassisSpeeds()), drive),
             Commands.runOnce(
                 () -> pivot.setAngle(Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get()))),
             Commands.waitUntil(
-                () ->
-                    Math.abs(
-                            pivot.inputs.intakeArmPosition.in(Degrees)
-                                - IntakeConstants.INTAKE_DOWN_VALUE.get())
-                        < IntakeConstants.DRS_DOWN_ANGLE_TOLERANCE_DEGREES),
+                    () ->
+                        Math.abs(
+                                pivot.inputs.intakeArmPosition.in(Degrees)
+                                    - IntakeConstants.INTAKE_DOWN_VALUE.get())
+                            < IntakeConstants.DRS_DOWN_ANGLE_TOLERANCE_DEGREES)
+                .withTimeout(1.5),
             Commands.runOnce(
                 () -> {
                   pivot.resetDRS();
