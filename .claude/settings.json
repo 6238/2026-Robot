@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/ryan/.gradle/caches/**)",
+      "Bash(jar tf maplesim-java-0.4.0-beta.jar)",
+      "Bash(jar xf /c/Users/ryan/.gradle/caches/modules-2/files-2.1/org.ironmaple/maplesim-java/0.4.0-beta/b485a8068ee93b1f8e56caddfe2c477029f41b30/maplesim-java-0.4.0-beta-sources.jar)",
+      "Read(//tmp/org/ironmaple/**)",
+      "Bash(jar tf /c/Users/ryan/.gradle/caches/modules-2/files-2.1/org.ironmaple/maplesim-java/0.4.0-beta/4d221b4cb2002273506c7c46c64ef27c2db3c7d2/maplesim-java-0.4.0-beta.jar)"
+    ]
+  }
+}

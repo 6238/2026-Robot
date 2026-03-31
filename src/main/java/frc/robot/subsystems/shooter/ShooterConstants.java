@@ -40,12 +40,12 @@ public class ShooterConstants {
 
   public static final LoggedNetworkPIDFeedforwardGains SIM_FLYWHEEL_GAINS =
       new LoggedNetworkPIDFeedforwardGains(
-          0.3, // kP
+          0.1, // kP
           0.0, // kI
           0.08, // kD
-          1.85, // kA
-          0.24, // kV
-          0.1, // kS // 6000rpm 100rps 6v
+          0.03, // kA
+          0.085, // kV
+          0.3, // kS // 6000rpm 100rps 6v
           0.0, // kG
           "ShooterFlywheel");
 

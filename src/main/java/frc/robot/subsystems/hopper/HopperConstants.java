@@ -24,7 +24,7 @@ public class HopperConstants {
 
   public static final AngularVelocity HOPPER_TOLERANCE_BEFORE_SHOT = RotationsPerSecond.of(10);
 
-  public static final double simulatedHopperThroughput = 5;
+  public static final double simulatedHopperThroughput = 8;
 
   public static final LoggedNetworkNumber INDEXER_VOLTAGE =
       new LoggedNetworkNumber("Hopper/IndexerVoltage", 5);

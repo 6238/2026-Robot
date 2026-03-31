@@ -42,13 +42,16 @@ import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.hopper.Hopper;
 import frc.robot.subsystems.hopper.HopperIO;
+import frc.robot.subsystems.hopper.HopperIOSim;
 import frc.robot.subsystems.hopper.HopperIOTalonFX;
 import frc.robot.subsystems.intake.IntakeConstants;
 import frc.robot.subsystems.intake.IntakePivot;
 import frc.robot.subsystems.intake.IntakePivotIO;
+import frc.robot.subsystems.intake.IntakePivotIOSim;
 import frc.robot.subsystems.intake.IntakePivotIOTalonFX;
 import frc.robot.subsystems.intake.IntakeRoller;
 import frc.robot.subsystems.intake.IntakeRollerIO;
+import frc.robot.subsystems.intake.IntakeRollerIOSim;
 import frc.robot.subsystems.intake.IntakeRollerIOTalonFX;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.ShooterIOSim;
@@ -65,6 +68,7 @@ import frc.robot.util.BatteryLogger;
 import frc.robot.util.RobotBumpSim;
 import frc.robot.util.RobotIdentity;
 import java.util.function.BooleanSupplier;
+import org.ironmaple.simulation.IntakeSimulation;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.littletonrobotics.junction.Logger;
@@ -96,6 +100,7 @@ public class RobotContainer {
 
   private SwerveDriveSimulation swerveDriveSimulation = null;
   private RobotBumpSim robotBumpSim = null;
+  private IntakeSimulation fuelIntake = null;
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
@@ -151,9 +156,17 @@ public class RobotContainer {
                     robotToCamera1,
                     swerveDriveSimulation::getSimulatedDriveTrainPose));
         shooter = new Shooter(new ShooterIOSim() {});
-        hopper = new Hopper(new HopperIO() {});
-        intakeRoller = new IntakeRoller(new IntakeRollerIO() {});
-        intakePivot = new IntakePivot(new IntakePivotIO() {});
+        hopper = new Hopper(new HopperIOSim());
+        intakeRoller = new IntakeRoller(new IntakeRollerIOSim(), () -> {});
+        intakePivot = new IntakePivot(new IntakePivotIOSim());
+        fuelIntake =
+            IntakeSimulation.OverTheBumperIntake(
+                "Fuel",
+                swerveDriveSimulation,
+                Meters.of(0.7),
+                Inches.of(12),
+                IntakeSimulation.IntakeSide.BACK,
+                40);
         break;
 
       default:
@@ -176,6 +189,10 @@ public class RobotContainer {
     superstructure =
         new Superstructure(
             drive, shooter, hopper, intakePivot, intakeRoller, swerveDriveSimulation);
+
+    if (fuelIntake != null) {
+      superstructure.consumeFuelForShot = fuelIntake::obtainGamePieceFromIntake;
+    }
 
     drive.setBatteryLogger(batteryLogger);
     shooter.setBatteryLogger(batteryLogger);
@@ -358,6 +375,15 @@ public class RobotContainer {
 
     if (robotBumpSim.isOnRamp()) {
       swerveDriveSimulation.setSimulationWorldPose(robotBumpSim.getSimWorldPose(simPose));
+    }
+
+    if (fuelIntake != null) {
+      if (superstructure.currentSuperState != Superstructure.CurrentState.IDLE) {
+        fuelIntake.startIntake();
+      } else {
+        fuelIntake.stopIntake();
+      }
+      Logger.recordOutput("Simulation/HopperFuelCount", fuelIntake.getGamePiecesAmount());
     }
 
     Logger.recordOutput("FieldSimulation/RobotPosition", simPose);

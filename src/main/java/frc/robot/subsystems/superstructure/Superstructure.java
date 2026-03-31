@@ -20,6 +20,7 @@ import frc.robot.subsystems.intake.IntakeRoller;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.ShooterConstants;
 import frc.robot.subsystems.superstructure.ShotPlanner.ShotSetpoint;
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
@@ -75,6 +76,13 @@ public class Superstructure extends SubsystemBase {
   private boolean topIndexerHighPhase = false;
 
   public boolean indxererMode = false;
+
+  /**
+   * Called in simulateShot() to consume one fuel piece before launching a projectile. Set by
+   * RobotContainer in SIM mode to {@code fuelIntake::obtainGamePieceFromIntake}. Returns true if a
+   * piece was available and consumed; false skips the shot.
+   */
+  public BooleanSupplier consumeFuelForShot = () -> true;
 
   public Superstructure(
       Drive drive,
@@ -313,6 +321,8 @@ public class Superstructure extends SubsystemBase {
     }
     shotSimulationTime = 0.0;
 
+    if (!consumeFuelForShot.getAsBoolean()) return;
+
     SimulatedArena.getInstance()
         .addGamePieceProjectile(
             new RebuiltFuelOnFly(
@@ -326,7 +336,7 @@ public class Superstructure extends SubsystemBase {
                             * 2
                             * 0.0508
                             * Math.PI
-                            / 1.9),
+                            / 2.25),
                     shotSetpoint.hoodAngle)
                 .withProjectileTrajectoryDisplayCallBack(
                     (pose3ds) ->
