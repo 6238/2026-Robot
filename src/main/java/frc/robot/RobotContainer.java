@@ -16,9 +16,6 @@ package frc.robot;
 import static edu.wpi.first.units.Units.*;
 import static frc.robot.subsystems.vision.VisionConstants.*;
 
-import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.path.PathPlannerPath;
-import com.pathplanner.lib.util.FileVersionException;
 import edu.wpi.first.hal.HALUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -29,12 +26,12 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.auto.AutoRoutines;
 import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
@@ -60,17 +57,16 @@ import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOPhotonVision;
+import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.testmode.TestModeRunner;
 import frc.robot.util.AlertUtils;
 import frc.robot.util.AutomaticCommands;
 import frc.robot.util.BatteryLogger;
+import frc.robot.util.RobotBumpSim;
 import frc.robot.util.RobotIdentity;
-import java.io.IOException;
-import java.util.Set;
 import java.util.function.BooleanSupplier;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
-import org.json.simple.parser.ParseException;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
@@ -99,6 +95,7 @@ public class RobotContainer {
   private final LoggedDashboardChooser<Command> autoChooser;
 
   private SwerveDriveSimulation swerveDriveSimulation = null;
+  private RobotBumpSim robotBumpSim = null;
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
@@ -127,24 +124,14 @@ public class RobotContainer {
                 new VisionIOPhotonVision(camera1Name, robotToCamera1));
         shooter = new Shooter(new ShooterIOTalonFX());
         hopper = new Hopper(new HopperIOTalonFX());
-        intakeRoller =
-            new IntakeRoller(
-                new IntakeRollerIOTalonFX(),
-                () ->
-                    edu.wpi.first.wpilibj2.command.CommandScheduler.getInstance()
-                        .schedule(
-                            Commands.sequence(
-                                Commands.runOnce(
-                                    () -> controller.setRumble(RumbleType.kBothRumble, 0.8)),
-                                Commands.waitSeconds(0.4),
-                                Commands.runOnce(
-                                    () -> controller.setRumble(RumbleType.kBothRumble, 0.0)))));
+        intakeRoller = new IntakeRoller(new IntakeRollerIOTalonFX(), () -> {});
         intakePivot = new IntakePivot(new IntakePivotIOTalonFX());
         break;
 
       case SIM:
         swerveDriveSimulation =
             MapleSimSwerve.createSimulationDrive(RobotIdentity.getTunerConstants());
+        robotBumpSim = new RobotBumpSim(Drive.getModuleTranslations());
         drive =
             new Drive(
                 new GyroIO() {},
@@ -153,11 +140,16 @@ public class RobotContainer {
                 new ModuleIOSim(swerveDriveSimulation.getModules()[2]),
                 new ModuleIOSim(swerveDriveSimulation.getModules()[3]),
                 swerveDriveSimulation);
-        vision = new Vision(drive::addVisionMeasurement, drive::getPose);
-        // new VisionIOPhotonVisionSim(
-        //     camera0Name,
-        //     robotToCamera0,
-        //     swerveDriveSimulation::getSimulatedDriveTrainPose));
+        vision =
+            new Vision(
+                drive::addVisionMeasurement,
+                drive::getPose,
+                new VisionIOPhotonVisionSim(
+                    camera0Name, robotToCamera0, swerveDriveSimulation::getSimulatedDriveTrainPose),
+                new VisionIOPhotonVisionSim(
+                    camera1Name,
+                    robotToCamera1,
+                    swerveDriveSimulation::getSimulatedDriveTrainPose));
         shooter = new Shooter(new ShooterIOSim() {});
         hopper = new Hopper(new HopperIO() {});
         intakeRoller = new IntakeRoller(new IntakeRollerIO() {});
@@ -194,7 +186,8 @@ public class RobotContainer {
     // Set up auto routines
     LoggedDashboardChooser<Command> tempChooser;
     try {
-      tempChooser = new LoggedDashboardChooser<>("Auto Choices", buildAutoChooser());
+      AutoRoutines autoRoutines = new AutoRoutines(drive, superstructure, intakePivot);
+      tempChooser = new LoggedDashboardChooser<>("Auto Choices", autoRoutines.buildAutoChooser());
       tempChooser.addOption(
           "Drive Wheel Radius Characterization", DriveCommands.wheelRadiusCharacterization(drive));
       tempChooser.addOption(
@@ -219,92 +212,6 @@ public class RobotContainer {
     autoChooser = tempChooser;
 
     configureButtonBindings();
-  }
-
-  private Command resetPoseCommand(PathPlannerPath path) {
-    return path.getStartingHolonomicPose().map(AutoBuilder::resetOdom).orElse(Commands.none());
-  }
-
-  private Command shootCommand(double time) {
-    return Commands.sequence(
-        Commands.deadline(
-            Commands.waitSeconds(time),
-            superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.SHOOTING),
-            DriveCommands.joystickDriveAtAngle(
-                drive,
-                () -> 0,
-                () -> 0,
-                () -> superstructure.getShotSetpoint().robotPose.getRotation())),
-        superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.IDLE));
-  }
-
-  private SendableChooser<Command> buildAutoChooser()
-      throws FileVersionException, IOException, ParseException {
-    SendableChooser<Command> autoChooser = new SendableChooser<>();
-
-    PathPlannerPath upperTrenchCycle1 = PathPlannerPath.fromPathFile("Upper Trench Cycle 1");
-    PathPlannerPath upperTrenchCycle2 = PathPlannerPath.fromPathFile("Upper Trench Cycle 2");
-    PathPlannerPath lowerTrenchCycle1 = PathPlannerPath.fromPathFile("Lower Trench Cycle 1");
-    PathPlannerPath lowerTrenchCycle2 = PathPlannerPath.fromPathFile("Lower Trench Cycle 2");
-
-    Set<edu.wpi.first.wpilibj2.command.Subsystem> driveAndSuperstructure =
-        Set.of(drive, superstructure);
-
-    autoChooser.addOption("Do Nothing", Commands.none());
-    // autoChooser.addOption(
-    //     "DRS Test (triggers after 1 s)",
-    // DRSHelper.wrapWithDRS(
-    //     () ->
-    // Commands.parallel(
-    //     intakePivot.setIntakeAngle(
-    //         () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
-    //     Commands.sequence(
-    //         Commands.waitSeconds(1.0), Commands.runOnce(intakePivot::forceTriggerDRS))),
-    // intakePivot,
-    // drive,
-    // Set.of(drive, intakePivot)));
-    autoChooser.addOption(
-        "Left Trench Mid Rush (double)",
-        Commands.sequence(
-            // intakePivot.preloadPivot(),
-            resetPoseCommand(upperTrenchCycle1),
-            // DRSHelper.wrapWithDRS(
-            //     () ->
-            Commands.parallel(
-                AutoBuilder.followPath(upperTrenchCycle1),
-                Commands.sequence(
-                    Commands.waitSeconds(0.25),
-                    superstructure.setWantedSuperStateCommand(
-                        () -> Superstructure.WantedState.INTAKING))),
-            // intakePivot,
-            // drive,
-            // driveAndSuperstructure),
-            shootCommand(4.6),
-            superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.INTAKING),
-            AutoBuilder.followPath(upperTrenchCycle2),
-            shootCommand(6)));
-    autoChooser.addOption(
-        "Right Trench Mid Rush (double)",
-        Commands.sequence(
-            intakePivot.preloadPivot(),
-            resetPoseCommand(lowerTrenchCycle1),
-            // DRSHelper.wrapWithDRS(
-            //     () ->
-            Commands.parallel(
-                AutoBuilder.followPath(lowerTrenchCycle1),
-                Commands.sequence(
-                    Commands.waitSeconds(0.25),
-                    superstructure.setWantedSuperStateCommand(
-                        () -> Superstructure.WantedState.INTAKING))),
-            // intakePivot,
-            // drive,
-            // driveAndSuperstructure),
-            shootCommand(4),
-            superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.INTAKING),
-            AutoBuilder.followPath(lowerTrenchCycle2),
-            shootCommand(6)));
-
-    return autoChooser;
   }
 
   /**
@@ -375,17 +282,6 @@ public class RobotContainer {
                     intakePivot.targetAngle.equals(
                         Degrees.of(IntakeConstants.INTAKE_UP_VALUE.get()))));
 
-    // controller
-    //     .y()
-    //     .whileTrue(
-    //         Commands.repeatingSequence(
-    //             intakePivot.setIntakeAngle(() ->
-    // Degrees.of(IntakeConstants.INTAKE_UP_VALUE.get())),
-    //             Commands.waitSeconds(0.4),
-    //             intakePivot.setIntakeAngle(
-    //                 () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
-    //             Commands.waitSeconds(0.4)));
-
     controller
         .x()
         .whileTrue(intakePivot.setIntakeArmVoltage(() -> Volts.of(-3)))
@@ -396,7 +292,8 @@ public class RobotContainer {
     new Trigger(() -> HALUtil.getFPGAButton()).onTrue(intakePivot.toggleBrakeMode());
 
     // Driver override: intentional stick movement cancels automation.
-    // Uses a larger threshold than the drive deadband to avoid false triggers from controller
+    // Uses a larger threshold than the drive deadband to avoid false triggers from
+    // controller
     // drift.
     final double OVERRIDE_DEADBAND = 0.7;
     BooleanSupplier driverOverride =
@@ -454,8 +351,18 @@ public class RobotContainer {
     if (Constants.currentMode != Constants.Mode.SIM) return;
 
     SimulatedArena.getInstance().simulationPeriodic();
-    Logger.recordOutput(
-        "FieldSimulation/RobotPosition", swerveDriveSimulation.getSimulatedDriveTrainPose());
+
+    Pose2d simPose = swerveDriveSimulation.getSimulatedDriveTrainPose();
+    var fieldSpeeds = swerveDriveSimulation.getDriveTrainSimulatedChassisSpeedsFieldRelative();
+    var simPose3d = robotBumpSim.update(simPose, fieldSpeeds, 5);
+
+    if (robotBumpSim.isOnRamp()) {
+      swerveDriveSimulation.setSimulationWorldPose(robotBumpSim.getSimWorldPose(simPose));
+    }
+
+    Logger.recordOutput("FieldSimulation/RobotPosition", simPose);
+    Logger.recordOutput("Drive/Pose3d", simPose3d);
+    Logger.recordOutput("Drive/isOnRamp", robotBumpSim.isOnRamp());
     Logger.recordOutput(
         "FieldSimulation/Fuel", SimulatedArena.getInstance().getGamePiecesArrayByType("Fuel"));
   }

@@ -13,25 +13,17 @@
 
 package frc.robot;
 
-import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.RotationsPerSecond;
-
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants.DriveMotorArrangement;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants.SteerMotorArrangement;
-import com.pathplanner.lib.path.PathPlannerPath;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.robot.sim.AIOpponentRobotSim;
-import frc.robot.subsystems.shooter.ShooterConstants;
-import frc.robot.subsystems.superstructure.ShotPlanner.ShotSetpoint;
 import frc.robot.testmode.TestModeHttpServer;
 import frc.robot.util.RobotIdentity;
 import org.ironmaple.simulation.SimulatedArena;
+import org.ironmaple.simulation.seasonspecific.rebuilt2026.Arena2026Rebuilt;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -108,6 +100,12 @@ public class Robot extends LoggedRobot {
         throw new RuntimeException(
             "You are using an unsupported swerve configuration, which this template does not support without manual customization. The 2025 release of Phoenix supports some swerve configurations which were not available during 2025 beta testing, preventing any development and support from the AdvantageKit developers.");
       }
+    }
+
+    // Override the simulated arena before constructing RobotContainer so that
+    // the Drive simulation registers with the correct arena instance.
+    if (Constants.currentMode == Constants.Mode.SIM) {
+      SimulatedArena.overrideInstance(new Arena2026Rebuilt(false));
     }
 
     // Instantiate our RobotContainer. This will perform all our button bindings,
@@ -260,25 +258,7 @@ public class Robot extends LoggedRobot {
 
   /** This function is caled once when the robot is first started up. */
   @Override
-  public void simulationInit() {
-    try {
-      PathPlannerPath path = PathPlannerPath.fromPathFile("opponent_neutral_fuel_cycle");
-      var opp0 = new AIOpponentRobotSim(0);
-      opp0.buildChooser(
-          path,
-          opp0.shootFuelIntoAllianceArea(
-              new ShotSetpoint(
-                  RotationsPerSecond.of(50),
-                  Degrees.of(0),
-                  Pose2d.kZero,
-                  new ChassisSpeeds(),
-                  Pose2d.kZero.getTranslation()),
-              ShooterConstants.FIXED_HOOD_ANGLE_DEGREES.in(Degrees)));
-    } catch (Exception e) {
-      DriverStation.reportError(
-          "Failed to init opponent sim: " + e.getMessage(), e.getStackTrace());
-    }
-  }
+  public void simulationInit() {}
 
   /** This function is called periodically whilst in simulation. */
   @Override
