@@ -3,8 +3,10 @@ package frc.robot.subsystems.hopper;
 import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.CANBus;
+import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.signals.InvertedValue;
 import edu.wpi.first.units.measure.AngularVelocity;
+import frc.robot.util.LoggedNetworkPIDFeedforwardGains;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 public class HopperConstants {
@@ -26,15 +28,34 @@ public class HopperConstants {
 
   public static final double simulatedHopperThroughput = 8;
 
-  public static final LoggedNetworkNumber INDEXER_VOLTAGE =
-      new LoggedNetworkNumber("Hopper/IndexerVoltage", 5);
+  public static final LoggedNetworkNumber INDEXER_SPEED =
+      new LoggedNetworkNumber("Hopper/IndexerSpeedRPS", 40);
 
-  public static final LoggedNetworkNumber REVERSE_INDEXER_VOLTAGE =
-      new LoggedNetworkNumber("Hopper/IndexerVoltage", 5);
+  public static final LoggedNetworkNumber TOP_INDEXER_SPEED =
+      new LoggedNetworkNumber("Hopper/TopIndexerSpeedRPS", 40);
 
-  public static final LoggedNetworkNumber TOP_INDEXER_VOLTAGE =
-      new LoggedNetworkNumber("Hopper/TopIndexerVoltage", 5);
+  public static final LoggedNetworkPIDFeedforwardGains INDEXER_GAINS =
+      new LoggedNetworkPIDFeedforwardGains(
+          0.6, // kP
+          0.0, // kI
+          0.0, // kD
+          0.0, // kA
+          0.10, // kV
+          0.24, // kS
+          0.0, // kG
+          "HopperIndexer");
 
-  public static final LoggedNetworkNumber REVERSE_TOP_INDEXER_VOLTAGE =
-      new LoggedNetworkNumber("Hopper/TopIndexerVoltage", -5);
+  public static final LoggedNetworkPIDFeedforwardGains TOP_INDEXER_GAINS =
+      new LoggedNetworkPIDFeedforwardGains(
+          0.6, // kP
+          0.0, // kI
+          0.0, // kD
+          0.0, // kA
+          0.10, // kV
+          0.24, // kS
+          0.0, // kG
+          "HopperTopIndexer");
+
+  public static final MotionMagicConfigs INDEXER_MOTION_MAGIC_CONFIGS =
+      new MotionMagicConfigs().withMotionMagicAcceleration(300);
 }

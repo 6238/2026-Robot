@@ -4,7 +4,7 @@ import static edu.wpi.first.units.Units.*;
 
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
-import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 
 public class HopperIOSim implements HopperIO {
@@ -27,6 +27,11 @@ public class HopperIOSim implements HopperIO {
 
   private double indexerVolts = 0.0;
   private double topIndexerVolts = 0.0;
+
+  private static double speedToVolts(double rps) {
+    if (rps == 0.0) return 0.0;
+    return rps * 0.12 + Math.signum(rps) * 0.1;
+  }
 
   @Override
   public void updateInputs(HopperIOInputs inputs) {
@@ -52,14 +57,14 @@ public class HopperIOSim implements HopperIO {
   }
 
   @Override
-  public void setIndexerVoltage(Voltage voltage) {
-    // Matches hardware: setIndexerVoltage drives both motors at the same voltage
-    indexerVolts = voltage.in(Volts);
-    topIndexerVolts = voltage.in(Volts);
+  public void setIndexerSpeed(AngularVelocity speed) {
+    double volts = speedToVolts(speed.in(RotationsPerSecond));
+    indexerVolts = volts;
+    topIndexerVolts = volts;
   }
 
   @Override
-  public void setTopIndexerVoltage(Voltage voltage) {
-    topIndexerVolts = voltage.in(Volts);
+  public void setTopIndexerSpeed(AngularVelocity speed) {
+    topIndexerVolts = speedToVolts(speed.in(RotationsPerSecond));
   }
 }

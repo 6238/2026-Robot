@@ -23,32 +23,39 @@ public class ShotPlanner {
             drivePose.getRotation());
 
     Translation2d hubTranslation2d = Constants.HUB_POSE_3D.get().getTranslation().toTranslation2d();
-    double distanceCurrently = drivePose.getTranslation().getDistance(hubTranslation2d);
-    double leadTimeSec = ShooterConstants.LEAD_TIME_MAP.get(distanceCurrently);
-    Translation2d predictedTranslation = hubTranslation2d; // .plus(
-    // new Translation2d(
-    //     fieldSpeeds.vxMetersPerSecond * -leadTimeSec,
-    //     fieldSpeeds.vyMetersPerSecond * -leadTimeSec));
+    Translation2d robotTranslation = drivePose.getTranslation();
 
-    Logger.recordOutput(
-        "ShotPlanner/predictedTranslation", new Pose2d(predictedTranslation, Rotation2d.kZero));
-    Logger.recordOutput("ShotPlanner/leadTime", leadTimeSec);
+    // Iteratively solve for the lead time that is consistent with the distance to the virtual
+    // target. Seed with distance to the real hub, then refine 3 times.
+    double leadTimeSec =
+        ShooterConstants.LEAD_TIME_MAP.get(robotTranslation.getDistance(hubTranslation2d));
+    Translation2d virtualTarget = hubTranslation2d;
+    for (int i = 0; i < 3; i++) {
+      virtualTarget =
+          hubTranslation2d.plus(
+              new Translation2d(
+                  fieldSpeeds.vxMetersPerSecond * -leadTimeSec,
+                  fieldSpeeds.vyMetersPerSecond * -leadTimeSec));
+      leadTimeSec = ShooterConstants.LEAD_TIME_MAP.get(robotTranslation.getDistance(virtualTarget));
+    }
 
-    double predictedDistanceM = drivePose.getTranslation().getDistance(predictedTranslation);
-
+    double predictedDistanceM = robotTranslation.getDistance(virtualTarget);
     double flywheelSpeed = ShooterConstants.FLYWHEEL_MAP.get(predictedDistanceM);
 
+    Logger.recordOutput(
+        "ShotPlanner/predictedTranslation", new Pose2d(virtualTarget, Rotation2d.kZero));
+    Logger.recordOutput("ShotPlanner/leadTime", leadTimeSec);
+    Logger.recordOutput("ShotPlanner/predictedDistance", predictedDistanceM);
+
     Pose2d lookAtHubPose2d =
-        new Pose2d(
-            drivePose.getTranslation(),
-            predictedTranslation.minus(drivePose.getTranslation()).getAngle());
+        new Pose2d(robotTranslation, virtualTarget.minus(robotTranslation).getAngle());
 
     return new ShotSetpoint(
         RotationsPerSecond.of(flywheelSpeed),
         ShooterConstants.FIXED_HOOD_ANGLE_DEGREES,
         lookAtHubPose2d,
         driveChassisSpeeds,
-        predictedTranslation);
+        virtualTarget);
   }
 
   public static ShotSetpoint createPassSetpoint(
@@ -61,33 +68,40 @@ public class ShotPlanner {
             drivePose.getRotation());
 
     Translation2d targetTranslation2d = targetPassPoint.getTranslation();
-    double distanceCurrently = drivePose.getTranslation().getDistance(targetTranslation2d);
-    double leadTimeSec = ShooterConstants.PASSING_LEAD_TIME_MAP.get(distanceCurrently);
-    Translation2d predictedTranslation =
-        targetTranslation2d.plus(
-            new Translation2d(
-                fieldSpeeds.vxMetersPerSecond * -leadTimeSec,
-                fieldSpeeds.vyMetersPerSecond * -leadTimeSec));
+    Translation2d robotTranslation = drivePose.getTranslation();
 
-    Logger.recordOutput(
-        "ShotPlanner/predictedTranslation", new Pose2d(predictedTranslation, Rotation2d.kZero));
-    Logger.recordOutput("ShotPlanner/leadTime", leadTimeSec);
+    // Iteratively solve for the consistent lead time / virtual target
+    double leadTimeSec =
+        ShooterConstants.PASSING_LEAD_TIME_MAP.get(
+            robotTranslation.getDistance(targetTranslation2d));
+    Translation2d virtualTarget = targetTranslation2d;
+    for (int i = 0; i < 3; i++) {
+      virtualTarget =
+          targetTranslation2d.plus(
+              new Translation2d(
+                  fieldSpeeds.vxMetersPerSecond * -leadTimeSec,
+                  fieldSpeeds.vyMetersPerSecond * -leadTimeSec));
+      leadTimeSec =
+          ShooterConstants.PASSING_LEAD_TIME_MAP.get(robotTranslation.getDistance(virtualTarget));
+    }
 
-    double predictedDistanceM = drivePose.getTranslation().getDistance(predictedTranslation);
-
+    double predictedDistanceM = robotTranslation.getDistance(virtualTarget);
     double flywheelSpeed = ShooterConstants.PASSING_FLYWHEEL_MAP.get(predictedDistanceM);
 
+    Logger.recordOutput(
+        "ShotPlanner/predictedTranslation", new Pose2d(virtualTarget, Rotation2d.kZero));
+    Logger.recordOutput("ShotPlanner/leadTime", leadTimeSec);
+    Logger.recordOutput("ShotPlanner/predictedDistance", predictedDistanceM);
+
     Pose2d lookAtHubPose2d =
-        new Pose2d(
-            drivePose.getTranslation(),
-            predictedTranslation.minus(drivePose.getTranslation()).getAngle());
+        new Pose2d(robotTranslation, virtualTarget.minus(robotTranslation).getAngle());
 
     return new ShotSetpoint(
         RotationsPerSecond.of(flywheelSpeed),
         ShooterConstants.FIXED_HOOD_ANGLE_DEGREES,
         lookAtHubPose2d,
         driveChassisSpeeds,
-        predictedTranslation);
+        virtualTarget);
   }
 
   public static final double FLYWHEEL_ENERGY_TRANSFER_COEFFICENT = 60.0 / 40.0;

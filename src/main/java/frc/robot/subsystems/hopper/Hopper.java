@@ -2,6 +2,7 @@ package frc.robot.subsystems.hopper;
 
 import static edu.wpi.first.units.Units.*;
 
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -46,53 +47,36 @@ public class Hopper extends SubsystemBase {
 
   public Command spinIndexer() {
     return runOnce(
-        () -> {
-          io.setIndexerVoltage(Volts.of(HopperConstants.INDEXER_VOLTAGE.get()));
-        });
+        () -> io.setIndexerSpeed(RotationsPerSecond.of(HopperConstants.INDEXER_SPEED.get())));
   }
 
   public Command stopIndexer() {
-    return runOnce(
-        () -> {
-          io.setIndexerVoltage(Volts.of(0));
-        });
+    return runOnce(() -> io.setIndexerSpeed(RotationsPerSecond.of(0)));
   }
 
   public Command spinTopIndexer() {
     return runOnce(
-        () -> {
-          if (HopperConstants.USE_TOP_INDEXER) {
-            io.setTopIndexerVoltage(Volts.of(HopperConstants.TOP_INDEXER_VOLTAGE.get()));
-          }
-        });
+        () ->
+            io.setTopIndexerSpeed(RotationsPerSecond.of(HopperConstants.TOP_INDEXER_SPEED.get())));
   }
 
   public Command stopTopIndexer() {
-    return runOnce(
-        () -> {
-          if (HopperConstants.USE_TOP_INDEXER) {
-            io.setTopIndexerVoltage(Volts.of(1));
-          }
-        });
+    return runOnce(() -> io.setTopIndexerSpeed(RotationsPerSecond.of(0)));
   }
 
   public Command spinFullIndexer() {
     return runOnce(
         () -> {
-          io.setIndexerVoltage(Volts.of(HopperConstants.INDEXER_VOLTAGE.get()));
-          if (HopperConstants.USE_TOP_INDEXER) {
-            io.setTopIndexerVoltage(Volts.of(HopperConstants.TOP_INDEXER_VOLTAGE.get()));
-          }
+          io.setIndexerSpeed(RotationsPerSecond.of(HopperConstants.INDEXER_SPEED.get()));
+          io.setTopIndexerSpeed(RotationsPerSecond.of(HopperConstants.TOP_INDEXER_SPEED.get()));
         });
   }
 
-  public Command spinFullIndexer(double a, double b) {
+  public Command spinFullIndexer(AngularVelocity indexer, AngularVelocity topIndexer) {
     return runOnce(
         () -> {
-          io.setIndexerVoltage(Volts.of(a));
-          if (HopperConstants.USE_TOP_INDEXER) {
-            io.setTopIndexerVoltage(Volts.of(b));
-          }
+          io.setIndexerSpeed(indexer);
+          io.setTopIndexerSpeed(topIndexer);
         });
   }
 
@@ -101,30 +85,28 @@ public class Hopper extends SubsystemBase {
       return Commands.none();
     }
     return Commands.repeatingSequence(
-        runOnce(() -> io.setTopIndexerVoltage(Volts.of(0))),
+        runOnce(() -> io.setTopIndexerSpeed(RotationsPerSecond.of(0))),
         Commands.waitSeconds(0.2),
         runOnce(
-            () -> io.setTopIndexerVoltage(Volts.of(-HopperConstants.TOP_INDEXER_VOLTAGE.get()))),
+            () ->
+                io.setTopIndexerSpeed(
+                    RotationsPerSecond.of(-HopperConstants.TOP_INDEXER_SPEED.get()))),
         Commands.waitSeconds(0.7));
   }
 
   public Command stopFullIndexer() {
     return runOnce(
         () -> {
-          io.setIndexerVoltage(Volts.of(0));
-          if (HopperConstants.USE_TOP_INDEXER) {
-            io.setTopIndexerVoltage(Volts.of(0));
-          }
+          io.setIndexerSpeed(RotationsPerSecond.of(0));
+          io.setTopIndexerSpeed(RotationsPerSecond.of(0));
         });
   }
 
-  public void setIndexerVolts(double volts) {
-    io.setIndexerVoltage(Volts.of(volts));
+  public void setIndexerSpeed(AngularVelocity speed) {
+    io.setIndexerSpeed(speed);
   }
 
-  public void setTopIndexerVolts(double volts) {
-    if (HopperConstants.USE_TOP_INDEXER) {
-      io.setTopIndexerVoltage(Volts.of(volts));
-    }
+  public void setTopIndexerSpeed(AngularVelocity speed) {
+    io.setTopIndexerSpeed(speed);
   }
 }

@@ -27,8 +27,11 @@ public class Shooter extends SubsystemBase {
   public AngularVelocity targetFlywheelVelocity;
   public AngularVelocity targetFeederVelocity;
 
-  private boolean bangThrough = false;
-  private boolean prevBangThrough = false;
+  /** True when flywheel was at or above the 4 % threshold last loop. */
+  private boolean prevAboveThreshold = false;
+
+  /** Latches true for exactly one loop when velocity first dips ≥4 % below target. */
+  private boolean ballShotDetected = false;
 
   private BatteryLogger batteryLogger;
 
@@ -68,33 +71,22 @@ public class Shooter extends SubsystemBase {
     //   io.setFlywheelSpeed(compensatedFlywheelVelocity);
     // }
 
-    // Bang-through flywheel control: full 12 V when below threshold, holds until back at target
-    prevBangThrough = bangThrough;
+    // Ball-shot detection: fires for exactly one loop when flywheel velocity first dips ≥4% below
+    // target. PID/FF runs continuously — no voltage override.
     double targetRPS = targetFlywheelVelocity.in(RotationsPerSecond);
-    double commandedVoltage = 0.0;
     if (targetRPS > 0) {
       double currentRPS = inputs.flywheelVelocity.in(RotationsPerSecond);
-      boolean belowThreshold =
-          currentRPS < targetRPS * (1.0 - ShooterConstants.FLYWHEEL_BANG_THROUGH_THRESHOLD);
-      // Latch on when below threshold, release only once velocity returns to target
-      if (belowThreshold) {
-        bangThrough = true;
-      } else if (bangThrough && currentRPS >= targetRPS) {
-        bangThrough = false;
-      }
-      if (bangThrough) {
-        io.setFlywheelVoltage(Volts.of(12.0));
-        commandedVoltage = 12.0;
-      } else {
-        io.setFlywheelSpeed(targetFlywheelVelocity);
-      }
+      boolean aboveThreshold =
+          currentRPS >= targetRPS * (1.0 - ShooterConstants.FLYWHEEL_BANG_THROUGH_THRESHOLD);
+      ballShotDetected = prevAboveThreshold && !aboveThreshold;
+      prevAboveThreshold = aboveThreshold;
+      io.setFlywheelSpeed(targetFlywheelVelocity);
     } else {
-      bangThrough = false;
+      prevAboveThreshold = false;
+      ballShotDetected = false;
     }
-    Logger.recordOutput("Shooter/bangThrough", bangThrough);
 
-    Logger.recordOutput("Shooter/commandedVoltage", commandedVoltage);
-    Logger.recordOutput("Shooter/prevBangThrough", prevBangThrough);
+    Logger.recordOutput("Shooter/velocityBelowThreshold", !prevAboveThreshold);
     Logger.recordOutput("Shooter/ballExitedFlywheel", ballExitedFlywheel());
     Logger.recordOutput("Shooter/targetVelocity", targetFlywheelVelocity.in(RotationsPerSecond));
     Logger.recordOutput("Shooter/currentVelocity", inputs.flywheelVelocity.in(RotationsPerSecond));
@@ -119,17 +111,12 @@ public class Shooter extends SubsystemBase {
     AlertUtils.processCriticalAlert(feederMotorConnectedAlert, !inputs.feederTalonConnected);
   }
 
-  /** True while the flywheel is >4% below target (12 V bang-through active). */
-  public boolean isBangThrough() {
-    return bangThrough;
-  }
-
   /**
-   * Returns true on the loop when bang-through transitions false→false (voltage "spikes down"),
-   * indicating a ball just exited the flywheel.
+   * Returns true for exactly one loop when the flywheel velocity first drops ≥4% below the target,
+   * indicating a ball just entered (and is loading) the flywheel.
    */
   public boolean ballExitedFlywheel() {
-    return prevBangThrough && !bangThrough;
+    return ballShotDetected;
   }
 
   public Command setFlywheelRPM(Supplier<AngularVelocity> speed) {

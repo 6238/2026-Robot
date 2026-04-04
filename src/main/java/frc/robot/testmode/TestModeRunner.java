@@ -236,9 +236,11 @@ public class TestModeRunner {
         Commands.runOnce(() -> announceStep(step)),
         Commands.run(
                 () -> {
-                  hopper.io.setIndexerVoltage(Volts.of(INDEXER_TEST_VOLTAGE));
+                  hopper.io.setIndexerSpeed(
+                      RotationsPerSecond.of(HopperConstants.INDEXER_SPEED.get()));
                   if (HopperConstants.USE_TOP_INDEXER) {
-                    hopper.io.setTopIndexerVoltage(Volts.of(INDEXER_TEST_VOLTAGE));
+                    hopper.io.setTopIndexerSpeed(
+                        RotationsPerSecond.of(HopperConstants.TOP_INDEXER_SPEED.get()));
                   }
                   elapsed[0] += 0.02;
                   if (elapsed[0] > WARMUP_S) {
@@ -257,8 +259,9 @@ public class TestModeRunner {
             .withTimeout(SHORT_STEP_DURATION_S),
         Commands.runOnce(
             () -> {
-              hopper.io.setIndexerVoltage(Volts.of(0));
-              if (HopperConstants.USE_TOP_INDEXER) hopper.io.setTopIndexerVoltage(Volts.of(0));
+              hopper.io.setIndexerSpeed(RotationsPerSecond.of(0));
+              if (HopperConstants.USE_TOP_INDEXER)
+                hopper.io.setTopIndexerSpeed(RotationsPerSecond.of(0));
             },
             hopper),
         Commands.runOnce(() -> finalizeStep(step, keys)),

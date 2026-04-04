@@ -28,9 +28,9 @@ public interface HopperIO {
   public default void updateInputs(HopperIOInputs inputs) {}
   ;
 
-  public default void setIndexerVoltage(Voltage voltage) {}
+  public default void setIndexerSpeed(AngularVelocity speed) {}
   ;
 
-  public default void setTopIndexerVoltage(Voltage voltage) {}
+  public default void setTopIndexerSpeed(AngularVelocity speed) {}
   ;
 }

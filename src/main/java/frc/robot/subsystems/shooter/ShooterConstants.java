@@ -29,12 +29,12 @@ public class ShooterConstants {
 
   public static final LoggedNetworkPIDFeedforwardGains FLYWHEEL_GAINS =
       new LoggedNetworkPIDFeedforwardGains(
-          0.0 * 0.75, // kP
-          0.0, // kI
+          0.53, // kP
+          0, // kI
           0, // kD
-          0.02, // kA
-          0.085, // kV
-          0.3, // 0.3, // kS
+          0.15 * 1 / FLYWHEEL_GEARING, // kA
+          0.0631 * 1 / FLYWHEEL_GEARING, // kV
+          0.25 * 1 / FLYWHEEL_GEARING, // 0.3, // kS
           0.0, // kG
           "ShooterFlywheel");
 
@@ -54,12 +54,12 @@ public class ShooterConstants {
 
   public static final LoggedNetworkPIDFeedforwardGains FEEDER_GAINS =
       new LoggedNetworkPIDFeedforwardGains(
-          0.04 * 1.5, // kP
+          0.6, // kP
           0.0, // kI
           0, // kD
-          1.82 * 1.5, // kA
-          0.12 * 1.5, // kV
-          0.1 * 1.5, // kS
+          0.15 * FEEDER_GEARING, // kA
+          0.0631 * FEEDER_GEARING, // kV
+          0.25 * FEEDER_GEARING, // 0.3, // kS
           0.0, // kG
           "ShooterFeeder");
 
@@ -89,6 +89,11 @@ public class ShooterConstants {
   public static final Angle FIXED_HOOD_ANGLE_DEGREES = Degrees.of(60.5);
   // Fraction below target at which bang-through (full 12 V) is applied instead of PID/FF
   public static final double FLYWHEEL_BANG_THROUGH_THRESHOLD = 0.04;
+  // RPS below target at which recovery acceleration is injected
+  public static final double FLYWHEEL_RECOVERY_THRESHOLD_RPS = 2.0;
+  // Acceleration (RPS/s) injected during flywheel speed recovery
+  // Set just above measured physical max (~110 RPS/s from 0→55 RPS in 0.5s)
+  public static final double FLYWHEEL_RECOVERY_ACCELERATION_RPS2 = 150.0;
   public static final AngularVelocity FLYWHEEL_TOLERANCE_BEFORE_SHOT = RotationsPerSecond.of(0.5);
   public static final AngularVelocity FEEDER_TOLERANCE_BEFORE_SHOT = RotationsPerSecond.of(2.0);
   public static final LoggedNetworkNumber FEEDER_REVERSE_VOLTAGE =
@@ -100,6 +105,14 @@ public class ShooterConstants {
   public static final Angle HUB_ROTATION_TOLERANCE_TIGHT = Degrees.of(1.25);
   public static final double HUB_NEAR_DISTANCE_METERS = 3.0;
   public static final double HUB_HIGH_ROBOT_SPEED_MPS = 2.5;
+
+  // Ball speed physics:
+  //   ball_speed_mps = flywheel_rps × (2π × wheel_radius) / ENERGY_TRANSFER_COEFF
+  //   horizontal_speed = ball_speed × cos(hood_angle)
+  //   flight_time = distance / horizontal_speed
+  public static final double FLYWHEEL_ENERGY_TRANSFER_COEFF = 1.5;
+  public static final double BALL_SPEED_PER_FLYWHEEL_RPS =
+      2 * Math.PI * SHOOTER_WHEEL_RADIUS.in(Meters) / FLYWHEEL_ENERGY_TRANSFER_COEFF;
 
   // distance (m) → flywheel speed (RPS)
   public static final ExtrapolatingDoubleTreeMap FLYWHEEL_MAP;
@@ -115,16 +128,24 @@ public class ShooterConstants {
     FLYWHEEL_MAP.put(1.5, 26.2 / 0.75);
     FLYWHEEL_MAP.put(3.0, 34.0 / 0.75);
 
+    // Physics-based: t_lead = d / (rps × BALL_SPEED_PER_FLYWHEEL_RPS × cos(hood))
     LEAD_TIME_MAP = new ExtrapolatingDoubleTreeMap();
-    LEAD_TIME_MAP.put(1.5, 0.56);
-    LEAD_TIME_MAP.put(3.0, 0.77);
+    double cosHood = Math.cos(FIXED_HOOD_ANGLE_DEGREES.in(Radians));
+    for (double d = 0.5; d <= 8.0; d += 0.25) {
+      double rps = FLYWHEEL_MAP.get(d);
+      double tFlight = d / (rps * BALL_SPEED_PER_FLYWHEEL_RPS * cosHood);
+      LEAD_TIME_MAP.put(d, tFlight);
+    }
 
     PASSING_FLYWHEEL_MAP = new ExtrapolatingDoubleTreeMap();
-    PASSING_FLYWHEEL_MAP.put(1.5, 27.5 * 1 / 0.75);
-    PASSING_FLYWHEEL_MAP.put(3.0, 32.75 * 1 / 0.75);
+    PASSING_FLYWHEEL_MAP.put(1.5, 27.5 / 0.75);
+    PASSING_FLYWHEEL_MAP.put(3.0, 32.75 / 0.75);
 
     PASSING_LEAD_TIME_MAP = new ExtrapolatingDoubleTreeMap();
-    PASSING_LEAD_TIME_MAP.put(1.5, 28.1);
-    PASSING_LEAD_TIME_MAP.put(3.0, 28.4);
+    for (double d = 0.5; d <= 8.0; d += 0.25) {
+      double rps = PASSING_FLYWHEEL_MAP.get(d);
+      double tFlight = d / (rps * BALL_SPEED_PER_FLYWHEEL_RPS * cosHood);
+      PASSING_LEAD_TIME_MAP.put(d, tFlight);
+    }
   }
 }

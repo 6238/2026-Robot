@@ -11,6 +11,7 @@ import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
@@ -68,6 +69,15 @@ public class ShooterIOTalonFX implements ShooterIO {
     flywheelConfig.Slot0 = ShooterConstants.FLYWHEEL_GAINS.toSlot0Configs();
     flywheelConfig.MotionMagic = ShooterConstants.FLYWHEEL_MOTION_MAGIC_CONFIGS;
     flywheelConfig.MotorOutput.Inverted = ShooterConstants.FLYWHEEL_INVERTED;
+    flywheelConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+
+    flywheelConfig.CurrentLimits.StatorCurrentLimitEnable = true;
+    flywheelConfig.CurrentLimits.StatorCurrentLimit = 90;
+
+    flywheelConfig.CurrentLimits.SupplyCurrentLimit = 40;
+    flywheelConfig.CurrentLimits.SupplyCurrentLowerLimit = 40;
+    flywheelConfig.CurrentLimits.SupplyCurrentLowerTime = 0.1;
+    flywheelConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
 
     flywheel2Talon = new TalonFX(ShooterConstants.FLYWHEEL2_MOTOR_ID, ShooterConstants.CAN_BUS);
     flywheel2Talon.setControl(
@@ -84,6 +94,12 @@ public class ShooterIOTalonFX implements ShooterIO {
         !tryUntilOk(
             Constants.MAX_PHEONIX_RETRIES,
             () -> flywheelTalon.getConfigurator().apply(flywheelConfig)));
+
+    AlertUtils.processCriticalAlert(
+        flywheelConfigAlert,
+        !tryUntilOk(
+            Constants.MAX_PHEONIX_RETRIES,
+            () -> flywheel2Talon.getConfigurator().apply(flywheelConfig)));
 
     AlertUtils.processCriticalAlert(
         feederConfigAlert,
@@ -150,7 +166,15 @@ public class ShooterIOTalonFX implements ShooterIO {
   }
 
   public void setFlywheelSpeed(AngularVelocity speed) {
-    flywheelTalon.setControl(flywheelVelocityVoltage.withVelocity(speed));
+    double currentVelocity = flywheelVelocity.getValueAsDouble();
+    double targetVelocity = speed.baseUnitMagnitude();
+    boolean recovering =
+        currentVelocity < (targetVelocity - ShooterConstants.FLYWHEEL_RECOVERY_THRESHOLD_RPS);
+    flywheelTalon.setControl(
+        flywheelVelocityVoltage
+            .withVelocity(speed)
+            .withAcceleration(
+                recovering ? ShooterConstants.FLYWHEEL_RECOVERY_ACCELERATION_RPS2 : 0));
   }
 
   public void setFlywheelVoltage(Voltage voltage) {
@@ -162,6 +186,14 @@ public class ShooterIOTalonFX implements ShooterIO {
   }
 
   public void setFeederSpeed(AngularVelocity speed) {
-    feederTalon.setControl(feederVelocityVoltage.withVelocity(speed));
+    double currentVelocity = feederVelocity.getValueAsDouble();
+    double targetVelocity = speed.baseUnitMagnitude();
+    boolean recovering =
+        currentVelocity < (targetVelocity - ShooterConstants.FLYWHEEL_RECOVERY_THRESHOLD_RPS);
+    feederTalon.setControl(
+        feederVelocityVoltage
+            .withVelocity(speed)
+            .withAcceleration(
+                recovering ? ShooterConstants.FLYWHEEL_RECOVERY_ACCELERATION_RPS2 : 0));
   }
 }

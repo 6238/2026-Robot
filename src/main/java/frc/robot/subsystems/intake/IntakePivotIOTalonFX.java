@@ -48,9 +48,11 @@ public class IntakePivotIOTalonFX implements IntakePivotIO {
     intakeArmConfig.MotionMagic = IntakeConstants.INTAKE_ARM_MOTION_MAGIC_CONFIGS;
     intakeArmConfig.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
     intakeArmConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+    intakeArmConfig.CurrentLimits.StatorCurrentLimitEnable = true;
+    intakeArmConfig.CurrentLimits.StatorCurrentLimit = 40;
     intakeArmConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
     intakeArmConfig.CurrentLimits.SupplyCurrentLimit = 30;
-    intakeArmConfig.CurrentLimits.SupplyCurrentLowerLimit = 30;
+    intakeArmConfig.CurrentLimits.SupplyCurrentLowerLimit = 20;
     intakeArmConfig.CurrentLimits.SupplyCurrentLowerTime = 0.5;
 
     AlertUtils.processCriticalAlert(

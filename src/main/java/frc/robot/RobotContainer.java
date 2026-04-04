@@ -89,6 +89,7 @@ public class RobotContainer {
   private final IntakeRoller intakeRoller;
   private final IntakePivot intakePivot;
   private final Superstructure superstructure;
+  //   private final ObjectDetection objectDetection;
 
   private final BatteryLogger batteryLogger = new BatteryLogger();
 
@@ -104,8 +105,8 @@ public class RobotContainer {
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
-    AlertUtils.criticalErrorRumbleFunction =
-        () -> controller.setRumble(RumbleType.kBothRumble, 1.0);
+    AlertUtils.criticalErrorRumbleFunction = () -> controller.setRumble(RumbleType.kBothRumble, 0);
+    // () -> controller.setRumble(RumbleType.kBothRumble, 1.0);
     AlertUtils.stopRumbleFunction = () -> controller.setRumble(RumbleType.kBothRumble, 0.0);
 
     AlertUtils.clearCriticalAlerts();
@@ -131,6 +132,8 @@ public class RobotContainer {
         hopper = new Hopper(new HopperIOTalonFX());
         intakeRoller = new IntakeRoller(new IntakeRollerIOTalonFX(), () -> {});
         intakePivot = new IntakePivot(new IntakePivotIOTalonFX());
+        // objectDetection =
+        //     new ObjectDetection(new ObjectDetectionIOJetson("objectdetection"), drive::getPose);
         break;
 
       case SIM:
@@ -159,6 +162,10 @@ public class RobotContainer {
         hopper = new Hopper(new HopperIOSim());
         intakeRoller = new IntakeRoller(new IntakeRollerIOSim(), () -> {});
         intakePivot = new IntakePivot(new IntakePivotIOSim());
+        // objectDetection =
+        //     new ObjectDetection(
+        //         new ObjectDetectionIOSim(swerveDriveSimulation::getSimulatedDriveTrainPose),
+        //         drive::getPose);
         fuelIntake =
             IntakeSimulation.OverTheBumperIntake(
                 "Fuel",
@@ -183,6 +190,7 @@ public class RobotContainer {
         hopper = new Hopper(new HopperIO() {});
         intakeRoller = new IntakeRoller(new IntakeRollerIO() {});
         intakePivot = new IntakePivot(new IntakePivotIO() {});
+        // objectDetection = new ObjectDetection(new ObjectDetectionIO() {}, drive::getPose);
         break;
     }
 
@@ -257,12 +265,23 @@ public class RobotContainer {
                     drive)
                 .ignoringDisable(true));
 
-    // Point-opposite drive mode (hold right trigger)
+    // Right trigger: shoot/pass with intake down and spinning
     controller
         .rightTrigger()
         .whileTrue(
-            DriveCommands.joystickDrivePointingOpposite(
-                drive, () -> -controller.getLeftY(), () -> -controller.getLeftX()));
+            Commands.parallel(
+                    DriveCommands.joystickDriveAtAngle(
+                        drive,
+                        () -> -controller.getLeftY(),
+                        () -> -controller.getLeftX(),
+                        () -> superstructure.getShotSetpoint().robotPose.getRotation()),
+                    superstructure.setWantedSuperStateCommand(
+                        () ->
+                            Constants.SHOULD_PASS.apply(drive.getPose().getX())
+                                ? Superstructure.WantedState.PASS_INTAKE
+                                : Superstructure.WantedState.SHOOT_INTAKE))
+                .until(() -> controller.leftBumper().getAsBoolean()))
+        .onFalse(superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.IDLE));
     controller
         .rightBumper()
         .whileTrue(
@@ -318,8 +337,17 @@ public class RobotContainer {
             Math.hypot(controller.getLeftX(), controller.getLeftY()) > OVERRIDE_DEADBAND
                 || Math.abs(controller.getRightX()) > OVERRIDE_DEADBAND;
 
-    // B button: context-aware trench / bump navigation
-    controller.b().whileTrue(AutomaticCommands.automaticCommand(drive, driverOverride));
+    // B button: continuous ball intake — follow the detected ball cluster path while intaking,
+    // replanning automatically as new detections arrive. Driver stick movement cancels.
+    // controller
+    //     .b()
+    //     .whileTrue(
+    //         Commands.parallel(
+    //                 objectDetection.continuousBallIntakeCommand(drive),
+    //                 superstructure.wantIntaking())
+    //             .until(driverOverride))
+    //     .onFalse(superstructure.setWantedSuperStateCommand(() ->
+    // Superstructure.WantedState.IDLE));
 
     // D-Pad: targeted automations
     controller.povUp().whileTrue(AutomaticCommands.hubBackWallCommand(drive, driverOverride));

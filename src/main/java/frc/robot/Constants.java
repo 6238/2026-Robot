@@ -67,17 +67,17 @@ public final class Constants {
   public static final Supplier<Pose2d> LEFT_TARGET_PASS_POSE2D =
       () -> {
         if (RobotContainer.isRed()) {
-          return new Pose2d(16, 7.5, Rotation2d.kZero);
+          return new Pose2d(14, 5.75, Rotation2d.kZero);
         }
-        return new Pose2d(0.625, 7.5, Rotation2d.kZero);
+        return new Pose2d(1.75, 5.75, Rotation2d.kZero);
       };
 
   public static final Supplier<Pose2d> RIGHT_TARGET_PASS_POSE2D =
       () -> {
         if (RobotContainer.isRed()) {
-          return new Pose2d(16, 0.25, Rotation2d.kZero);
+          return new Pose2d(14, 2, Rotation2d.kZero);
         }
-        return new Pose2d(0.625, 0.25, Rotation2d.kZero);
+        return new Pose2d(1.75, 2, Rotation2d.kZero);
       };
   public static final double LEFT_RIGHT_SPLIT = Constants.HUB_POSE_3D.get().getY();
 

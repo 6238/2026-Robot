@@ -5,6 +5,7 @@ import static frc.robot.util.PhoenixUtil.tryUntilOk;
 
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.units.measure.AngularAcceleration;
@@ -40,6 +41,12 @@ public class HopperIOTalonFX implements HopperIO {
   public StatusSignal<Current> topIndexerSupplyCurrent;
   public StatusSignal<Voltage> topIndexerVoltage;
 
+  // Control requests
+  private final MotionMagicVelocityVoltage indexerVelocityRequest =
+      new MotionMagicVelocityVoltage(0).withSlot(0);
+  private final MotionMagicVelocityVoltage topIndexerVelocityRequest =
+      new MotionMagicVelocityVoltage(0).withSlot(0);
+
   public HopperIOTalonFX() {
     this.indexerTalon = new TalonFX(HopperConstants.INDEXER_MOTOR_ID, HopperConstants.CAN_BUS);
 
@@ -47,9 +54,13 @@ public class HopperIOTalonFX implements HopperIO {
     TalonFXConfiguration indexerConfig = new TalonFXConfiguration();
     indexerConfig.Feedback.SensorToMechanismRatio = HopperConstants.INDEXER_GEARING;
     indexerConfig.MotorOutput.Inverted = HopperConstants.INDEXER_MOTOR_DIRECTION;
+    indexerConfig.Slot0 = HopperConstants.INDEXER_GAINS.toSlot0Configs();
+    indexerConfig.MotionMagic = HopperConstants.INDEXER_MOTION_MAGIC_CONFIGS;
+    indexerConfig.CurrentLimits.StatorCurrentLimitEnable = true;
+    indexerConfig.CurrentLimits.StatorCurrentLimit = 40;
     indexerConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
-    indexerConfig.CurrentLimits.SupplyCurrentLimit = 30;
-    indexerConfig.CurrentLimits.SupplyCurrentLowerLimit = 20;
+    indexerConfig.CurrentLimits.SupplyCurrentLimit = 20;
+    indexerConfig.CurrentLimits.SupplyCurrentLowerLimit = 15;
     indexerConfig.CurrentLimits.SupplyCurrentLowerTime = 0.35;
 
     if (tryUntilOk(
@@ -73,10 +84,14 @@ public class HopperIOTalonFX implements HopperIO {
       TalonFXConfiguration topIndexerConfig = new TalonFXConfiguration();
       topIndexerConfig.Feedback.SensorToMechanismRatio = HopperConstants.TOP_INDEXER_GEARING;
       topIndexerConfig.MotorOutput.Inverted = HopperConstants.TOP_INDEXER_MOTOR_DIRECTION;
+      topIndexerConfig.Slot0 = HopperConstants.TOP_INDEXER_GAINS.toSlot0Configs();
+      topIndexerConfig.MotionMagic = HopperConstants.INDEXER_MOTION_MAGIC_CONFIGS;
+
+      topIndexerConfig.CurrentLimits.StatorCurrentLimitEnable = true;
+      topIndexerConfig.CurrentLimits.StatorCurrentLimit = 40;
       topIndexerConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
-      topIndexerConfig.CurrentLimits.SupplyCurrentLimit = 30;
+      topIndexerConfig.CurrentLimits.SupplyCurrentLimit = 25;
       topIndexerConfig.CurrentLimits.SupplyCurrentLowerLimit = 20;
-      topIndexerConfig.CurrentLimits.SupplyCurrentLowerTime = 0.35;
 
       AlertUtils.processCriticalAlert(
           indexerConfigAlert,
@@ -137,16 +152,30 @@ public class HopperIOTalonFX implements HopperIO {
     }
   }
 
-  public void setIndexerVoltage(Voltage voltage) {
-    indexerTalon.setVoltage(voltage.in(Volts));
+  @Override
+  public void setIndexerSpeed(AngularVelocity speed) {
+    if (speed.isNear(RotationsPerSecond.of(0), RotationsPerSecond.of(0))) {
+      indexerTalon.stopMotor();
+    } else {
+      indexerTalon.setControl(indexerVelocityRequest.withVelocity(speed));
+    }
     if (HopperConstants.USE_TOP_INDEXER) {
-      topIndexerTalon.setVoltage(voltage.in(Volts));
+      if (speed.isNear(RotationsPerSecond.of(0), RotationsPerSecond.of(0))) {
+        topIndexerTalon.stopMotor();
+      } else {
+        topIndexerTalon.setControl(topIndexerVelocityRequest.withVelocity(speed));
+      }
     }
   }
 
-  public void setTopIndexerVoltage(Voltage voltage) {
+  @Override
+  public void setTopIndexerSpeed(AngularVelocity speed) {
     if (HopperConstants.USE_TOP_INDEXER) {
-      topIndexerTalon.setVoltage(voltage.in(Volts));
+      if (speed.isNear(RotationsPerSecond.of(0), RotationsPerSecond.of(0))) {
+        topIndexerTalon.stopMotor();
+      } else {
+        topIndexerTalon.setControl(topIndexerVelocityRequest.withVelocity(speed));
+      }
     }
   }
 }

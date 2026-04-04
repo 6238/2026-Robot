@@ -65,6 +65,20 @@ public class IntakeConstants {
       new LoggedNetworkNumber("Intake/CrawlCurrentThresholdMin", 3.0);
   public static final double CRAWL_MAX_OFFSET_DEGREES = 10.0;
 
+  // Pivot oscillation during shooting (rapid up/down to feed balls)
+  public static final LoggedNetworkNumber OSCILLATE_UP_ANGLE_DEGREES =
+      new LoggedNetworkNumber("Intake/OscillateUpAngle", 70.0);
+  public static final LoggedNetworkNumber OSCILLATE_DOWN_ANGLE_DEGREES =
+      new LoggedNetworkNumber("Intake/OscillateDownAngle", -10.0);
+  public static final LoggedNetworkNumber OSCILLATE_CURRENT_THRESHOLD_AMPS =
+      new LoggedNetworkNumber("Intake/OscillateCurrentThreshold", 20.0);
+  public static final LoggedNetworkNumber OSCILLATE_UP_TIME_LIMIT_SECONDS =
+      new LoggedNetworkNumber("Intake/OscillateUpTimeLimit", 0.45);
+  public static final LoggedNetworkNumber OSCILLATE_UP_ANGLE_TOLERANCE_DEGREES =
+      new LoggedNetworkNumber("Intake/OscillateUpAngleTolerance", 3.0);
+  public static final LoggedNetworkNumber OSCILLATE_DOWN_DURATION_SECONDS =
+      new LoggedNetworkNumber("Intake/OscillateDownDuration", 0.15);
+
   // DRS (Dynamic Recovery System) — intake lower block detection & mitigation
   // Detection: pivot targeting DOWN, high current, AND stuck above target for DRS_STUCK_TIMEOUT_S
   public static final LoggedNetworkNumber DRS_CURRENT_THRESHOLD_AMPS =
