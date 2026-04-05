@@ -80,6 +80,14 @@ public class Superstructure extends SubsystemBase {
    */
   public BooleanSupplier consumeFuelForShot = () -> true;
 
+  /**
+   * Returns true when the flywheel should pre-spin in IDLE due to an active or imminent hub shift.
+   * Set by RobotContainer based on match timing and game data.
+   */
+  public BooleanSupplier hubSpinupActive = () -> false;
+
+  private boolean wasHubSpinupActive = false;
+
   public Superstructure(
       Drive drive,
       Shooter shooter,
@@ -175,6 +183,14 @@ public class Superstructure extends SubsystemBase {
         // hopper.setIndexerSpeed(RotationsPerSecond.of(firstSpinup ? -10 : 0));
         // hopper.setTopIndexerSpeed(RotationsPerSecond.of(firstSpinup ? -10 : 0));
         // shooter.setFeederVoltage(Volts.of(firstSpinup ? -2 : 0));
+        if (ShooterConstants.SPINUP_WHEN_HUB_ACTIVE && hubSpinupActive.getAsBoolean()) {
+          shooter.setFlywheelRPM(
+              RotationsPerSecond.of(ShooterConstants.SPINUP_FLYWHEEL_SPEED.get()));
+          wasHubSpinupActive = true;
+        } else if (wasHubSpinupActive) {
+          shooter.setFlywheelVoltage(Volts.of(0));
+          wasHubSpinupActive = false;
+        }
         break;
       case INTAKING:
         intake.setAngle(Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get()));

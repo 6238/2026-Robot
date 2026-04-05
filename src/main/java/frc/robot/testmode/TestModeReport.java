@@ -69,8 +69,7 @@ public class TestModeReport {
           for (String step : sectionSteps) {
             List<MotorResult> stepResults =
                 sectionResults.stream().filter(r -> r.step().equals(step)).toList();
-            rows
-                .append("<tr class='sh'><td colspan='7'>")
+            rows.append("<tr class='sh'><td colspan='7'>")
                 .append(escHtml(step))
                 .append("</td></tr>\n");
             for (MotorResult r : stepResults) {
@@ -105,8 +104,7 @@ public class TestModeReport {
                       + statusColor
                       + "' rx='2' title='measured'/>"
                       + "</svg>";
-              rows
-                  .append("<tr>")
+              rows.append("<tr>")
                   .append("<td>")
                   .append(escHtml(r.motorKey()))
                   .append("</td>")

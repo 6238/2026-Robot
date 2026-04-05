@@ -1,5 +1,6 @@
 package subsystems;
 
+import static edu.wpi.first.units.Units.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -7,11 +8,13 @@ import static org.mockito.Mockito.*;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.hopper.Hopper;
 import frc.robot.subsystems.intake.IntakePivot;
+import frc.robot.subsystems.intake.IntakeRoller;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.Superstructure.CurrentState;
@@ -28,6 +31,7 @@ public class SuperstructureTest {
   Shooter mockShooter;
   Hopper mockHopper;
   IntakePivot mockIntake;
+  IntakeRoller mockIntakeRoller;
   Drive mockDrive;
   SwerveDriveSimulation mockDriveSimulation;
 
@@ -37,6 +41,7 @@ public class SuperstructureTest {
     mockShooter = Mockito.mock(Shooter.class);
     mockHopper = Mockito.mock(Hopper.class);
     mockIntake = Mockito.mock(IntakePivot.class);
+    mockIntakeRoller = Mockito.mock(IntakeRoller.class);
     mockDrive = Mockito.mock(Drive.class);
     mockDriveSimulation = Mockito.mock(SwerveDriveSimulation.class);
 
@@ -60,7 +65,8 @@ public class SuperstructureTest {
     when(mockDrive.getChassisSpeeds()).thenReturn(new ChassisSpeeds());
 
     superstructure =
-        new Superstructure(mockDrive, mockShooter, mockHopper, mockIntake, mockDriveSimulation);
+        new Superstructure(
+            mockDrive, mockShooter, mockHopper, mockIntake, mockIntakeRoller, mockDriveSimulation);
   }
 
   @AfterEach
@@ -144,8 +150,7 @@ public class SuperstructureTest {
 
     superstructure.applyStates();
 
-    // SPINNING_UP → REVERSING (brief feeder/indexer reversal) → SHOOTING
-    assertEquals(CurrentState.REVERSING, superstructure.currentSuperState);
+    assertEquals(CurrentState.SHOOTING, superstructure.currentSuperState);
   }
 
   @Test
@@ -186,13 +191,24 @@ public class SuperstructureTest {
   }
 
   @Test
-  void idleState_schedulesStopCommands() {
+  void idleState_spinsUpFlywheelWhenHubActive() {
+    superstructure.hubSpinupActive = () -> true;
+    superstructure.currentSuperState = CurrentState.IDLE;
+    superstructure.applyStates();
+    verify(mockShooter).setFlywheelRPM(any(AngularVelocity.class));
+  }
+
+  @Test
+  void idleState_zerosFlywheelWhenHubBecomesInactive() {
+    // First loop: hub active → sets wasHubSpinupActive = true
+    superstructure.hubSpinupActive = () -> true;
     superstructure.currentSuperState = CurrentState.IDLE;
     superstructure.applyStates();
 
-    // Verify that stop commands were requested from the subsystems
-    verify(mockHopper).stopFullIndexer();
-    verify(mockShooter).setFlywheelVoltage(any(Supplier.class));
-    verify(mockShooter).setFeederVoltage(any(Supplier.class));
+    // Second loop: hub inactive → should zero the flywheel
+    superstructure.hubSpinupActive = () -> false;
+    superstructure.applyStates();
+
+    verify(mockShooter).setFlywheelVoltage(Volts.of(0));
   }
 }

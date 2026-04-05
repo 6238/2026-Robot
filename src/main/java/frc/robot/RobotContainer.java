@@ -203,6 +203,8 @@ public class RobotContainer {
       superstructure.consumeFuelForShot = fuelIntake::obtainGamePieceFromIntake;
     }
 
+    superstructure.hubSpinupActive = () -> false; //() -> shouldSpinupFlywheel(DriverStation.getMatchTime());
+
     drive.setBatteryLogger(batteryLogger);
     shooter.setBatteryLogger(batteryLogger);
     hopper.setBatteryLogger(batteryLogger);
@@ -357,13 +359,13 @@ public class RobotContainer {
     // controller.povLeft().whileTrue(AutomaticCommands.underTowerCommand(drive, driverOverride));
 
     // spinup command
-    controller
-        .y()
-        .onTrue(
-            new ToggleCommand(
-                shooter.setFlywheelRPM(
-                    () -> RotationsPerSecond.of(ShooterConstants.SPINUP_FLYWHEEL_SPEED.get())),
-                shooter.setFlywheelVoltage(() -> Volts.of(0))));
+    // controller
+    //     .y()
+    //     .onTrue(
+    //         new ToggleCommand(
+    //             shooter.setFlywheelRPM(
+    //                 () -> RotationsPerSecond.of(ShooterConstants.SPINUP_FLYWHEEL_SPEED.get())),
+    //             shooter.setFlywheelVoltage(() -> Volts.of(0))));
 
     // D-Pad Right: shoot while drifting in -x direction
     controller
@@ -438,5 +440,78 @@ public class RobotContainer {
 
   public static boolean isRed() {
     return DriverStation.getAlliance().orElse(Alliance.Blue).equals(Alliance.Red);
+  }
+
+  /**
+   * Returns whether the hub is currently active for our alliance. Mirrors the WPILib game data
+   * spec: game data char = alliance whose hub goes inactive first (active in Shifts 2 & 4).
+   */
+  public static boolean isHubActive(double matchTime) {
+    var alliance = DriverStation.getAlliance();
+    if (alliance.isEmpty()) return false;
+    if (DriverStation.isAutonomousEnabled()) return true;
+    if (!DriverStation.isTeleopEnabled()) return false;
+
+    String gameData = DriverStation.getGameSpecificMessage();
+    if (gameData.isEmpty()) return true; // data not yet received; assume active
+
+    boolean redInactiveFirst =
+        switch (gameData.charAt(0)) {
+          case 'R' -> true;
+          case 'B' -> false;
+          default -> {
+            yield true;
+          } // invalid data; assume active
+        };
+
+    // Named alliance (goes inactive first) is active in Shifts 2 & 4.
+    // shift1ActiveForUs = true  → our hub is on in Shifts 1 & 3
+    // shift1ActiveForUs = false → our hub is on in Shifts 2 & 4
+    boolean shift1ActiveForUs =
+        alliance.get() == Alliance.Red ? !redInactiveFirst : redInactiveFirst;
+
+    if (matchTime > 130) return true;
+    if (matchTime > 105) return shift1ActiveForUs;
+    if (matchTime > 80) return !shift1ActiveForUs;
+    if (matchTime > 55) return shift1ActiveForUs;
+    if (matchTime > 30) return !shift1ActiveForUs;
+    return true; // end game
+  }
+
+  /**
+   * Returns true when the flywheel should pre-spin: hub is active OR within 2 s before an active
+   * shift. Each "last 2s of shift N" window is always true because either that shift is active for
+   * us, or it's the pre-spinup for the next shift which is.
+   */
+  public static boolean shouldSpinupFlywheel(double matchTime) {
+    var alliance = DriverStation.getAlliance();
+    if (alliance.isEmpty()) return false;
+    if (DriverStation.isAutonomousEnabled()) return true;
+    if (!DriverStation.isTeleopEnabled()) return false;
+
+    String gameData = DriverStation.getGameSpecificMessage();
+    if (gameData.isEmpty()) return true;
+
+    boolean redInactiveFirst =
+        switch (gameData.charAt(0)) {
+          case 'R' -> true;
+          case 'B' -> false;
+          default -> {
+            yield true;
+          }
+        };
+
+    boolean shift1ActiveForUs =
+        alliance.get() == Alliance.Red ? !redInactiveFirst : redInactiveFirst;
+
+    if (matchTime > 130) return true; // transition
+    if (matchTime > 107) return shift1ActiveForUs; // shift 1 (excl. pre-spinup window)
+    if (matchTime > 105) return true; // last 2s shift 1 / pre-spinup shift 2
+    if (matchTime > 82) return !shift1ActiveForUs; // shift 2 (excl. pre-spinup window)
+    if (matchTime > 80) return true; // last 2s shift 2 / pre-spinup shift 3
+    if (matchTime > 57) return shift1ActiveForUs; // shift 3 (excl. pre-spinup window)
+    if (matchTime > 55) return true; // last 2s shift 3 / pre-spinup shift 4
+    if (matchTime > 30) return !shift1ActiveForUs; // shift 4
+    return true; // end game
   }
 }

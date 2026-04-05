@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.units.measure.AngularVelocity;
 import frc.robot.subsystems.hopper.Hopper;
 import frc.robot.subsystems.hopper.HopperIO;
 import frc.robot.subsystems.hopper.HopperIO.HopperIOInputs;
@@ -45,35 +45,35 @@ class HopperTest {
   // ── spinIndexer / stopIndexer ─────────────────────────────────────────────
 
   @Test
-  void spinIndexer_callsSetIndexerVoltage() {
+  void spinIndexer_callsSetIndexerSpeed() {
     hopper.spinIndexer().initialize();
-    verify(mockHopperIO).setIndexerVoltage(any(Voltage.class));
+    verify(mockHopperIO).setIndexerSpeed(any(AngularVelocity.class));
   }
 
   @Test
-  void stopIndexer_setsIndexerVoltageToZero() {
+  void stopIndexer_setsIndexerSpeedToZero() {
     hopper.stopIndexer().initialize();
 
-    ArgumentCaptor<Voltage> captor = ArgumentCaptor.forClass(Voltage.class);
-    verify(mockHopperIO).setIndexerVoltage(captor.capture());
-    assertEquals(0.0, captor.getValue().in(Volts), DELTA);
+    ArgumentCaptor<AngularVelocity> captor = ArgumentCaptor.forClass(AngularVelocity.class);
+    verify(mockHopperIO).setIndexerSpeed(captor.capture());
+    assertEquals(0.0, captor.getValue().in(RotationsPerSecond), DELTA);
   }
 
   // ── spinTopIndexer / stopTopIndexer ─────────────────────────────────────
 
   @Test
-  void spinTopIndexer_callsSetTopIndexerVoltage() {
+  void spinTopIndexer_callsSetTopIndexerSpeed() {
     hopper.spinTopIndexer().initialize();
-    verify(mockHopperIO).setTopIndexerVoltage(any(Voltage.class));
+    verify(mockHopperIO).setTopIndexerSpeed(any(AngularVelocity.class));
   }
 
   @Test
-  void stopTopIndexer_setsTopIndexerVoltageToOne() {
+  void stopTopIndexer_setsTopIndexerSpeedToZero() {
     hopper.stopTopIndexer().initialize();
 
-    ArgumentCaptor<Voltage> captor = ArgumentCaptor.forClass(Voltage.class);
-    verify(mockHopperIO).setTopIndexerVoltage(captor.capture());
-    assertEquals(1.0, captor.getValue().in(Volts), DELTA);
+    ArgumentCaptor<AngularVelocity> captor = ArgumentCaptor.forClass(AngularVelocity.class);
+    verify(mockHopperIO).setTopIndexerSpeed(captor.capture());
+    assertEquals(0.0, captor.getValue().in(RotationsPerSecond), DELTA);
   }
 
   // ── spinFullIndexer / stopFullIndexer ────────────────────────────────────
@@ -81,47 +81,47 @@ class HopperTest {
   @Test
   void spinFullIndexer_setsBothMotors() {
     hopper.spinFullIndexer().initialize();
-    verify(mockHopperIO).setIndexerVoltage(any(Voltage.class));
-    verify(mockHopperIO).setTopIndexerVoltage(any(Voltage.class));
+    verify(mockHopperIO).setIndexerSpeed(any(AngularVelocity.class));
+    verify(mockHopperIO).setTopIndexerSpeed(any(AngularVelocity.class));
   }
 
   @Test
-  void stopFullIndexer_setsBothVoltagesToZero() {
+  void stopFullIndexer_setsBothSpeedsToZero() {
     hopper.stopFullIndexer().initialize();
 
-    ArgumentCaptor<Voltage> indexerCaptor = ArgumentCaptor.forClass(Voltage.class);
-    ArgumentCaptor<Voltage> topCaptor = ArgumentCaptor.forClass(Voltage.class);
-    verify(mockHopperIO).setIndexerVoltage(indexerCaptor.capture());
-    verify(mockHopperIO).setTopIndexerVoltage(topCaptor.capture());
+    ArgumentCaptor<AngularVelocity> indexerCaptor = ArgumentCaptor.forClass(AngularVelocity.class);
+    ArgumentCaptor<AngularVelocity> topCaptor = ArgumentCaptor.forClass(AngularVelocity.class);
+    verify(mockHopperIO).setIndexerSpeed(indexerCaptor.capture());
+    verify(mockHopperIO).setTopIndexerSpeed(topCaptor.capture());
 
-    assertEquals(0.0, indexerCaptor.getValue().in(Volts), DELTA);
-    assertEquals(0.0, topCaptor.getValue().in(Volts), DELTA);
+    assertEquals(0.0, indexerCaptor.getValue().in(RotationsPerSecond), DELTA);
+    assertEquals(0.0, topCaptor.getValue().in(RotationsPerSecond), DELTA);
   }
 
   @Test
-  void spinFullIndexerWithParams_setsExactVoltages() {
-    hopper.spinFullIndexer(5.0, 7.0).initialize();
+  void spinFullIndexerWithParams_setsExactSpeeds() {
+    hopper.spinFullIndexer(RotationsPerSecond.of(5.0), RotationsPerSecond.of(7.0)).initialize();
 
-    ArgumentCaptor<Voltage> indexerCaptor = ArgumentCaptor.forClass(Voltage.class);
-    ArgumentCaptor<Voltage> topCaptor = ArgumentCaptor.forClass(Voltage.class);
-    verify(mockHopperIO).setIndexerVoltage(indexerCaptor.capture());
-    verify(mockHopperIO).setTopIndexerVoltage(topCaptor.capture());
+    ArgumentCaptor<AngularVelocity> indexerCaptor = ArgumentCaptor.forClass(AngularVelocity.class);
+    ArgumentCaptor<AngularVelocity> topCaptor = ArgumentCaptor.forClass(AngularVelocity.class);
+    verify(mockHopperIO).setIndexerSpeed(indexerCaptor.capture());
+    verify(mockHopperIO).setTopIndexerSpeed(topCaptor.capture());
 
-    assertEquals(5.0, indexerCaptor.getValue().in(Volts), DELTA);
-    assertEquals(7.0, topCaptor.getValue().in(Volts), DELTA);
+    assertEquals(5.0, indexerCaptor.getValue().in(RotationsPerSecond), DELTA);
+    assertEquals(7.0, topCaptor.getValue().in(RotationsPerSecond), DELTA);
   }
 
   @Test
-  void spinFullIndexerWithParams_negative_setsNegativeVoltages() {
-    hopper.spinFullIndexer(-3.0, -5.0).initialize();
+  void spinFullIndexerWithParams_negative_setsNegativeSpeeds() {
+    hopper.spinFullIndexer(RotationsPerSecond.of(-3.0), RotationsPerSecond.of(-5.0)).initialize();
 
-    ArgumentCaptor<Voltage> indexerCaptor = ArgumentCaptor.forClass(Voltage.class);
-    ArgumentCaptor<Voltage> topCaptor = ArgumentCaptor.forClass(Voltage.class);
-    verify(mockHopperIO).setIndexerVoltage(indexerCaptor.capture());
-    verify(mockHopperIO).setTopIndexerVoltage(topCaptor.capture());
+    ArgumentCaptor<AngularVelocity> indexerCaptor = ArgumentCaptor.forClass(AngularVelocity.class);
+    ArgumentCaptor<AngularVelocity> topCaptor = ArgumentCaptor.forClass(AngularVelocity.class);
+    verify(mockHopperIO).setIndexerSpeed(indexerCaptor.capture());
+    verify(mockHopperIO).setTopIndexerSpeed(topCaptor.capture());
 
-    assertEquals(-3.0, indexerCaptor.getValue().in(Volts), DELTA);
-    assertEquals(-5.0, topCaptor.getValue().in(Volts), DELTA);
+    assertEquals(-3.0, indexerCaptor.getValue().in(RotationsPerSecond), DELTA);
+    assertEquals(-5.0, topCaptor.getValue().in(RotationsPerSecond), DELTA);
   }
 
   // ── periodic ─────────────────────────────────────────────────────────────

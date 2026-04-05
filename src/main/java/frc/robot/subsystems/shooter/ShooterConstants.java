@@ -21,6 +21,9 @@ public class ShooterConstants {
   public static final InvertedValue FEEDER_INVERTED = InvertedValue.CounterClockwise_Positive;
   public static final CANBus CAN_BUS = new CANBus("canivore");
 
+  // When true, flywheel spins up automatically during active hub shifts (and 2s before each starts)
+  public static final boolean SPINUP_WHEN_HUB_ACTIVE = true;
+
   public static final Distance SHOOTER_WHEEL_RADIUS = Inches.of(2.0);
   public static final Distance SHOOTER_HOOD_HEIGHT = Inches.of(28.0);
 
@@ -29,10 +32,10 @@ public class ShooterConstants {
 
   public static final LoggedNetworkPIDFeedforwardGains FLYWHEEL_GAINS =
       new LoggedNetworkPIDFeedforwardGains(
-          0.53, // kP
+          0.6, // kP
           0, // kI
           0, // kD
-          0.15 * 1 / FLYWHEEL_GEARING, // kA
+          0.1725 * 1 / FLYWHEEL_GEARING, // kA
           0.0631 * 1 / FLYWHEEL_GEARING, // kV
           0.25 * 1 / FLYWHEEL_GEARING, // 0.3, // kS
           0.0, // kG
@@ -57,7 +60,7 @@ public class ShooterConstants {
           0.6, // kP
           0.0, // kI
           0, // kD
-          0.15 * FEEDER_GEARING, // kA
+          0.1725 * FEEDER_GEARING, // kA
           0.0631 * FEEDER_GEARING, // kV
           0.25 * FEEDER_GEARING, // 0.3, // kS
           0.0, // kG

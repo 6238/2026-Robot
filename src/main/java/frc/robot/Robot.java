@@ -165,34 +165,7 @@ public class Robot extends LoggedRobot {
     Logger.recordOutput("Match/CurrentShift", shiftName);
     Logger.recordOutput("Match/ShiftTimeRemaining", shiftTimeRemaining);
 
-    String gameData;
-    gameData = DriverStation.getGameSpecificMessage();
-    if (gameData.length() > 0) {
-      switch (gameData.charAt(0)) {
-        case 'B':
-          if (DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue)
-              == DriverStation.Alliance.Blue) {
-            Logger.recordOutput("ACTIVE", true);
-          } else {
-            Logger.recordOutput("ACTIVE", false);
-          }
-          break;
-        case 'R':
-          // Red case code
-          if (DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue)
-              == DriverStation.Alliance.Red) {
-            Logger.recordOutput("ACTIVE", true);
-          } else {
-            Logger.recordOutput("ACTIVE", false);
-          }
-          break;
-        default:
-          // This is corrupt data
-          break;
-      }
-    } else {
-      // Code for no data received yet
-    }
+    Logger.recordOutput("ACTIVE", RobotContainer.isHubActive(matchTime));
   }
 
   /** This function is called once when the robot is disabled. */
