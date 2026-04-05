@@ -14,6 +14,7 @@ public interface IntakeRollerIO {
   @AutoLog
   public static class IntakeRollerIOInputs {
     public boolean intakeTalonConnected = false;
+    public boolean intakeFollowerTalonConnected = false;
 
     public Angle intakePosition = Rotations.of(0.0);
     public AngularVelocity intakeVelocity = RotationsPerSecond.of(0.0);

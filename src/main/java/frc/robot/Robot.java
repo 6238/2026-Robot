@@ -252,9 +252,7 @@ public class Robot extends LoggedRobot {
 
   /** This function is called once when test mode is exited. */
   @Override
-  public void testExit() {
-    TestModeHttpServer.stop();
-  }
+  public void testExit() {}
 
   /** This function is caled once when the robot is first started up. */
   @Override

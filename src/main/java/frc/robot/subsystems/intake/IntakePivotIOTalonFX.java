@@ -39,7 +39,7 @@ public class IntakePivotIOTalonFX implements IntakePivotIO {
   public MotionMagicVoltage motionMagicVoltageArm = new MotionMagicVoltage(0).withSlot(0);
 
   public IntakePivotIOTalonFX() {
-    this.intakeArmTalon = new TalonFX(IntakeConstants.INTAKE_ARM_MOTOR_ID, IntakeConstants.CAN_BUS);
+    this.intakeArmTalon = new TalonFX(IntakeConstants.INTAKE_ARM_MOTOR_ID, IntakeConstants.PIVOT_CAN_BUS);
 
     TalonFXConfiguration intakeArmConfig = new TalonFXConfiguration();
     intakeArmConfig.Feedback.SensorToMechanismRatio = IntakeConstants.INTAKE_ARM_GEARING;

@@ -12,7 +12,7 @@ import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 public class HopperConstants {
   public static final boolean USE_TOP_INDEXER = true;
 
-  public static final CANBus CAN_BUS = CANBus.roboRIO();
+  public static final CANBus CAN_BUS = new CANBus("canivore");
   public static final int INDEXER_MOTOR_ID = 41;
   public static final int TOP_INDEXER_MOTOR_ID = 46;
 

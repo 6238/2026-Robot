@@ -76,6 +76,7 @@ public class IntakePivot extends SubsystemBase {
       drsTriggered = false;
     }
 
+    Logger.recordOutput("Intake/currentAngle", inputs.intakeArmPosition.in(Degrees));
     Logger.recordOutput("IntakePivot/DRS/Triggered", drsTriggered);
     Logger.recordOutput("IntakePivot/DRS/Condition", drsCondition);
     Logger.recordOutput("IntakePivot/DRS/StuckTimerSecs", drsStuckTimer);
@@ -105,6 +106,7 @@ public class IntakePivot extends SubsystemBase {
           Angle newAngle = angleSupplier.get();
           boolean changed = Math.abs(newAngle.in(Degrees) - targetAngle.in(Degrees)) > 2.0;
           targetAngle = newAngle;
+          Logger.recordOutput("Intake/targetAngle", targetAngle);
           io.setIntakePosition(newAngle);
           if (changed) {
             drsIgnoreTimer = DRS_IGNORE_SECONDS;

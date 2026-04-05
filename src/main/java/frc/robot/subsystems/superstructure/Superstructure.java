@@ -70,12 +70,8 @@ public class Superstructure extends SubsystemBase {
   // Pivot oscillation state (during shooting/passing)
   private double oscTimer = 0.0;
   private boolean oscGoingDown = false;
-
-  // Top-indexer jam recovery state
-  private final Timer topIndexerJamTimer = new Timer();
-  private boolean topIndexerJamming = false;
-
-  public boolean indxererMode = false;
+  private double oscRangeMultiplier = 1.0; // Starts at 100% range
+  private final double OSC_DECAY_RATE = 0.65;
 
   /**
    * Called in simulateShot() to consume one fuel piece before launching a projectile. Set by
@@ -176,6 +172,9 @@ public class Superstructure extends SubsystemBase {
   public void applyStates() {
     switch (currentSuperState) {
       case IDLE:
+        // hopper.setIndexerSpeed(RotationsPerSecond.of(firstSpinup ? -10 : 0));
+        // hopper.setTopIndexerSpeed(RotationsPerSecond.of(firstSpinup ? -10 : 0));
+        // shooter.setFeederVoltage(Volts.of(firstSpinup ? -2 : 0));
         break;
       case INTAKING:
         intake.setAngle(Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get()));
@@ -185,8 +184,8 @@ public class Superstructure extends SubsystemBase {
         intake.setAngle(Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get()));
         if (wantedSuperState == WantedState.SHOOT_INTAKE
             || wantedSuperState == WantedState.PASS_INTAKE) intakeRoller.spin();
-        hopper.setIndexerSpeed(RotationsPerSecond.of(firstSpinup ? -10 : 0));
-        hopper.setTopIndexerSpeed(RotationsPerSecond.of(firstSpinup ? -10 : 0));
+        hopper.setIndexerSpeed(RotationsPerSecond.of(firstSpinup ? -14 : 0));
+        hopper.setTopIndexerSpeed(RotationsPerSecond.of(firstSpinup ? -14 : 0));
         shooter.setFeederVoltage(Volts.of(firstSpinup ? -2 : 0));
         shooter.setFlywheelRPM(shotSetpoint.flywheelSpeed);
         if (!readyToShoot()) break;
@@ -195,11 +194,10 @@ public class Superstructure extends SubsystemBase {
           currentSuperState = CurrentState.SHOOTING;
           firstSpinup = false;
           noShotTimer.restart();
-          topIndexerJamTimer.restart();
-          topIndexerJamming = false;
           crawlUpScheduled = false;
           oscGoingDown = false;
           oscTimer = 0.0;
+          oscRangeMultiplier = 1.0;
         } else if (wantedSuperState == WantedState.PASSING
             || wantedSuperState == WantedState.PASS_INTAKE) {
           currentSuperState = CurrentState.PASSING;
@@ -271,8 +269,12 @@ public class Superstructure extends SubsystemBase {
           crawlUpScheduled = false;
           oscGoingDown = false;
           oscTimer = 0.0;
+          oscRangeMultiplier = 1.0;
+          Logger.recordOutput("Superstructure/NoShotTrigger", true);
           intake.io.setIntakeArmVoltage(Volts.of(0));
           intake.setAngle(Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get()));
+        } else {
+          Logger.recordOutput("Superstructure/NoShotTrigger", false);
         }
 
         simulateShot();
@@ -283,20 +285,37 @@ public class Superstructure extends SubsystemBase {
   }
 
   private void applyPivotOscillate() {
-    oscTimer += 0.02;
+    oscTimer += 0.02; // Assuming 20ms loop
+
+    double upAngle = IntakeConstants.INTAKE_UP_VALUE.get();
+    double downAngleFull = IntakeConstants.INTAKE_DOWN_VALUE.get();
+
+    // Calculate how far "down" we should actually go based on the current multiplier
+    // This moves the 'down' target closer to the 'up' target over time
+    double currentDownAngle = upAngle + ((downAngleFull - upAngle) * oscRangeMultiplier);
+
     if (oscGoingDown) {
-      intake.setAngle(Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get()));
-      if (oscTimer >= 0.3) {
+      intake.setAngle(Degrees.of(currentDownAngle));
+      if (oscTimer >= 0.225) {
         oscGoingDown = false;
         oscTimer = 0.0;
+
+        // Every time we finish going down and head back up,
+        // reduce the multiplier for the NEXT "down" stroke
+        oscRangeMultiplier *= OSC_DECAY_RATE;
+
+        // Optional: Clamp it so it doesn't stay perfectly still eventually
+        if (oscRangeMultiplier < 0.1) oscRangeMultiplier = 0.1;
       }
     } else {
-      intake.setAngle(Degrees.of(IntakeConstants.INTAKE_UP_VALUE.get()));
-      if (oscTimer >= 0.35) {
+      intake.setAngle(Degrees.of(upAngle));
+      if (oscTimer >= 0.225) {
         oscGoingDown = true;
         oscTimer = 0.0;
       }
     }
+
+    Logger.recordOutput("Superstructure/OscillationMultiplier", oscRangeMultiplier);
   }
 
   public void simulateShot() {

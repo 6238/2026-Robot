@@ -10,27 +10,28 @@ import frc.robot.util.LoggedNetworkPIDFeedforwardGains;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 public class IntakeConstants {
-  public static final CANBus CAN_BUS = CANBus.roboRIO();
-  public static final int INTAKE_MOTOR_ID = 59;
-  public static final int INTAKE_FOLLOWER_MOTOR_ID = 55;
+  public static final CANBus ROLLER_CAN_BUS = CANBus.roboRIO();
+  public static final CANBus PIVOT_CAN_BUS = new CANBus("canivore");
+  public static final int INTAKE_MOTOR_ID = 55;
+  public static final int INTAKE_FOLLOWER_MOTOR_ID = 59;
   public static final int INTAKE_ARM_MOTOR_ID = 54;
 
-  public static final double INTAKE_GEARING = 34 / 12 * 18 / 34;
+  public static final double INTAKE_GEARING = 1.5;
   public static final InvertedValue INTAKE_MOTOR_DIRECTION =
       InvertedValue.CounterClockwise_Positive;
   public static final LoggedNetworkPIDFeedforwardGains INTAKE_GAINS =
-      new LoggedNetworkPIDFeedforwardGains(0.03, 0, 0.00, 0, 0.17, 0, 0, "intake");
+      new LoggedNetworkPIDFeedforwardGains(0.4, 0, 0.00, 0, 0.17, 0, 0, "intake");
 
-  public static final double INTAKE_ARM_GEARING = 25 * 2;
+  public static final double INTAKE_ARM_GEARING = 35 * 2;
   public static final InvertedValue INTAKE_ARM_MOTOR_DIRECTION =
       InvertedValue.CounterClockwise_Positive;
-  public static final Angle INTAKE_START_VALUE = Degrees.of(120.0);
+  public static final Angle INTAKE_START_VALUE = Degrees.of(110.0);
   public static final LoggedNetworkNumber INTAKE_DOWN_VALUE =
-      new LoggedNetworkNumber("INTAKE_DOWN_ANGLE", -35.5);
+      new LoggedNetworkNumber("INTAKE_DOWN_ANGLE", -10);
   public static final LoggedNetworkNumber INTAKE_UP_VALUE =
-      new LoggedNetworkNumber("INTAKE_UP_ANGLE", 70.0);
+      new LoggedNetworkNumber("INTAKE_UP_ANGLE", 60.0);
   public static final LoggedNetworkPIDFeedforwardGains INTAKE_ARM_GAINS =
-      new LoggedNetworkPIDFeedforwardGains(1.5, 0.03, 0.1, 0.33, 5.64, 0, 0.3, "Intake_ARM");
+      new LoggedNetworkPIDFeedforwardGains(48, 1, 5, 0.17, 7.8, 0, 0.3, "Intake_ARM");
   public static final MotionMagicConfigs INTAKE_ARM_MOTION_MAGIC_CONFIGS =
       new MotionMagicConfigs()
           .withMotionMagicCruiseVelocity(RotationsPerSecond.of(1.5))

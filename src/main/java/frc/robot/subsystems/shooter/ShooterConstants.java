@@ -19,7 +19,7 @@ public class ShooterConstants {
 
   public static final InvertedValue FLYWHEEL_INVERTED = InvertedValue.Clockwise_Positive;
   public static final InvertedValue FEEDER_INVERTED = InvertedValue.CounterClockwise_Positive;
-  public static final CANBus CAN_BUS = CANBus.roboRIO();
+  public static final CANBus CAN_BUS = new CANBus("canivore");
 
   public static final Distance SHOOTER_WHEEL_RADIUS = Inches.of(2.0);
   public static final Distance SHOOTER_HOOD_HEIGHT = Inches.of(28.0);
@@ -125,8 +125,8 @@ public class ShooterConstants {
 
   static {
     FLYWHEEL_MAP = new ExtrapolatingDoubleTreeMap();
-    FLYWHEEL_MAP.put(1.5, 26.2 / 0.75);
-    FLYWHEEL_MAP.put(3.0, 34.0 / 0.75);
+    FLYWHEEL_MAP.put(1.5, 26.5 / 0.75);
+    FLYWHEEL_MAP.put(3.0, 34.4 / 0.75);
 
     // Physics-based: t_lead = d / (rps × BALL_SPEED_PER_FLYWHEEL_RPS × cos(hood))
     LEAD_TIME_MAP = new ExtrapolatingDoubleTreeMap();

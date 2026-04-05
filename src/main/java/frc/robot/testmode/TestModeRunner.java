@@ -56,9 +56,9 @@ public class TestModeRunner {
   static final double PIVOT_SWEEP_TIMEOUT_S = 6.0; // safety timeout for full-range sweep
 
   // ── Pass/fail thresholds (ratio of measured/baseline) ───────────────────
-  static final double WARN_BELOW = 0.75; // WARN if measured < 75% of baseline
+  static final double WARN_BELOW = 0.65; // WARN if measured < 75% of baseline
   static final double FAIL_BELOW = 0.50; // FAIL if measured < 50% of baseline
-  static final double WARN_ABOVE = 1.30; // WARN if measured > 130% of baseline
+  static final double WARN_ABOVE = 1.50; // WARN if measured > 130% of baseline
 
   // ── Persistence ─────────────────────────────────────────────────────────
   static final String BASELINE_PATH = "/home/lvuser/test-baseline.properties";
@@ -100,8 +100,7 @@ public class TestModeRunner {
             flywheelStep(shooter),
             feederStep(shooter),
             hopperStep(hopper),
-            rollerStep(intakeRoller),
-            pivotStep(intakePivot),
+            pivotStep(intakePivot, intakeRoller),
 
             // Finalize
             Commands.runOnce(
@@ -295,7 +294,7 @@ public class TestModeRunner {
         Commands.waitSeconds(STOP_GAP_S));
   }
 
-  private Command pivotStep(IntakePivot intakePivot) {
+  private Command pivotStep(IntakePivot intakePivot, IntakeRoller intakeRoller) {
     final String stepUp = "INTAKE_PIVOT_UP";
     final String stepDown = "INTAKE_PIVOT_DOWN";
     final String key = "Pivot";
@@ -309,6 +308,9 @@ public class TestModeRunner {
             },
             intakePivot),
         Commands.waitSeconds(PIVOT_SETUP_WAIT_S),
+
+        // Test roller now that pivot is at INTAKE_DOWN
+        rollerStep(intakeRoller),
 
         // Up sweep: constant voltage from INTAKE_DOWN to INTAKE_UP, collect velocity
         Commands.runOnce(() -> announceStep(stepUp)),

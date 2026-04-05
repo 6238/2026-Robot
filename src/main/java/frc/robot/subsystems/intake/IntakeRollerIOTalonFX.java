@@ -21,6 +21,7 @@ import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.robot.Constants;
 import frc.robot.util.AlertUtils;
 import frc.robot.util.BetterStatusSignalCollection;
+import org.littletonrobotics.junction.Logger;
 
 public class IntakeRollerIOTalonFX implements IntakeRollerIO {
   private Alert statusSignalAlert = new Alert("ISSUE", "Status Signal Error", AlertType.kError);
@@ -39,12 +40,14 @@ public class IntakeRollerIOTalonFX implements IntakeRollerIO {
   public StatusSignal<Voltage> intakeVoltage;
   public StatusSignal<Temperature> intakeTemperature;
 
+  private boolean notSwapped = true;
+
   public VelocityVoltage velocityVoltage = new VelocityVoltage(0).withSlot(0);
 
   public IntakeRollerIOTalonFX() {
-    this.intakeTalon = new TalonFX(IntakeConstants.INTAKE_MOTOR_ID, IntakeConstants.CAN_BUS);
+    this.intakeTalon = new TalonFX(IntakeConstants.INTAKE_MOTOR_ID, IntakeConstants.ROLLER_CAN_BUS);
     this.intakeFollowerTalon =
-        new TalonFX(IntakeConstants.INTAKE_FOLLOWER_MOTOR_ID, IntakeConstants.CAN_BUS);
+        new TalonFX(IntakeConstants.INTAKE_FOLLOWER_MOTOR_ID, IntakeConstants.ROLLER_CAN_BUS);
 
     TalonFXConfiguration intakeConfig = new TalonFXConfiguration();
     intakeConfig.Feedback.SensorToMechanismRatio = IntakeConstants.INTAKE_GEARING;
@@ -62,6 +65,12 @@ public class IntakeRollerIOTalonFX implements IntakeRollerIO {
         !tryUntilOk(
             Constants.MAX_PHEONIX_RETRIES,
             () -> intakeTalon.getConfigurator().apply(intakeConfig)));
+
+    AlertUtils.processCriticalAlert(
+        intakeConfigAlert,
+        !tryUntilOk(
+            Constants.MAX_PHEONIX_RETRIES,
+            () -> intakeFollowerTalon.getConfigurator().apply(intakeConfig)));
 
     intakeFollowerTalon.setControl(
         new Follower(IntakeConstants.INTAKE_MOTOR_ID, MotorAlignmentValue.Opposed));
@@ -105,15 +114,33 @@ public class IntakeRollerIOTalonFX implements IntakeRollerIO {
     inputs.intakeSupplyCurrent = intakeSupplyCurrent.getValue();
     inputs.intakeAppliedVoltage = intakeVoltage.getValue();
     inputs.intakeTemperature = intakeTemperature.getValue();
+
+    inputs.intakeFollowerTalonConnected = intakeFollowerTalon.isConnected();
+
+    if (inputs.intakeFollowerTalonConnected && !inputs.intakeTalonConnected && notSwapped) {
+      intakeTalon.setControl(
+          new Follower(IntakeConstants.INTAKE_MOTOR_ID, MotorAlignmentValue.Opposed));
+      notSwapped = false;
+    }
+
+    Logger.recordOutput("swapped leader follower", !notSwapped);
   }
 
   @Override
   public void setIntakeVoltage(Voltage voltage) {
-    intakeTalon.setVoltage(voltage.in(Volts));
+    if (!notSwapped) {
+      intakeFollowerTalon.setVoltage(voltage.in(Volts));
+    } else {
+      intakeTalon.setVoltage(voltage.in(Volts));
+    }
   }
 
   @Override
   public void setIntakeVelocity(AngularVelocity speed) {
-    intakeTalon.setControl(velocityVoltage.withVelocity(speed));
+    if (!notSwapped) {
+      intakeFollowerTalon.setControl(velocityVoltage.withVelocity(speed));
+    } else {
+      intakeTalon.setControl(velocityVoltage.withVelocity(speed));
+    }
   }
 }

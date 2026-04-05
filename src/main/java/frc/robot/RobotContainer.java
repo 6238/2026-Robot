@@ -54,6 +54,7 @@ import frc.robot.subsystems.intake.IntakeRollerIO;
 import frc.robot.subsystems.intake.IntakeRollerIOSim;
 import frc.robot.subsystems.intake.IntakeRollerIOTalonFX;
 import frc.robot.subsystems.shooter.Shooter;
+import frc.robot.subsystems.shooter.ShooterConstants;
 import frc.robot.subsystems.shooter.ShooterIOSim;
 import frc.robot.subsystems.shooter.ShooterIOTalonFX;
 import frc.robot.subsystems.superstructure.Superstructure;
@@ -63,10 +64,10 @@ import frc.robot.subsystems.vision.VisionIOPhotonVision;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.testmode.TestModeRunner;
 import frc.robot.util.AlertUtils;
-import frc.robot.util.AutomaticCommands;
 import frc.robot.util.BatteryLogger;
 import frc.robot.util.RobotBumpSim;
 import frc.robot.util.RobotIdentity;
+import frc.robot.util.ToggleCommand;
 import java.util.function.BooleanSupplier;
 import org.ironmaple.simulation.IntakeSimulation;
 import org.ironmaple.simulation.SimulatedArena;
@@ -250,8 +251,8 @@ public class RobotContainer {
     drive.setDefaultCommand(
         DriveCommands.joystickDrive(
             drive,
-            () -> -controller.getLeftY(),
-            () -> -controller.getLeftX(),
+            () -> controller.getLeftX() * 0.3,
+            () -> -controller.getLeftY() * 0.3,
             () -> -controller.getRightX()));
 
     // Reset Drive Rotation
@@ -350,9 +351,19 @@ public class RobotContainer {
     // Superstructure.WantedState.IDLE));
 
     // D-Pad: targeted automations
-    controller.povUp().whileTrue(AutomaticCommands.hubBackWallCommand(drive, driverOverride));
-    controller.povDown().whileTrue(AutomaticCommands.wallShootSetupCommand(drive, driverOverride));
-    controller.povLeft().whileTrue(AutomaticCommands.underTowerCommand(drive, driverOverride));
+    // controller.povUp().whileTrue(AutomaticCommands.hubBackWallCommand(drive, driverOverride));
+    // controller.povDown().whileTrue(AutomaticCommands.wallShootSetupCommand(drive,
+    // driverOverride));
+    // controller.povLeft().whileTrue(AutomaticCommands.underTowerCommand(drive, driverOverride));
+
+    // spinup command
+    controller
+        .y()
+        .onTrue(
+            new ToggleCommand(
+                shooter.setFlywheelRPM(
+                    () -> RotationsPerSecond.of(ShooterConstants.SPINUP_FLYWHEEL_SPEED.get())),
+                shooter.setFlywheelVoltage(() -> Volts.of(0))));
 
     // D-Pad Right: shoot while drifting in -x direction
     controller
