@@ -53,6 +53,10 @@ import frc.robot.subsystems.intake.IntakeRoller;
 import frc.robot.subsystems.intake.IntakeRollerIO;
 import frc.robot.subsystems.intake.IntakeRollerIOSim;
 import frc.robot.subsystems.intake.IntakeRollerIOTalonFX;
+import frc.robot.subsystems.objectdetection.ObjectDetection;
+import frc.robot.subsystems.objectdetection.ObjectDetectionIO;
+import frc.robot.subsystems.objectdetection.ObjectDetectionIOReal;
+import frc.robot.subsystems.objectdetection.ObjectDetectionIOSim;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.ShooterIOSim;
 import frc.robot.subsystems.shooter.ShooterIOTalonFX;
@@ -89,7 +93,7 @@ public class RobotContainer {
   private final IntakeRoller intakeRoller;
   private final IntakePivot intakePivot;
   private final Superstructure superstructure;
-  //   private final ObjectDetection objectDetection;
+  private final ObjectDetection objectDetection;
 
   private final BatteryLogger batteryLogger = new BatteryLogger();
 
@@ -132,8 +136,7 @@ public class RobotContainer {
         hopper = new Hopper(new HopperIOTalonFX());
         intakeRoller = new IntakeRoller(new IntakeRollerIOTalonFX(), () -> {});
         intakePivot = new IntakePivot(new IntakePivotIOTalonFX());
-        // objectDetection =
-        //     new ObjectDetection(new ObjectDetectionIOJetson("objectdetection"), drive::getPose);
+        objectDetection = new ObjectDetection(new ObjectDetectionIOReal(), drive);
         break;
 
       case SIM:
@@ -162,10 +165,7 @@ public class RobotContainer {
         hopper = new Hopper(new HopperIOSim());
         intakeRoller = new IntakeRoller(new IntakeRollerIOSim(), () -> {});
         intakePivot = new IntakePivot(new IntakePivotIOSim());
-        // objectDetection =
-        //     new ObjectDetection(
-        //         new ObjectDetectionIOSim(swerveDriveSimulation::getSimulatedDriveTrainPose),
-        //         drive::getPose);
+        objectDetection = new ObjectDetection(new ObjectDetectionIOSim(), drive);
         fuelIntake =
             IntakeSimulation.OverTheBumperIntake(
                 "Fuel",
@@ -190,7 +190,7 @@ public class RobotContainer {
         hopper = new Hopper(new HopperIO() {});
         intakeRoller = new IntakeRoller(new IntakeRollerIO() {});
         intakePivot = new IntakePivot(new IntakePivotIO() {});
-        // objectDetection = new ObjectDetection(new ObjectDetectionIO() {}, drive::getPose);
+        objectDetection = new ObjectDetection(new ObjectDetectionIO() {}, drive);
         break;
     }
 
@@ -353,6 +353,9 @@ public class RobotContainer {
     // Superstructure.WantedState.IDLE));
 
     controller.b().whileTrue(AutomaticCommands.automaticCommand(drive, driverOverride));
+
+    // Y button: continuous ball collection — hold to scan and collect clusters
+    controller.y().whileTrue(objectDetection.continuousCollectionCommand());
 
     // D-Pad: targeted automations
     // controller.povUp().whileTrue(AutomaticCommands.hubBackWallCommand(drive, driverOverride));
