@@ -4,9 +4,31 @@ import edu.wpi.first.util.struct.Struct;
 import edu.wpi.first.util.struct.StructSerializable;
 import java.nio.ByteBuffer;
 
-public record BallDetection(double x, double y, double distance) implements StructSerializable {
+public class BallDetection implements StructSerializable {
 
   public static final BallDetectionStruct struct = new BallDetectionStruct();
+
+  private final double x;
+  private final double y;
+  private final double distance;
+
+  public BallDetection(double x, double y, double distance) {
+    this.x = x;
+    this.y = y;
+    this.distance = distance;
+  }
+
+  public double x() {
+    return x;
+  }
+
+  public double y() {
+    return y;
+  }
+
+  public double distance() {
+    return distance;
+  }
 
   public static final class BallDetectionStruct implements Struct<BallDetection> {
     @Override
