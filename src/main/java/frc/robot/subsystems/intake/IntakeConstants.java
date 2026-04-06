@@ -12,15 +12,15 @@ import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 public class IntakeConstants {
   public static final CANBus ROLLER_CAN_BUS = CANBus.roboRIO();
   public static final CANBus PIVOT_CAN_BUS = new CANBus("canivore");
-  public static final int INTAKE_MOTOR_ID = 55;
-  public static final int INTAKE_FOLLOWER_MOTOR_ID = 59;
+  public static final int INTAKE_MOTOR_ID = 59;
+  public static final int INTAKE_FOLLOWER_MOTOR_ID = 55;
   public static final int INTAKE_ARM_MOTOR_ID = 54;
 
   public static final double INTAKE_GEARING = 1.5;
   public static final InvertedValue INTAKE_MOTOR_DIRECTION =
       InvertedValue.CounterClockwise_Positive;
   public static final LoggedNetworkPIDFeedforwardGains INTAKE_GAINS =
-      new LoggedNetworkPIDFeedforwardGains(0.4, 0, 0.00, 0, 0.17, 0, 0, "intake");
+      new LoggedNetworkPIDFeedforwardGains(0.25, 0, 0.00, 0.15, 0.17, 0, 0.2, "intake");
 
   public static final double INTAKE_ARM_GEARING = 35 * 2;
   public static final InvertedValue INTAKE_ARM_MOTOR_DIRECTION =
@@ -66,19 +66,17 @@ public class IntakeConstants {
       new LoggedNetworkNumber("Intake/CrawlCurrentThresholdMin", 3.0);
   public static final double CRAWL_MAX_OFFSET_DEGREES = 10.0;
 
-  // Pivot oscillation during shooting (rapid up/down to feed balls)
-  public static final LoggedNetworkNumber OSCILLATE_UP_ANGLE_DEGREES =
-      new LoggedNetworkNumber("Intake/OscillateUpAngle", 70.0);
-  public static final LoggedNetworkNumber OSCILLATE_DOWN_ANGLE_DEGREES =
-      new LoggedNetworkNumber("Intake/OscillateDownAngle", -10.0);
-  public static final LoggedNetworkNumber OSCILLATE_CURRENT_THRESHOLD_AMPS =
-      new LoggedNetworkNumber("Intake/OscillateCurrentThreshold", 20.0);
-  public static final LoggedNetworkNumber OSCILLATE_UP_TIME_LIMIT_SECONDS =
-      new LoggedNetworkNumber("Intake/OscillateUpTimeLimit", 0.45);
-  public static final LoggedNetworkNumber OSCILLATE_UP_ANGLE_TOLERANCE_DEGREES =
-      new LoggedNetworkNumber("Intake/OscillateUpAngleTolerance", 3.0);
-  public static final LoggedNetworkNumber OSCILLATE_DOWN_DURATION_SECONDS =
-      new LoggedNetworkNumber("Intake/OscillateDownDuration", 0.15);
+  // Pivot oscillation during shooting
+  // Center sweeps from (INTAKE_DOWN_VALUE + OSCILLATE_CENTER_OFFSET) to
+  // (INTAKE_UP_VALUE - OSCILLATE_CENTER_OFFSET) at OSCILLATE_SWEEP_RATE_DPS degrees/sec,
+  // then the setpoint sinusoids around that center.
+  public static final double OSCILLATE_CENTER_OFFSET_DEGREES = 20.0;
+  public static final LoggedNetworkNumber OSCILLATE_AMPLITUDE_DEGREES =
+      new LoggedNetworkNumber("Intake/OscillateAmplitude", 10.0);
+  public static final LoggedNetworkNumber OSCILLATE_FREQUENCY_HZ =
+      new LoggedNetworkNumber("Intake/OscillateFrequency", 4.0);
+  public static final LoggedNetworkNumber OSCILLATE_SWEEP_RATE_DPS =
+      new LoggedNetworkNumber("Intake/OscillateSweepRate", 15.0);
 
   // DRS (Dynamic Recovery System) — intake lower block detection & mitigation
   // Detection: pivot targeting DOWN, high current, AND stuck above target for DRS_STUCK_TIMEOUT_S
@@ -96,6 +94,10 @@ public class IntakeConstants {
   public static final LoggedNetworkNumber DRS_BACKUP_SPEED_MPS =
       new LoggedNetworkNumber("DRS/BackupSpeedMps", 1.0);
   public static final double DRS_BACKUP_DURATION_SECONDS = 0.3;
+
+  // Roller recovery acceleration
+  public static final double ROLLER_RECOVERY_THRESHOLD_RPS = 2.0;
+  public static final double ROLLER_RECOVERY_ACCELERATION_RPS2 = 150.0;
 
   // Slingshot (roller pullback + release during shooting)
   public static final double SLINGSHOT_PULLBACK_ROTATIONS = 0.5;

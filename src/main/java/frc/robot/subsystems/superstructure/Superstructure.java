@@ -69,9 +69,6 @@ public class Superstructure extends SubsystemBase {
 
   // Pivot oscillation state (during shooting/passing)
   private double oscTimer = 0.0;
-  private boolean oscGoingDown = false;
-  private double oscRangeMultiplier = 1.0; // Starts at 100% range
-  private final double OSC_DECAY_RATE = 0.65;
 
   /**
    * Called in simulateShot() to consume one fuel piece before launching a projectile. Set by
@@ -211,9 +208,7 @@ public class Superstructure extends SubsystemBase {
           firstSpinup = false;
           noShotTimer.restart();
           crawlUpScheduled = false;
-          oscGoingDown = false;
           oscTimer = 0.0;
-          oscRangeMultiplier = 1.0;
         } else if (wantedSuperState == WantedState.PASSING
             || wantedSuperState == WantedState.PASS_INTAKE) {
           currentSuperState = CurrentState.PASSING;
@@ -227,7 +222,6 @@ public class Superstructure extends SubsystemBase {
         hopper.setTopIndexerSpeed(RotationsPerSecond.of(HopperConstants.TOP_INDEXER_SPEED.get()));
         if (readyToShoot() && !crawlUpScheduled) {
           crawlUpScheduled = true;
-          oscGoingDown = false;
           oscTimer = 0.0;
         }
         if (crawlUpScheduled
@@ -264,7 +258,6 @@ public class Superstructure extends SubsystemBase {
 
         if (readyToShoot() && !crawlUpScheduled) {
           crawlUpScheduled = true;
-          oscGoingDown = false;
           oscTimer = 0.0;
         }
         if (crawlUpScheduled
@@ -283,9 +276,7 @@ public class Superstructure extends SubsystemBase {
           noShotTimer.restart();
           noShotCooldownTimer.restart();
           crawlUpScheduled = false;
-          oscGoingDown = false;
           oscTimer = 0.0;
-          oscRangeMultiplier = 1.0;
           Logger.recordOutput("Superstructure/NoShotTrigger", true);
           intake.io.setIntakeArmVoltage(Volts.of(0));
           intake.setAngle(Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get()));
@@ -301,37 +292,29 @@ public class Superstructure extends SubsystemBase {
   }
 
   private void applyPivotOscillate() {
-    oscTimer += 0.02; // Assuming 20ms loop
+    oscTimer += 0.02;
 
+    double downAngle = IntakeConstants.INTAKE_DOWN_VALUE.get();
     double upAngle = IntakeConstants.INTAKE_UP_VALUE.get();
-    double downAngleFull = IntakeConstants.INTAKE_DOWN_VALUE.get();
+    double centerMin = downAngle + IntakeConstants.OSCILLATE_CENTER_OFFSET_DEGREES;
+    double centerMax = upAngle - IntakeConstants.OSCILLATE_CENTER_OFFSET_DEGREES;
 
-    // Calculate how far "down" we should actually go based on the current multiplier
-    // This moves the 'down' target closer to the 'up' target over time
-    double currentDownAngle = upAngle + ((downAngleFull - upAngle) * oscRangeMultiplier);
+    // Center sweeps from centerMin up to centerMax at the configured rate, then holds
+    double center =
+        Math.min(centerMin + IntakeConstants.OSCILLATE_SWEEP_RATE_DPS.get() * oscTimer, centerMax);
 
-    if (oscGoingDown) {
-      intake.setAngle(Degrees.of(currentDownAngle));
-      if (oscTimer >= 0.225) {
-        oscGoingDown = false;
-        oscTimer = 0.0;
+    // Sinusoidal oscillation around the moving center
+    double amplitude = IntakeConstants.OSCILLATE_AMPLITUDE_DEGREES.get();
+    double frequency = IntakeConstants.OSCILLATE_FREQUENCY_HZ.get();
+    double setpoint = center + amplitude * Math.sin(2.0 * Math.PI * frequency * oscTimer);
 
-        // Every time we finish going down and head back up,
-        // reduce the multiplier for the NEXT "down" stroke
-        oscRangeMultiplier *= OSC_DECAY_RATE;
+    // Clamp to valid pivot range
+    setpoint = Math.max(downAngle, Math.min(upAngle, setpoint));
 
-        // Optional: Clamp it so it doesn't stay perfectly still eventually
-        if (oscRangeMultiplier < 0.1) oscRangeMultiplier = 0.1;
-      }
-    } else {
-      intake.setAngle(Degrees.of(upAngle));
-      if (oscTimer >= 0.225) {
-        oscGoingDown = true;
-        oscTimer = 0.0;
-      }
-    }
+    intake.setAngle(Degrees.of(setpoint));
 
-    Logger.recordOutput("Superstructure/OscillationMultiplier", oscRangeMultiplier);
+    Logger.recordOutput("Superstructure/OscillationCenter", center);
+    Logger.recordOutput("Superstructure/OscillationSetpoint", setpoint);
   }
 
   public void simulateShot() {

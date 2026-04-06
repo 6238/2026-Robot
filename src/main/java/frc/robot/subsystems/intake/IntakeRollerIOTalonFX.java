@@ -54,11 +54,10 @@ public class IntakeRollerIOTalonFX implements IntakeRollerIO {
     intakeConfig.MotorOutput.Inverted = IntakeConstants.INTAKE_MOTOR_DIRECTION;
     intakeConfig.Slot0 = IntakeConstants.INTAKE_GAINS.toSlot0Configs();
     intakeConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-    intakeConfig.CurrentLimits.StatorCurrentLimit = 40;
+    intakeConfig.CurrentLimits.StatorCurrentLimit = 70;
     intakeConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
-    intakeConfig.CurrentLimits.SupplyCurrentLimit = 20;
-    intakeConfig.CurrentLimits.SupplyCurrentLowerLimit = 15;
-    intakeConfig.CurrentLimits.SupplyCurrentLowerTime = 0.35;
+    intakeConfig.CurrentLimits.SupplyCurrentLimit = 25;
+    intakeConfig.CurrentLimits.SupplyCurrentLowerLimit = 25;
 
     AlertUtils.processCriticalAlert(
         intakeConfigAlert,
@@ -129,7 +128,7 @@ public class IntakeRollerIOTalonFX implements IntakeRollerIO {
   @Override
   public void setIntakeVoltage(Voltage voltage) {
     if (!notSwapped) {
-      intakeFollowerTalon.setVoltage(voltage.in(Volts));
+      intakeFollowerTalon.setVoltage(-voltage.in(Volts));
     } else {
       intakeTalon.setVoltage(voltage.in(Volts));
     }
@@ -137,10 +136,22 @@ public class IntakeRollerIOTalonFX implements IntakeRollerIO {
 
   @Override
   public void setIntakeVelocity(AngularVelocity speed) {
+    double currentVelocity = intakeVelocity.getValueAsDouble();
+    double targetVelocity = speed.baseUnitMagnitude();
+    boolean recovering =
+        currentVelocity < (targetVelocity - IntakeConstants.ROLLER_RECOVERY_THRESHOLD_RPS);
     if (!notSwapped) {
-      intakeFollowerTalon.setControl(velocityVoltage.withVelocity(speed));
+      intakeFollowerTalon.setControl(
+          velocityVoltage
+              .withVelocity(speed.times(-1))
+              .withAcceleration(
+                  recovering ? -IntakeConstants.ROLLER_RECOVERY_ACCELERATION_RPS2 : 0));
     } else {
-      intakeTalon.setControl(velocityVoltage.withVelocity(speed));
+      intakeTalon.setControl(
+          velocityVoltage
+              .withVelocity(speed)
+              .withAcceleration(
+                  recovering ? IntakeConstants.ROLLER_RECOVERY_ACCELERATION_RPS2 : 0));
     }
   }
 }

@@ -54,7 +54,6 @@ import frc.robot.subsystems.intake.IntakeRollerIO;
 import frc.robot.subsystems.intake.IntakeRollerIOSim;
 import frc.robot.subsystems.intake.IntakeRollerIOTalonFX;
 import frc.robot.subsystems.shooter.Shooter;
-import frc.robot.subsystems.shooter.ShooterConstants;
 import frc.robot.subsystems.shooter.ShooterIOSim;
 import frc.robot.subsystems.shooter.ShooterIOTalonFX;
 import frc.robot.subsystems.superstructure.Superstructure;
@@ -64,10 +63,10 @@ import frc.robot.subsystems.vision.VisionIOPhotonVision;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.testmode.TestModeRunner;
 import frc.robot.util.AlertUtils;
+import frc.robot.util.AutomaticCommands;
 import frc.robot.util.BatteryLogger;
 import frc.robot.util.RobotBumpSim;
 import frc.robot.util.RobotIdentity;
-import frc.robot.util.ToggleCommand;
 import java.util.function.BooleanSupplier;
 import org.ironmaple.simulation.IntakeSimulation;
 import org.ironmaple.simulation.SimulatedArena;
@@ -203,7 +202,8 @@ public class RobotContainer {
       superstructure.consumeFuelForShot = fuelIntake::obtainGamePieceFromIntake;
     }
 
-    superstructure.hubSpinupActive = () -> false; //() -> shouldSpinupFlywheel(DriverStation.getMatchTime());
+    superstructure.hubSpinupActive =
+        () -> false; // () -> shouldSpinupFlywheel(DriverStation.getMatchTime());
 
     drive.setBatteryLogger(batteryLogger);
     shooter.setBatteryLogger(batteryLogger);
@@ -253,8 +253,8 @@ public class RobotContainer {
     drive.setDefaultCommand(
         DriveCommands.joystickDrive(
             drive,
-            () -> controller.getLeftX() * 0.3,
-            () -> -controller.getLeftY() * 0.3,
+            () -> -controller.getLeftY(),
+            () -> -controller.getLeftX(),
             () -> -controller.getRightX()));
 
     // Reset Drive Rotation
@@ -351,6 +351,8 @@ public class RobotContainer {
     //             .until(driverOverride))
     //     .onFalse(superstructure.setWantedSuperStateCommand(() ->
     // Superstructure.WantedState.IDLE));
+
+    controller.b().whileTrue(AutomaticCommands.automaticCommand(drive, driverOverride));
 
     // D-Pad: targeted automations
     // controller.povUp().whileTrue(AutomaticCommands.hubBackWallCommand(drive, driverOverride));
