@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.util.AlertUtils;
 import frc.robot.util.BatteryLogger;
+import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.Logger;
 
 public class IntakeRoller extends SubsystemBase {
@@ -21,6 +22,11 @@ public class IntakeRoller extends SubsystemBase {
 
   public IntakeRollerIO io;
   public IntakeRollerIOInputsAutoLogged inputs;
+
+  // Supplier for pivot angle in degrees; roller is suppressed above ROLLER_PIVOT_CUTOFF_DEGREES
+  private DoubleSupplier pivotAngleDegSupplier = () -> 0.0;
+
+  public static final double ROLLER_PIVOT_CUTOFF_DEGREES = 80.0;
 
   // Jam prevention state
   private AngularVelocity desiredIntakeVelocity = RotationsPerSecond.of(0);
@@ -34,6 +40,10 @@ public class IntakeRoller extends SubsystemBase {
 
   public void setBatteryLogger(BatteryLogger batteryLogger) {
     this.batteryLogger = batteryLogger;
+  }
+
+  public void setPivotAngleSupplier(DoubleSupplier supplier) {
+    this.pivotAngleDegSupplier = supplier;
   }
 
   public IntakeRoller(IntakeRollerIO io) {
@@ -85,6 +95,11 @@ public class IntakeRoller extends SubsystemBase {
         isJamReversing = false;
         io.setIntakeVelocity(desiredIntakeVelocity);
       }
+    }
+
+    // Suppress roller when pivot is above cutoff angle (don't fight jam reversal)
+    if (pivotAngleDegSupplier.getAsDouble() > ROLLER_PIVOT_CUTOFF_DEGREES && !isJamReversing) {
+      io.setIntakeVoltage(Volts.of(0));
     }
 
     Logger.recordOutput("IntakeRoller/isJamReversing", isJamReversing);

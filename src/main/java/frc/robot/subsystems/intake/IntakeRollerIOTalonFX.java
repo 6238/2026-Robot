@@ -137,9 +137,10 @@ public class IntakeRollerIOTalonFX implements IntakeRollerIO {
   @Override
   public void setIntakeVelocity(AngularVelocity speed) {
     double currentVelocity = intakeVelocity.getValueAsDouble();
-    double targetVelocity = speed.baseUnitMagnitude();
+    double targetVelocity = speed.in(RotationsPerSecond);
     boolean recovering =
         currentVelocity < (targetVelocity - IntakeConstants.ROLLER_RECOVERY_THRESHOLD_RPS);
+    Logger.recordOutput("intakerollerrecovering", recovering);
     if (!notSwapped) {
       intakeFollowerTalon.setControl(
           velocityVoltage

@@ -77,6 +77,7 @@ public class IntakePivot extends SubsystemBase {
     }
 
     Logger.recordOutput("Intake/currentAngle", inputs.intakeArmPosition.in(Degrees));
+    Logger.recordOutput("Intake/targetAngle", targetAngle.in(Degrees));
     Logger.recordOutput("IntakePivot/DRS/Triggered", drsTriggered);
     Logger.recordOutput("IntakePivot/DRS/Condition", drsCondition);
     Logger.recordOutput("IntakePivot/DRS/StuckTimerSecs", drsStuckTimer);

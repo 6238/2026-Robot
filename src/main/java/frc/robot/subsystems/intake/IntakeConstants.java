@@ -12,6 +12,7 @@ import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 public class IntakeConstants {
   public static final CANBus ROLLER_CAN_BUS = CANBus.roboRIO();
   public static final CANBus PIVOT_CAN_BUS = new CANBus("canivore");
+  public static final int INTAKE_CANCODER_ID = 56;
   public static final int INTAKE_MOTOR_ID = 59;
   public static final int INTAKE_FOLLOWER_MOTOR_ID = 55;
   public static final int INTAKE_ARM_MOTOR_ID = 54;
@@ -20,12 +21,14 @@ public class IntakeConstants {
   public static final InvertedValue INTAKE_MOTOR_DIRECTION =
       InvertedValue.CounterClockwise_Positive;
   public static final LoggedNetworkPIDFeedforwardGains INTAKE_GAINS =
-      new LoggedNetworkPIDFeedforwardGains(0.25, 0, 0.00, 0.15, 0.17, 0, 0.2, "intake");
+      new LoggedNetworkPIDFeedforwardGains(0.01, 0, 0.00, 0.12, 0.17, 0, 0.2, "intake");
+
+  public static final double IntakeCanCoderOffset = 0.202;
 
   public static final double INTAKE_ARM_GEARING = 35 * 2;
   public static final InvertedValue INTAKE_ARM_MOTOR_DIRECTION =
       InvertedValue.CounterClockwise_Positive;
-  public static final Angle INTAKE_START_VALUE = Degrees.of(110.0);
+  public static final Angle INTAKE_START_VALUE = Degrees.of(100.0);
   public static final LoggedNetworkNumber INTAKE_DOWN_VALUE =
       new LoggedNetworkNumber("INTAKE_DOWN_ANGLE", -10);
   public static final LoggedNetworkNumber INTAKE_UP_VALUE =
@@ -77,6 +80,9 @@ public class IntakeConstants {
       new LoggedNetworkNumber("Intake/OscillateFrequency", 4.0);
   public static final LoggedNetworkNumber OSCILLATE_SWEEP_RATE_DPS =
       new LoggedNetworkNumber("Intake/OscillateSweepRate", 15.0);
+  // Fraction of each oscillation period spent above center (0.5 = symmetric, >0.5 = more time up)
+  public static final LoggedNetworkNumber OSCILLATE_DUTY_CYCLE =
+      new LoggedNetworkNumber("Intake/OscillateDutyCycle", 0.7);
 
   // DRS (Dynamic Recovery System) — intake lower block detection & mitigation
   // Detection: pivot targeting DOWN, high current, AND stuck above target for DRS_STUCK_TIMEOUT_S
@@ -96,7 +102,7 @@ public class IntakeConstants {
   public static final double DRS_BACKUP_DURATION_SECONDS = 0.3;
 
   // Roller recovery acceleration
-  public static final double ROLLER_RECOVERY_THRESHOLD_RPS = 2.0;
+  public static final double ROLLER_RECOVERY_THRESHOLD_RPS = 50.0;
   public static final double ROLLER_RECOVERY_ACCELERATION_RPS2 = 150.0;
 
   // Slingshot (roller pullback + release during shooting)

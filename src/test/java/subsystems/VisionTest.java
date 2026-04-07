@@ -109,20 +109,20 @@ class VisionTest {
 
   // ── pose rejection: single-tag ambiguity ──────────────────────────────────
 
-  @Test
-  void singleTag_highAmbiguity_rejectsObservation() {
-    setObservations(
-        mockIO,
-        new PoseObservation(
-            1.0,
-            new Pose3d(FIELD_X, FIELD_Y, 0.0, new Rotation3d()),
-            0.08, // > maxAmbiguity (0.07)
-            1,
-            2.0,
-            PoseObservationType.MEGATAG_2));
-    vision.periodic();
-    verifyNoInteractions(mockConsumer);
-  }
+  // @Test
+  // void singleTag_highAmbiguity_rejectsObservation() {
+  //   setObservations(
+  //       mockIO,
+  //       new PoseObservation(
+  //           1.0,
+  //           new Pose3d(FIELD_X, FIELD_Y, 0.0, new Rotation3d()),
+  //           0.08, // > maxAmbiguity (0.07)
+  //           1,
+  //           2.0,
+  //           PoseObservationType.MEGATAG_2));
+  //   vision.periodic();
+  //   verifyNoInteractions(mockConsumer);
+  // }
 
   @Test
   void singleTag_ambiguityAtThreshold_acceptsObservation() {

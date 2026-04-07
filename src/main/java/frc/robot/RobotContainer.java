@@ -33,6 +33,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.auto.AutoRoutines;
 import frc.robot.commands.DriveCommands;
+import frc.robot.subsystems.GratuitousLighting;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
@@ -102,6 +103,7 @@ public class RobotContainer {
   private SwerveDriveSimulation swerveDriveSimulation = null;
   private RobotBumpSim robotBumpSim = null;
   private IntakeSimulation fuelIntake = null;
+  public GratuitousLighting lighting = new GratuitousLighting();
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
@@ -202,8 +204,12 @@ public class RobotContainer {
       superstructure.consumeFuelForShot = fuelIntake::obtainGamePieceFromIntake;
     }
 
+    intakeRoller.setPivotAngleSupplier(() -> intakePivot.inputs.intakeArmPosition.in(Degrees));
+
     superstructure.hubSpinupActive =
         () -> false; // () -> shouldSpinupFlywheel(DriverStation.getMatchTime());
+
+    lighting.superState = () -> superstructure.currentSuperState;
 
     drive.setBatteryLogger(batteryLogger);
     shooter.setBatteryLogger(batteryLogger);
@@ -316,10 +322,8 @@ public class RobotContainer {
             Commands.either(
                 intakePivot.setIntakeAngle(
                     () -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
-                intakePivot.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_UP_VALUE.get())),
-                () ->
-                    intakePivot.targetAngle.equals(
-                        Degrees.of(IntakeConstants.INTAKE_UP_VALUE.get()))));
+                intakePivot.setIntakeAngle(() -> IntakeConstants.INTAKE_START_VALUE),
+                () -> intakePivot.targetAngle.equals(IntakeConstants.INTAKE_START_VALUE)));
 
     controller
         .x()

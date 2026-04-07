@@ -57,7 +57,7 @@ public class ShooterConstants {
 
   public static final LoggedNetworkPIDFeedforwardGains FEEDER_GAINS =
       new LoggedNetworkPIDFeedforwardGains(
-          0.6, // kP
+          0.7, // kP
           0.0, // kI
           0, // kD
           0.1725 * FEEDER_GEARING, // kA
@@ -128,8 +128,10 @@ public class ShooterConstants {
 
   static {
     FLYWHEEL_MAP = new ExtrapolatingDoubleTreeMap();
-    FLYWHEEL_MAP.put(1.5, 27.3 / 0.75);
-    FLYWHEEL_MAP.put(3.0, 35.9 / 0.75);
+    FLYWHEEL_MAP.put(2.32, 42.3);
+    FLYWHEEL_MAP.put(2.53, 44.3);
+    FLYWHEEL_MAP.put(3.52, 52.3);
+    FLYWHEEL_MAP.put(4.14, 55.7);
 
     // Physics-based: t_lead = d / (rps × BALL_SPEED_PER_FLYWHEEL_RPS × cos(hood))
     LEAD_TIME_MAP = new ExtrapolatingDoubleTreeMap();

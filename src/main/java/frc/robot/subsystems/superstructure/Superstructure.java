@@ -294,7 +294,7 @@ public class Superstructure extends SubsystemBase {
   private void applyPivotOscillate() {
     oscTimer += 0.02;
 
-    double downAngle = IntakeConstants.INTAKE_DOWN_VALUE.get();
+    double downAngle = IntakeConstants.INTAKE_DOWN_VALUE.get() + 20;
     double upAngle = IntakeConstants.INTAKE_UP_VALUE.get();
     double centerMin = downAngle + IntakeConstants.OSCILLATE_CENTER_OFFSET_DEGREES;
     double centerMax = upAngle - IntakeConstants.OSCILLATE_CENTER_OFFSET_DEGREES;
@@ -303,10 +303,20 @@ public class Superstructure extends SubsystemBase {
     double center =
         Math.min(centerMin + IntakeConstants.OSCILLATE_SWEEP_RATE_DPS.get() * oscTimer, centerMax);
 
-    // Sinusoidal oscillation around the moving center
+    // Asymmetric oscillation around the moving center: dutyCycle fraction of each period is spent
+    // above center (positive), (1-dutyCycle) fraction below. dutyCycle=0.5 → symmetric sine.
     double amplitude = IntakeConstants.OSCILLATE_AMPLITUDE_DEGREES.get();
     double frequency = IntakeConstants.OSCILLATE_FREQUENCY_HZ.get();
-    double setpoint = center + amplitude * Math.sin(2.0 * Math.PI * frequency * oscTimer);
+    double dutyCycle = Math.max(0.01, Math.min(0.99, IntakeConstants.OSCILLATE_DUTY_CYCLE.get()));
+    double period = 1.0 / frequency;
+    double phaseInPeriod = (oscTimer % period) / period; // 0..1 within current period
+    double sinArg;
+    if (phaseInPeriod < dutyCycle) {
+      sinArg = Math.PI * phaseInPeriod / dutyCycle; // 0→π over the up portion
+    } else {
+      sinArg = Math.PI + Math.PI * (phaseInPeriod - dutyCycle) / (1.0 - dutyCycle); // π→2π
+    }
+    double setpoint = center + amplitude * Math.sin(sinArg);
 
     // Clamp to valid pivot range
     setpoint = Math.max(downAngle, Math.min(upAngle, setpoint));

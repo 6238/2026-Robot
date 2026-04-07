@@ -8,6 +8,7 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.measure.Angle;
@@ -56,13 +57,16 @@ public class IntakePivotIOTalonFX implements IntakePivotIO {
     intakeArmConfig.CurrentLimits.SupplyCurrentLowerLimit = 20;
     intakeArmConfig.CurrentLimits.SupplyCurrentLowerTime = 0.5;
 
+    intakeArmConfig.Feedback.FeedbackRemoteSensorID = IntakeConstants.INTAKE_CANCODER_ID;
+    intakeArmConfig.Feedback.FeedbackRotorOffset = IntakeConstants.IntakeCanCoderOffset;
+    intakeArmConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RemoteCANcoder;
+    intakeArmConfig.Feedback.SensorToMechanismRatio = -1;
+
     AlertUtils.processCriticalAlert(
         intakeArmConfigAlert,
         !tryUntilOk(
             Constants.MAX_PHEONIX_RETRIES,
             () -> intakeArmTalon.getConfigurator().apply(intakeArmConfig)));
-
-    intakeArmTalon.setPosition(IntakeConstants.INTAKE_START_VALUE);
 
     intakeArmPosition = intakeArmTalon.getPosition();
     intakeArmVelocity = intakeArmTalon.getVelocity();

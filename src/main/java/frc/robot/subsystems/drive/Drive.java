@@ -30,9 +30,7 @@ import com.pathplanner.lib.util.swerve.SwerveSetpoint;
 import com.pathplanner.lib.util.swerve.SwerveSetpointGenerator;
 import com.therekrab.autopilot.APConstraints;
 import com.therekrab.autopilot.APProfile;
-import com.therekrab.autopilot.APTarget;
 import com.therekrab.autopilot.Autopilot;
-import com.therekrab.autopilot.Autopilot.APResult;
 import edu.wpi.first.hal.FRCNetComm.tInstances;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
@@ -177,9 +175,9 @@ public class Drive extends SubsystemBase {
         this::getPose,
         this::setPose,
         this::getChassisSpeeds,
-        this::runVelocity,
+        (speeds, feedforwards) -> runVelocity(speeds, feedforwards),
         new PPHolonomicDriveController(
-            new PIDConstants(4.2, 0.02, 0.1), new PIDConstants(5.2, 0.02, 0.1)),
+            new PIDConstants(5, 0.02, 0.1), new PIDConstants(5.2, 0.02, 0.1)),
         PP_CONFIG,
         () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
         this);
@@ -291,6 +289,10 @@ public class Drive extends SubsystemBase {
    * @param speeds Speeds in meters/sec
    */
   public void runVelocity(ChassisSpeeds speeds) {
+    runVelocity(speeds, DriveFeedforwards.zeros(4));
+  }
+
+  public void runVelocity(ChassisSpeeds speeds, DriveFeedforwards feedforwards) {
     // Calculate module setpoints
     previousSetpoint = setpointGenerator.generateSetpoint(previousSetpoint, speeds, 0.02);
     SwerveModuleState[] setpointStates = previousSetpoint.moduleStates();
@@ -299,9 +301,14 @@ public class Drive extends SubsystemBase {
     Logger.recordOutput("SwerveStates/Setpoints", setpointStates);
     Logger.recordOutput("SwerveChassisSpeeds/Setpoints", previousSetpoint.robotRelativeSpeeds());
 
-    // Send setpoints to modules
+    // Send setpoints to modules with PathPlanner torque-current feedforwards.
+    // Copy each state so that Module.runSetpoint's optimize() mutation doesn't corrupt
+    // previousSetpoint's internal state array, which would cause 180-degree flip oscillation.
+    double[] torqueCurrents = feedforwards.torqueCurrentsAmps();
     for (int i = 0; i < 4; i++) {
-      modules[i].runSetpoint(setpointStates[i]);
+      modules[i].runSetpoint(
+          new SwerveModuleState(setpointStates[i].speedMetersPerSecond, setpointStates[i].angle),
+          torqueCurrents[i]);
     }
 
     // Log optimized setpoints (runSetpoint mutates each state)
@@ -570,40 +577,6 @@ public class Drive extends SubsystemBase {
         this);
   }
 
-  /** Drives the robot to an APTarget using AutoPilot. Ends when at target or driver overrides. */
-  public Command align(APTarget target, BooleanSupplier driverOverride) {
-    return this.run(
-            () -> {
-              Pose2d pose = getPose();
-              APResult output = kAutopilot.calculate(pose, getChassisSpeeds(), target);
-
-              double angularError =
-                  MathUtil.angleModulus(
-                      output.targetAngle().getRadians() - pose.getRotation().getRadians());
-              double omega =
-                  MathUtil.clamp(
-                      angularError * 4.15,
-                      -getMaxAngularSpeedRadPerSec(),
-                      getMaxAngularSpeedRadPerSec());
-
-              Logger.recordOutput("Autopilot/targetPose", target.getReference());
-              Logger.recordOutput("Autopilot/vx", output.vx().in(MetersPerSecond));
-              Logger.recordOutput("Autopilot/vy", output.vy().in(MetersPerSecond));
-              Logger.recordOutput("Autopilot/omega", omega);
-              Logger.recordOutput("Autopilot/atTarget", kAutopilot.atTarget(pose, target));
-              Logger.recordOutput("Autopilot/driverOverride", driverOverride.getAsBoolean());
-
-              runVelocity(
-                  ChassisSpeeds.fromFieldRelativeSpeeds(
-                      output.vx().in(MetersPerSecond),
-                      output.vy().in(MetersPerSecond),
-                      omega,
-                      pose.getRotation()));
-            })
-        .until(() -> kAutopilot.atTarget(getPose(), target) || driverOverride.getAsBoolean())
-        .finallyDo(() -> runVelocity(new ChassisSpeeds()));
-  }
-
   /**
    * Drives at a constant field-relative velocity until the robot stalls (wall contact) or the
    * driver overrides. A debouncer prevents the stall check from firing before the robot has had a
@@ -651,13 +624,13 @@ public class Drive extends SubsystemBase {
   }
 
   private static final APConstraints kConstraints =
-      new APConstraints().withAcceleration(6.0).withJerk(8.0);
+      new APConstraints().withVelocity(3.5).withAcceleration(8.0);
 
   private static final APProfile kProfile =
       new APProfile(kConstraints)
-          .withErrorXY(Centimeters.of(2))
-          .withErrorTheta(Degrees.of(0.5))
-          .withBeelineRadius(Centimeters.of(8));
+          .withErrorXY(Centimeters.of(6))
+          .withErrorTheta(Degrees.of(4))
+          .withBeelineRadius(Centimeters.of(10));
 
   public static final Autopilot kAutopilot = new Autopilot(kProfile);
 }

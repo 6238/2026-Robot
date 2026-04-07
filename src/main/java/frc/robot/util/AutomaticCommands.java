@@ -1,6 +1,7 @@
 package frc.robot.util;
 
-import com.therekrab.autopilot.APTarget;
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.path.PathConstraints;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -14,9 +15,13 @@ import org.littletonrobotics.junction.Logger;
 
 public class AutomaticCommands {
 
+  // PathPlanner constraints for all teleop pathfinding
+  private static final PathConstraints CONSTRAINTS =
+      new PathConstraints(3.0, 3.5, Math.toRadians(540), Math.toRadians(720));
+
   // Trench
-  public static final Translation2d trenchNeutralEntry = new Translation2d(3.4, 7.58);
-  public static final Translation2d trenchAllianceEntry = new Translation2d(5.75, 7.58);
+  public static final Translation2d trenchNeutralEntry = new Translation2d(5.75, 7.46);
+  public static final Translation2d trenchAllianceEntry = new Translation2d(3.4, 7.46);
 
   // Hub back wall (TODO: measure on field)
   public static final Pose2d hubBackWallPose = new Pose2d(4.0, 5.5, Rotation2d.fromDegrees(180));
@@ -96,7 +101,7 @@ public class AutomaticCommands {
       BooleanSupplier driverOverride) {
     Translation2d currentTrans = currentPose.getTranslation();
     boolean inNeutralZone =
-        currentTrans.getDistance(neutralEntry) > currentTrans.getDistance(allianceEntry);
+        currentTrans.getDistance(allianceEntry) > currentTrans.getDistance(neutralEntry);
 
     Logger.recordOutput("trench/neutralEntry", new Pose2d(neutralEntry, Rotation2d.kZero));
     Logger.recordOutput("trench/allianceEntry", new Pose2d(allianceEntry, Rotation2d.kZero));
@@ -118,18 +123,21 @@ public class AutomaticCommands {
 
     Translation2d adjustedNeutral =
         new Translation2d(neutralEntry.getX(), neutralEntry.getY() + yOffset);
-    Pose2d alignPose = new Pose2d(adjustedAlliance, shooterFacing);
+    Pose2d alignPose = new Pose2d(neutralEntry, shooterFacing);
     Logger.recordOutput("AutomaticCommands/target", alignPose);
 
     if (inNeutralZone) {
-      // Neutral zone: align to alliance entry, drive into the wall, then slide left 4 ft.
-      return drive
-          .align(new APTarget(alignPose).withVelocity(0.0), driverOverride)
+      // Neutral zone: pathfind to neutral entry, drive into the wall, nudge off wall, then slide.
+      return AutoBuilder.pathfindToPose(alignPose, CONSTRAINTS, 0.0)
+          .until(driverOverride)
           .andThen(
               DriveCommands.joystickDriveRobotRelative(drive, () -> -0.5, () -> 0, () -> 0)
                   .withTimeout(0.3))
           // .andThen(drive.driveIntoWall(wallVx, wallVy, driverOverride))
           // .andThen(Commands.print("now!"))
+          .andThen(
+              DriveCommands.joystickDriveRobotRelative(drive, () -> 0.3, () -> 0, () -> 0)
+                  .withTimeout(0.1))
           .andThen(
               DriveCommands.joystickDrive(drive, () -> -1, () -> 0, () -> 0).withTimeout(0.75));
     } else {
@@ -138,12 +146,13 @@ public class AutomaticCommands {
           neutralEntry.getX() < 8 ? Rotation2d.fromDegrees(180) : Rotation2d.fromDegrees(0);
       Pose2d allianceAlignPose = new Pose2d(allianceEntry, backwardsFacing);
       Pose2d exitPose = new Pose2d(neutralEntry, backwardsFacing);
-      Logger.recordOutput("AutomaticCommands/target", allianceAlignPose);
-      return drive
-          .align(new APTarget(allianceAlignPose).withVelocity(0.0), driverOverride)
+      Logger.recordOutput("AutomaticCommands/allianceEntry", allianceAlignPose);
+      Logger.recordOutput("AutomaticCommands/exitPose", exitPose);
+      return AutoBuilder.pathfindToPose(allianceAlignPose, CONSTRAINTS, 3.5)
+          .until(driverOverride)
           .andThen(
               Commands.runOnce(() -> Logger.recordOutput("AutomaticCommands/target", exitPose)))
-          .andThen(drive.align(new APTarget(exitPose).withVelocity(0.0), driverOverride));
+          .andThen(AutoBuilder.pathfindToPose(exitPose, CONSTRAINTS, 0.0).until(driverOverride));
     }
   }
 
@@ -154,7 +163,7 @@ public class AutomaticCommands {
           Pose2d target =
               drive.getPose().getX() > 8 ? flipVertical(hubBackWallPose) : hubBackWallPose;
           Logger.recordOutput("AutomaticCommands/target", target);
-          return drive.align(new APTarget(target).withVelocity(0.0), driverOverride);
+          return AutoBuilder.pathfindToPose(target, CONSTRAINTS, 0.0).until(driverOverride);
         },
         Set.of(drive));
   }
@@ -171,7 +180,7 @@ public class AutomaticCommands {
               current.getY() > 4.1 ? WALL_SHOOT_SETUP_TOP_Y : WALL_SHOOT_SETUP_BOTTOM_Y;
           Pose2d setupPose = new Pose2d(current.getX(), targetY, current.getRotation());
           Logger.recordOutput("AutomaticCommands/target", setupPose);
-          return drive.align(new APTarget(setupPose).withVelocity(0.0), driverOverride);
+          return AutoBuilder.pathfindToPose(setupPose, CONSTRAINTS, 0.0).until(driverOverride);
         },
         Set.of(drive));
   }
@@ -184,11 +193,12 @@ public class AutomaticCommands {
           Pose2d entryPose = isRedSide ? flipVertical(towerEntryPose) : towerEntryPose;
           Pose2d exitPose = isRedSide ? flipVertical(towerExitPose) : towerExitPose;
           Logger.recordOutput("AutomaticCommands/target", entryPose);
-          return drive
-              .align(new APTarget(entryPose).withVelocity(0.0), driverOverride)
+          return AutoBuilder.pathfindToPose(entryPose, CONSTRAINTS, 2.0)
+              .until(driverOverride)
               .andThen(
                   Commands.runOnce(() -> Logger.recordOutput("AutomaticCommands/target", exitPose)))
-              .andThen(drive.align(new APTarget(exitPose).withVelocity(0.0), driverOverride));
+              .andThen(
+                  AutoBuilder.pathfindToPose(exitPose, CONSTRAINTS, 0.0).until(driverOverride));
         },
         Set.of(drive));
   }

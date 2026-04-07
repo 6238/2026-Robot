@@ -79,12 +79,26 @@ public class Module {
 
   /** Runs the module with the specified setpoint state. Mutates the state to optimize it. */
   public void runSetpoint(SwerveModuleState state) {
-    // Optimize velocity setpoint
-    state.optimize(getAngle());
+    runSetpoint(state, 0.0);
+  }
+
+  /**
+   * Runs the module with the specified setpoint state and torque-current feedforward (amps).
+   * Mutates the state to optimize it.
+   */
+  public void runSetpoint(SwerveModuleState state, double torqueCurrentFF) {
+    // Note: no optimize() here. The SwerveSetpointGenerator already handles direction
+    // optimization by rate-limiting steer velocity. Calling optimize() after the generator
+    // corrupts previousSetpoint's model of module angles and causes 180° flip oscillation.
     state.cosineScale(inputs.turnPosition);
 
-    // Apply setpoints
-    io.setDriveVelocity(state.speedMetersPerSecond / constants.WheelRadius);
+    // Apply setpoints. When stopped, use open-loop 0 instead of velocity PID at 0 to avoid
+    // active stall current fighting brake mode.
+    if (state.speedMetersPerSecond == 0.0) {
+      io.setDriveOpenLoop(0.0);
+    } else {
+      io.setDriveVelocity(state.speedMetersPerSecond / constants.WheelRadius, torqueCurrentFF);
+    }
     io.setTurnPosition(state.angle);
   }
 
