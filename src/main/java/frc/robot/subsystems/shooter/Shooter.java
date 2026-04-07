@@ -89,14 +89,6 @@ public class Shooter extends SubsystemBase {
     Logger.recordOutput("Shooter/velocityBelowThreshold", !prevAboveThreshold);
     Logger.recordOutput("Shooter/ballExitedFlywheel", ballExitedFlywheel());
     Logger.recordOutput("Shooter/targetVelocity", targetFlywheelVelocity.in(RotationsPerSecond));
-    Logger.recordOutput("Shooter/currentVelocity", inputs.flywheelVelocity.in(RotationsPerSecond));
-    Logger.recordOutput(
-        "Shooter/flywheelErrorPercent",
-        targetFlywheelVelocity.in(RotationsPerSecond) > 0
-            ? (targetFlywheelVelocity.in(RotationsPerSecond)
-                    - inputs.flywheelVelocity.in(RotationsPerSecond))
-                / targetFlywheelVelocity.in(RotationsPerSecond)
-            : 0.0);
 
     if (batteryLogger != null) {
       batteryLogger.reportCurrentUsage(

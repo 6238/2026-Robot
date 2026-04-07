@@ -325,10 +325,7 @@ public class RobotContainer {
                 intakePivot.setIntakeAngle(() -> IntakeConstants.INTAKE_START_VALUE),
                 () -> intakePivot.targetAngle.equals(IntakeConstants.INTAKE_START_VALUE)));
 
-    controller
-        .x()
-        .whileTrue(intakePivot.setIntakeArmVoltage(() -> Volts.of(-3)))
-        .onFalse(intakePivot.setIntakeArmVoltage(() -> Volts.of(0)));
+    // X button binding moved below driverOverride definition
 
     // Intake Reset
     controller.back().onTrue(intakePivot.reset().ignoringDisable(true));
@@ -357,6 +354,7 @@ public class RobotContainer {
     // Superstructure.WantedState.IDLE));
 
     controller.b().whileTrue(AutomaticCommands.automaticCommand(drive, driverOverride));
+    controller.x().whileTrue(AutomaticCommands.neutralToAllianceCommand(drive, driverOverride));
 
     // D-Pad: targeted automations
     // controller.povUp().whileTrue(AutomaticCommands.hubBackWallCommand(drive, driverOverride));

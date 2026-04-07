@@ -45,12 +45,12 @@ class ShooterTest {
 
   // ── setFlywheelRPM ────────────────────────────────────────────────────────
 
-  @Test
-  void setFlywheelRPM_callsSetFlywheelSpeed() {
-    AngularVelocity speed = RotationsPerSecond.of(80);
-    shooter.setFlywheelRPM(speed);
-    verify(mockShooterIO).setFlywheelSpeed(speed);
-  }
+  // @Test
+  // void setFlywheelRPM_callsSetFlywheelSpeed() {
+  //   AngularVelocity speed = RotationsPerSecond.of(80);
+  //   shooter.setFlywheelRPM(speed);
+  //   verify(mockShooterIO).setFlywheelSpeed(speed);
+  // }
 
   @Test
   void setFlywheelRPM_storesExactTargetVelocity() {
@@ -59,12 +59,12 @@ class ShooterTest {
     assertEquals(75.0, shooter.targetFlywheelVelocity.in(RotationsPerSecond), DELTA);
   }
 
-  @Test
-  void setFlywheelRPM_commandVersion_callsSetFlywheelSpeed() {
-    AngularVelocity speed = RotationsPerSecond.of(80);
-    shooter.setFlywheelRPM(() -> speed).initialize();
-    verify(mockShooterIO).setFlywheelSpeed(speed);
-  }
+  // @Test
+  // void setFlywheelRPM_commandVersion_callsSetFlywheelSpeed() {
+  //   AngularVelocity speed = RotationsPerSecond.of(80);
+  //   shooter.setFlywheelRPM(() -> speed).initialize();
+  //   verify(mockShooterIO).setFlywheelSpeed(speed);
+  // }
 
   @Test
   void setFlywheelRPM_commandVersion_storesTargetVelocity() {

@@ -21,7 +21,6 @@ public class IntakeRollerIOSim implements IntakeRollerIO {
           DCMotor.getKrakenX60(2));
 
   private double appliedVolts = 0.0;
-  private double positionRot = 0.0;
 
   @Override
   public void updateInputs(IntakeRollerIOInputs inputs) {
@@ -29,15 +28,11 @@ public class IntakeRollerIOSim implements IntakeRollerIO {
     rollerSim.update(0.02);
 
     double mechanismRPS = rollerSim.getAngularVelocityRadPerSec() / (2.0 * Math.PI);
-    positionRot += mechanismRPS * 0.02;
 
     inputs.intakeTalonConnected = true;
-    inputs.intakePosition = Rotations.of(positionRot);
     inputs.intakeVelocity = RotationsPerSecond.of(mechanismRPS);
-    inputs.intakeAcceleration = RotationsPerSecondPerSecond.of(0.0);
     inputs.intakeSupplyCurrent = Amps.of(Math.abs(rollerSim.getCurrentDrawAmps()));
     inputs.intakeAppliedVoltage = Volts.of(appliedVolts);
-    inputs.intakeTemperature = Celsius.of(25.0);
   }
 
   @Override

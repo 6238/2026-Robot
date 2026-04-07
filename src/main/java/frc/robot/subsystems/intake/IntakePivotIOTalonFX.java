@@ -12,7 +12,6 @@ import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
@@ -33,7 +32,6 @@ public class IntakePivotIOTalonFX implements IntakePivotIO {
 
   public StatusSignal<Angle> intakeArmPosition;
   public StatusSignal<AngularVelocity> intakeArmVelocity;
-  public StatusSignal<AngularAcceleration> intakeArmAcceleration;
   public StatusSignal<Current> intakeArmSupplyCurrent;
   public StatusSignal<Voltage> intakeArmVoltage;
 
@@ -70,17 +68,12 @@ public class IntakePivotIOTalonFX implements IntakePivotIO {
 
     intakeArmPosition = intakeArmTalon.getPosition();
     intakeArmVelocity = intakeArmTalon.getVelocity();
-    intakeArmAcceleration = intakeArmTalon.getAcceleration();
     intakeArmSupplyCurrent = intakeArmTalon.getSupplyCurrent();
     intakeArmVoltage = intakeArmTalon.getMotorVoltage();
 
     statusSignalCollector =
         new BetterStatusSignalCollection(
-            intakeArmPosition,
-            intakeArmVelocity,
-            intakeArmAcceleration,
-            intakeArmSupplyCurrent,
-            intakeArmVoltage);
+            intakeArmPosition, intakeArmVelocity, intakeArmSupplyCurrent, intakeArmVoltage);
     statusSignalCollector.setUpdateFrequencyForAll(50);
     ParentDevice.optimizeBusUtilizationForAll(intakeArmTalon);
   }
@@ -98,10 +91,9 @@ public class IntakePivotIOTalonFX implements IntakePivotIO {
       statusSignalAlert.set(false);
     }
 
-    inputs.intakeArmTalonConnected = intakeArmTalon.isConnected();
+    inputs.intakeArmTalonConnected = intakeArmPosition.getStatus().isOK();
     inputs.intakeArmPosition = intakeArmPosition.getValue();
     inputs.intakeArmVelocity = intakeArmVelocity.getValue();
-    inputs.intakeArmAcceleration = intakeArmAcceleration.getValue();
     inputs.intakeArmSupplyCurrent = intakeArmSupplyCurrent.getValue();
     inputs.intakeArmAppliedVoltage = intakeArmVoltage.getValue();
   }

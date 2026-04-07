@@ -48,7 +48,6 @@ public class IntakePivotIOSim implements IntakePivotIO {
     inputs.intakeArmPosition = Degrees.of(Math.toDegrees(armSim.getAngleRads()));
     inputs.intakeArmVelocity =
         RotationsPerSecond.of(armSim.getVelocityRadPerSec() / (2.0 * Math.PI));
-    inputs.intakeArmAcceleration = RotationsPerSecondPerSecond.of(0.0);
     inputs.intakeArmSupplyCurrent = Amps.of(Math.abs(armSim.getCurrentDrawAmps()));
     inputs.intakeArmAppliedVoltage = Volts.of(appliedVolts);
   }

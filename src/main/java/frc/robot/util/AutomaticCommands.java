@@ -15,46 +15,69 @@ import org.littletonrobotics.junction.Logger;
 
 public class AutomaticCommands {
 
-  // PathPlanner constraints for all teleop pathfinding
   private static final PathConstraints CONSTRAINTS =
       new PathConstraints(3.0, 3.5, Math.toRadians(540), Math.toRadians(720));
 
-  // Trench
-  public static final Translation2d trenchNeutralEntry = new Translation2d(5.75, 7.46);
-  public static final Translation2d trenchAllianceEntry = new Translation2d(3.4, 7.46);
+  // Slower constraints for final approaches into the trench
+  private static final PathConstraints TRENCH_APPROACH_CONSTRAINTS =
+      new PathConstraints(1.25, 3, Math.toRadians(540), Math.toRadians(720));
+
+  // Trench geometry
+  public static final Translation2d trenchNeutralEntry = new Translation2d(5.7, 7.46);
+  public static final Translation2d trenchAllianceEntry = new Translation2d(3.3, 7.46);
 
   // Hub back wall (TODO: measure on field)
   public static final Pose2d hubBackWallPose = new Pose2d(4.0, 5.5, Rotation2d.fromDegrees(180));
 
   // Wall scrape (TODO: measure on field)
-  // Robot approaches at a slight angle so intake brushes the wall, then slides along it.
   public static final Pose2d wallScrapeStartPose = new Pose2d(1.5, 7.6, Rotation2d.fromDegrees(10));
   public static final Pose2d wallScrapeEndPose = new Pose2d(6.0, 7.6, Rotation2d.fromDegrees(10));
 
-  // Y clearance from each side wall for the wall shoot setup
   public static final double WALL_SHOOT_SETUP_TOP_Y = 7.2;
   public static final double WALL_SHOOT_SETUP_BOTTOM_Y = 0.9;
 
-  // Tower (TODO: measure on field)
-  // Robot enters near the outpost side, then backs out.
+  // Wall tower traversal (B button, near alliance wall)
+  public static final Translation2d wallTowerTopEntry = new Translation2d(0.528, 5.117);
+  public static final Translation2d wallTowerBottomEntry = new Translation2d(0.528, 2.598);
+
+  // Under-tower (D-Pad Left, TODO: measure on field)
   public static final Pose2d towerEntryPose = new Pose2d(4.0, 6.5, Rotation2d.fromDegrees(270));
   public static final Pose2d towerExitPose = new Pose2d(4.0, 4.5, Rotation2d.fromDegrees(90));
 
-  /** Flips a Pose2d across the field's vertical midline (for red alliance). */
   private static Pose2d flipVertical(Pose2d pose) {
     return new Pose2d(FieldFlipUtil.flipVerticalMidline(pose.getTranslation()), pose.getRotation());
   }
 
+  // ── B Button ─────────────────────────────────────────────────────────────
+
   /**
-   * Context-aware command for B button. If the robot is in the neutral zone (closer to the neutral
-   * trench entry), drives to the position right under the trench. If the robot is in the alliance
-   * zone (closer to the alliance trench entry), drives through the trench into the neutral zone.
+   * B button: context-aware command.
+   *
+   * <p>Near the alliance wall (x &lt; 2.0 or x &gt; 14.0): traverses the wall tower.
+   *
+   * <p>Otherwise: trench traversal — snaps heading to nearest 0° or 180° and pathfinds between
+   * neutral and alliance entries.
+   *
+   * <p>Special case: if the robot is already inside the trench corridor, back out first.
    */
   public static Command automaticCommand(Drive drive, BooleanSupplier driverOverride) {
     return Commands.defer(
         () -> {
           Pose2d pose = drive.getPose();
-          // Bump zone: near the horizontal midline (y ~ 4.1) → go to hub back wall
+          // Wall tower (near own alliance wall)
+          if (pose.getX() < 2.0) {
+            return wallTowerCommand(
+                drive, wallTowerTopEntry, wallTowerBottomEntry, pose, driverOverride);
+          }
+          if (pose.getX() > 14.0) {
+            return wallTowerCommand(
+                drive,
+                FieldFlipUtil.flipVerticalMidline(wallTowerTopEntry),
+                FieldFlipUtil.flipVerticalMidline(wallTowerBottomEntry),
+                pose,
+                driverOverride);
+          }
+          // Trench
           if (Math.abs(pose.getY() - 4.1) < 1.0) {
             return hubBackWallCommand(drive, driverOverride);
           }
@@ -89,9 +112,48 @@ public class AutomaticCommands {
   }
 
   /**
-   * Context-aware trench command. If the robot is closer to the neutral entry it is in the neutral
-   * zone and drives to the position right under the trench. If the robot is closer to the alliance
-   * entry it is in the alliance zone and drives through the trench into the neutral zone.
+   * B button wall tower traversal: pathfinds to the nearer of the two tower waypoints, then
+   * continues through to the far waypoint.
+   */
+  private static Command wallTowerCommand(
+      Drive drive,
+      Translation2d topEntry,
+      Translation2d bottomEntry,
+      Pose2d currentPose,
+      BooleanSupplier driverOverride) {
+
+    boolean closerToTop =
+        currentPose.getTranslation().getDistance(topEntry)
+            < currentPose.getTranslation().getDistance(bottomEntry);
+    Translation2d fromEntry = closerToTop ? topEntry : bottomEntry;
+    Translation2d toEntry = closerToTop ? bottomEntry : topEntry;
+
+    // Intake faces direction of motion: moving toward higher y → intake faces +y → heading 270°
+    Rotation2d traversalHeading =
+        toEntry.getY() >= fromEntry.getY()
+            ? Rotation2d.fromDegrees(270)
+            : Rotation2d.fromDegrees(90);
+
+    Pose2d fromPose = new Pose2d(fromEntry, traversalHeading);
+    Logger.recordOutput("AutomaticCommands/wallTower/fromPose", fromPose);
+    Logger.recordOutput(
+        "AutomaticCommands/wallTower/toPose", new Pose2d(toEntry, traversalHeading));
+
+    // Drive field-relative along Y; time = distance / (0.5 joystick * ~3 m/s max)
+    double yDir = toEntry.getY() > fromEntry.getY() ? 1.0 : -1.0;
+    double traversalSeconds = fromEntry.getDistance(toEntry) / 1.5;
+
+    return AutoBuilder.pathfindToPose(fromPose, TRENCH_APPROACH_CONSTRAINTS, 0.0)
+        .until(driverOverride)
+        .andThen(
+            DriveCommands.joystickDrive(drive, () -> 0.0, () -> yDir * 0.5, () -> 0.0)
+                .withTimeout(traversalSeconds)
+                .until(driverOverride));
+  }
+
+  /**
+   * B button trench traversal: snaps the robot to the nearest 0° or 180° heading, pathfinds to the
+   * entry point, then drives through to the exit point.
    */
   public static Command trenchCommand(
       Drive drive,
@@ -99,62 +161,109 @@ public class AutomaticCommands {
       Translation2d allianceEntry,
       Pose2d currentPose,
       BooleanSupplier driverOverride) {
+
     Translation2d currentTrans = currentPose.getTranslation();
     boolean inNeutralZone =
         currentTrans.getDistance(allianceEntry) > currentTrans.getDistance(neutralEntry);
+    boolean inCorridor = inTrenchCorridor(currentPose, neutralEntry, allianceEntry);
 
     Logger.recordOutput("trench/neutralEntry", new Pose2d(neutralEntry, Rotation2d.kZero));
     Logger.recordOutput("trench/allianceEntry", new Pose2d(allianceEntry, Rotation2d.kZero));
     Logger.recordOutput("trench/inNeutralZone", inNeutralZone);
+    Logger.recordOutput("trench/inCorridor", inCorridor);
 
-    // Shooter faces toward the hub regardless of which side the robot starts on.
+    Translation2d fromEntry = inNeutralZone ? neutralEntry : allianceEntry;
+    Translation2d toEntry = inNeutralZone ? allianceEntry : neutralEntry;
+
+    // Snap current heading to nearest 0° or 180°
+    double headingDeg = ((currentPose.getRotation().getDegrees() % 360) + 360) % 360;
+    Rotation2d traversalHeading =
+        (headingDeg < 90 || headingDeg >= 270)
+            ? Rotation2d.fromDegrees(0)
+            : Rotation2d.fromDegrees(180);
+
+    Pose2d fromPose = new Pose2d(fromEntry, traversalHeading);
+    Pose2d toPose = new Pose2d(toEntry, traversalHeading);
+    Logger.recordOutput("AutomaticCommands/trench/fromPose", fromPose);
+    Logger.recordOutput("AutomaticCommands/trench/toPose", toPose);
+
+    Command mainSeq =
+        AutoBuilder.pathfindToPose(fromPose, TRENCH_APPROACH_CONSTRAINTS, 1.25)
+            .until(driverOverride)
+            .andThen(AutoBuilder.pathfindToPose(toPose, CONSTRAINTS, 1.0).until(driverOverride));
+
+    if (inCorridor) {
+      return AutoBuilder.pathfindToPose(
+              trenchClearPose(currentPose, neutralEntry, allianceEntry), CONSTRAINTS, 0.0)
+          .until(driverOverride)
+          .andThen(mainSeq);
+    }
+    return mainSeq;
+  }
+
+  // ── X Button ─────────────────────────────────────────────────────────────
+
+  /**
+   * X button: trench wall lineup. Pathfinds to the neutral entry with the shooter facing field
+   * center (intake facing the outer wall), then backs the intake into the wall to localize.
+   */
+  public static Command neutralToAllianceCommand(Drive drive, BooleanSupplier driverOverride) {
+    return Commands.defer(
+        () -> {
+          Pose2d pose = drive.getPose();
+          if (pose.getX() < 8 && pose.getY() > 4) {
+            return trenchWallLineup(drive, trenchNeutralEntry, driverOverride);
+          }
+          if (pose.getX() < 8 && pose.getY() < 4) {
+            return trenchWallLineup(
+                drive, FieldFlipUtil.flipHorizontalMidline(trenchNeutralEntry), driverOverride);
+          }
+          if (pose.getX() > 8 && pose.getY() > 4) {
+            return trenchWallLineup(
+                drive, FieldFlipUtil.flipVerticalMidline(trenchNeutralEntry), driverOverride);
+          }
+          return trenchWallLineup(
+              drive, FieldFlipUtil.flipBothMidlines(trenchNeutralEntry), driverOverride);
+        },
+        Set.of(drive));
+  }
+
+  /**
+   * Pathfinds to the neutral entry at ±90° (shooter toward field center, intake toward outer wall),
+   * then backs the intake into the wall for localization.
+   */
+  private static Command trenchWallLineup(
+      Drive drive, Translation2d neutralEntry, BooleanSupplier driverOverride) {
+    // Shooter faces field center so intake faces the outer wall
     Rotation2d shooterFacing =
         neutralEntry.getY() < 4 ? Rotation2d.fromDegrees(90) : Rotation2d.fromDegrees(270);
-    // Shift Y 18 cm toward the field center to stay clear of the wall.
-    double yOffset = allianceEntry.getY() > 4 ? -0.50 : 0.50;
-    Translation2d adjustedAlliance =
-        new Translation2d(allianceEntry.getX(), allianceEntry.getY() + yOffset);
-
-    // Direction from alliance entry toward neutral entry (along the trench).
-    Translation2d wallDir = neutralEntry.minus(allianceEntry);
-    double wallDist = wallDir.getNorm();
-    double wallVx = wallDir.getX() / wallDist * 0.5;
-    double wallVy = wallDir.getY() / wallDist * 0.5;
-
-    Translation2d adjustedNeutral =
-        new Translation2d(neutralEntry.getX(), neutralEntry.getY() + yOffset);
-    Pose2d alignPose = new Pose2d(neutralEntry, shooterFacing);
+    // Small offset toward field center so the wall press reliably reaches the wall
+    double yOffset = neutralEntry.getY() > 4 ? -0.3 : 0.3;
+    Pose2d alignPose =
+        new Pose2d(neutralEntry.getX(), neutralEntry.getY() + yOffset, shooterFacing);
     Logger.recordOutput("AutomaticCommands/target", alignPose);
 
-    if (inNeutralZone) {
-      // Neutral zone: pathfind to neutral entry, drive into the wall, nudge off wall, then slide.
-      return AutoBuilder.pathfindToPose(alignPose, CONSTRAINTS, 0.0)
-          .until(driverOverride)
-          .andThen(
-              DriveCommands.joystickDriveRobotRelative(drive, () -> -0.5, () -> 0, () -> 0)
-                  .withTimeout(0.3))
-          // .andThen(drive.driveIntoWall(wallVx, wallVy, driverOverride))
-          // .andThen(Commands.print("now!"))
-          .andThen(
-              DriveCommands.joystickDriveRobotRelative(drive, () -> 0.3, () -> 0, () -> 0)
-                  .withTimeout(0.1))
-          .andThen(
-              DriveCommands.joystickDrive(drive, () -> -1, () -> 0, () -> 0).withTimeout(0.75));
-    } else {
-      // Alliance zone: robot points backwards (toward alliance wall) through the trench.
-      Rotation2d backwardsFacing =
-          neutralEntry.getX() < 8 ? Rotation2d.fromDegrees(180) : Rotation2d.fromDegrees(0);
-      Pose2d allianceAlignPose = new Pose2d(allianceEntry, backwardsFacing);
-      Pose2d exitPose = new Pose2d(neutralEntry, backwardsFacing);
-      Logger.recordOutput("AutomaticCommands/allianceEntry", allianceAlignPose);
-      Logger.recordOutput("AutomaticCommands/exitPose", exitPose);
-      return AutoBuilder.pathfindToPose(allianceAlignPose, CONSTRAINTS, 3.5)
-          .until(driverOverride)
-          .andThen(
-              Commands.runOnce(() -> Logger.recordOutput("AutomaticCommands/target", exitPose)))
-          .andThen(AutoBuilder.pathfindToPose(exitPose, CONSTRAINTS, 0.0).until(driverOverride));
-    }
+    // Robot is at 90°/270° after lineup, so robot-relative Y = field X axis.
+    // Compute the robot-Y direction that points toward the alliance zone.
+    double fieldXToAlliance = neutralEntry.getX() < 8 ? -1.0 : 1.0;
+    double robotYDir = fieldXToAlliance * (-shooterFacing.getSin());
+    double driveSpeed = 1.4 / 3.0; // 1.4 m/s as fraction of ~3 m/s max
+
+    return AutoBuilder.pathfindToPose(alignPose, TRENCH_APPROACH_CONSTRAINTS, 0.0)
+        .until(driverOverride)
+        .andThen(
+            DriveCommands.joystickDriveRobotRelative(drive, () -> -0.5, () -> 0, () -> 0)
+                .withTimeout(0.3))
+        .andThen(
+            DriveCommands.joystickDriveRobotRelative(drive, () -> 0.3, () -> 0, () -> 0)
+                .withTimeout(0.1))
+        .andThen(
+            DriveCommands.joystickDriveRobotRelative(
+                    drive, () -> 0.0, () -> robotYDir * driveSpeed, () -> 0.0)
+                .withTimeout(0.5));
   }
+
+  // ── Other commands ────────────────────────────────────────────────────────
 
   /** D-Pad Up: Lines up against the back wall of the hub. */
   public static Command hubBackWallCommand(Drive drive, BooleanSupplier driverOverride) {
@@ -201,5 +310,36 @@ public class AutomaticCommands {
                   AutoBuilder.pathfindToPose(exitPose, CONSTRAINTS, 0.0).until(driverOverride));
         },
         Set.of(drive));
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
+  /**
+   * Returns true if the robot is inside the trench corridor and close enough to the wall that it
+   * should back out before running a trench command.
+   */
+  private static boolean inTrenchCorridor(
+      Pose2d currentPose, Translation2d neutralEntry, Translation2d allianceEntry) {
+    double minX = Math.min(neutralEntry.getX(), allianceEntry.getX()) - 0.3;
+    double maxX = Math.max(neutralEntry.getX(), allianceEntry.getX()) + 0.3;
+    double trenchY = neutralEntry.getY();
+    return currentPose.getX() > minX
+        && currentPose.getX() < maxX
+        && Math.abs(currentPose.getY() - trenchY) < 0.4;
+  }
+
+  /**
+   * Returns a pose clear of the trench corridor: 0.7 m toward field center in Y, and exits in X
+   * toward whichever end of the trench the robot is closest to.
+   */
+  private static Pose2d trenchClearPose(
+      Pose2d currentPose, Translation2d neutralEntry, Translation2d allianceEntry) {
+    double trenchY = neutralEntry.getY();
+    double safeY = trenchY + (trenchY > 4.1 ? -0.7 : 0.7);
+    double minX = Math.min(neutralEntry.getX(), allianceEntry.getX());
+    double maxX = Math.max(neutralEntry.getX(), allianceEntry.getX());
+    double midX = (minX + maxX) / 2.0;
+    double safeX = currentPose.getX() < midX ? minX - 0.7 : maxX + 0.7;
+    return new Pose2d(safeX, safeY, currentPose.getRotation());
   }
 }

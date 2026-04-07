@@ -15,6 +15,7 @@ package frc.robot.subsystems.drive;
 
 import static edu.wpi.first.units.Units.*;
 
+import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.CANBus;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.PathfindingCommand;
@@ -142,6 +143,7 @@ public class Drive extends SubsystemBase {
   private final Field2d m_field = new Field2d();
 
   private BatteryLogger batteryLogger;
+  private BaseStatusSignal[] allSignals;
 
   public void setBatteryLogger(BatteryLogger batteryLogger) {
     this.batteryLogger = batteryLogger;
@@ -160,6 +162,17 @@ public class Drive extends SubsystemBase {
     modules[1] = new Module(frModuleIO, 1, RobotIdentity.getTunerConstants().FrontRight);
     modules[2] = new Module(blModuleIO, 2, RobotIdentity.getTunerConstants().BackLeft);
     modules[3] = new Module(brModuleIO, 3, RobotIdentity.getTunerConstants().BackRight);
+
+    // Build combined signal array for single-batch CAN refresh
+    var gyroSignals = gyroIO.getSignals();
+    var moduleSignals =
+        java.util.Arrays.stream(new ModuleIO[] {flModuleIO, frModuleIO, blModuleIO, brModuleIO})
+            .flatMap(io -> java.util.Arrays.stream(io.getSignals()))
+            .toArray(BaseStatusSignal[]::new);
+    allSignals =
+        java.util.stream.Stream.concat(
+                java.util.Arrays.stream(gyroSignals), java.util.Arrays.stream(moduleSignals))
+            .toArray(BaseStatusSignal[]::new);
 
     // Do this in either robot or subsystem init
     SmartDashboard.putData("Field", m_field);
@@ -213,6 +226,12 @@ public class Drive extends SubsystemBase {
 
   @Override
   public void periodic() {
+    // Refresh all CAN signals in one batch before acquiring the lock.
+    // This replaces N sequential blocking waitForAll calls with a single one.
+    if (allSignals.length > 0) {
+      BaseStatusSignal.refreshAll(allSignals);
+    }
+
     odometryLock.lock(); // Prevents odometry updates while reading data
     gyroIO.updateInputs(gyroInputs);
     Logger.processInputs("Drive/Gyro", gyroInputs);

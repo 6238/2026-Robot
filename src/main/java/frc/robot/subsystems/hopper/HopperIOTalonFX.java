@@ -8,7 +8,6 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
-import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
@@ -32,12 +31,10 @@ public class HopperIOTalonFX implements HopperIO {
   public BetterStatusSignalCollection statusSignalCollector;
 
   public StatusSignal<AngularVelocity> indexerVelocity;
-  public StatusSignal<AngularAcceleration> indexerAcceleration;
   public StatusSignal<Current> indexerSupplyCurrent;
   public StatusSignal<Voltage> indexerVoltage;
 
   public StatusSignal<AngularVelocity> topIndexerVelocity;
-  public StatusSignal<AngularAcceleration> topIndexerAcceleration;
   public StatusSignal<Current> topIndexerSupplyCurrent;
   public StatusSignal<Voltage> topIndexerVoltage;
 
@@ -72,7 +69,6 @@ public class HopperIOTalonFX implements HopperIO {
 
     // Status Signals
     indexerVelocity = indexerTalon.getVelocity();
-    indexerAcceleration = indexerTalon.getAcceleration();
     indexerSupplyCurrent = indexerTalon.getSupplyCurrent();
     indexerVoltage = indexerTalon.getMotorVoltage();
 
@@ -100,25 +96,21 @@ public class HopperIOTalonFX implements HopperIO {
               () -> topIndexerTalon.getConfigurator().apply(topIndexerConfig)));
 
       topIndexerVelocity = topIndexerTalon.getVelocity();
-      topIndexerAcceleration = topIndexerTalon.getAcceleration();
       topIndexerSupplyCurrent = topIndexerTalon.getSupplyCurrent();
       topIndexerVoltage = topIndexerTalon.getMotorVoltage();
 
       statusSignalCollector =
           new BetterStatusSignalCollection(
               indexerVelocity,
-              indexerAcceleration,
               indexerSupplyCurrent,
               indexerVoltage,
               topIndexerVelocity,
-              topIndexerAcceleration,
               topIndexerSupplyCurrent,
               topIndexerVoltage);
       ParentDevice.optimizeBusUtilizationForAll(indexerTalon, topIndexerTalon);
     } else {
       statusSignalCollector =
-          new BetterStatusSignalCollection(
-              indexerVelocity, indexerAcceleration, indexerSupplyCurrent, indexerVoltage);
+          new BetterStatusSignalCollection(indexerVelocity, indexerSupplyCurrent, indexerVoltage);
       ParentDevice.optimizeBusUtilizationForAll(indexerTalon);
     }
     statusSignalCollector.setUpdateFrequencyForAll(50);
@@ -136,17 +128,15 @@ public class HopperIOTalonFX implements HopperIO {
       statusSignalAlert.set(false);
     }
 
-    inputs.indexerTalonConnected = indexerTalon.isConnected();
+    inputs.indexerTalonConnected = indexerVelocity.getStatus().isOK();
 
     inputs.indexerVelocity = indexerVelocity.getValue();
-    inputs.indexerAcceleration = indexerAcceleration.getValue();
     inputs.indexerSupplyCurrent = indexerSupplyCurrent.getValue();
     inputs.indexerAppliedVoltage = indexerVoltage.getValue();
 
     if (HopperConstants.USE_TOP_INDEXER) {
-      inputs.topIndexerTalonConnected = topIndexerTalon.isConnected();
+      inputs.topIndexerTalonConnected = topIndexerVelocity.getStatus().isOK();
       inputs.topIndexerVelocity = topIndexerVelocity.getValue();
-      inputs.topIndexerAcceleration = topIndexerAcceleration.getValue();
       inputs.topIndexerSupplyCurrent = topIndexerSupplyCurrent.getValue();
       inputs.topIndexerAppliedVoltage = topIndexerVoltage.getValue();
     }

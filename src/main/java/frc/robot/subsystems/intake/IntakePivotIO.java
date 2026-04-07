@@ -3,7 +3,6 @@ package frc.robot.subsystems.intake;
 import static edu.wpi.first.units.Units.*;
 
 import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
@@ -16,7 +15,6 @@ public interface IntakePivotIO {
 
     public Angle intakeArmPosition = Degrees.of(0.0);
     public AngularVelocity intakeArmVelocity = RotationsPerSecond.of(0.0);
-    public AngularAcceleration intakeArmAcceleration = RotationsPerSecondPerSecond.of(0.0);
     public Current intakeArmSupplyCurrent = Amps.of(0.0);
     public Voltage intakeArmAppliedVoltage = Volts.of(0.0);
   }

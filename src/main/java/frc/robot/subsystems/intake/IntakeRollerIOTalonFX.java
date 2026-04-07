@@ -10,11 +10,8 @@ import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
@@ -33,12 +30,10 @@ public class IntakeRollerIOTalonFX implements IntakeRollerIO {
 
   public BetterStatusSignalCollection statusSignalCollector;
 
-  public StatusSignal<Angle> intakePosition;
   public StatusSignal<AngularVelocity> intakeVelocity;
-  public StatusSignal<AngularAcceleration> intakeAcceleration;
   public StatusSignal<Current> intakeSupplyCurrent;
   public StatusSignal<Voltage> intakeVoltage;
-  public StatusSignal<Temperature> intakeTemperature;
+  public StatusSignal<AngularVelocity> intakeFollowerVelocity;
 
   private boolean notSwapped = true;
 
@@ -74,21 +69,14 @@ public class IntakeRollerIOTalonFX implements IntakeRollerIO {
     intakeFollowerTalon.setControl(
         new Follower(IntakeConstants.INTAKE_MOTOR_ID, MotorAlignmentValue.Opposed));
 
-    intakePosition = intakeTalon.getPosition();
     intakeVelocity = intakeTalon.getVelocity();
-    intakeAcceleration = intakeTalon.getAcceleration();
     intakeSupplyCurrent = intakeTalon.getSupplyCurrent();
     intakeVoltage = intakeTalon.getMotorVoltage();
-    intakeTemperature = intakeTalon.getDeviceTemp();
+    intakeFollowerVelocity = intakeFollowerTalon.getVelocity();
+    intakeFollowerVelocity.setUpdateFrequency(50);
 
     statusSignalCollector =
-        new BetterStatusSignalCollection(
-            intakePosition,
-            intakeVelocity,
-            intakeAcceleration,
-            intakeSupplyCurrent,
-            intakeVoltage,
-            intakeTemperature);
+        new BetterStatusSignalCollection(intakeVelocity, intakeSupplyCurrent, intakeVoltage);
     statusSignalCollector.setUpdateFrequencyForAll(50);
     ParentDevice.optimizeBusUtilizationForAll(intakeTalon, intakeFollowerTalon);
   }
@@ -106,15 +94,12 @@ public class IntakeRollerIOTalonFX implements IntakeRollerIO {
       statusSignalAlert.set(false);
     }
 
-    inputs.intakeTalonConnected = intakeTalon.isConnected();
-    inputs.intakePosition = intakePosition.getValue();
+    inputs.intakeTalonConnected = intakeVelocity.getStatus().isOK();
     inputs.intakeVelocity = intakeVelocity.getValue();
-    inputs.intakeAcceleration = intakeAcceleration.getValue();
     inputs.intakeSupplyCurrent = intakeSupplyCurrent.getValue();
     inputs.intakeAppliedVoltage = intakeVoltage.getValue();
-    inputs.intakeTemperature = intakeTemperature.getValue();
 
-    inputs.intakeFollowerTalonConnected = intakeFollowerTalon.isConnected();
+    inputs.intakeFollowerTalonConnected = intakeFollowerVelocity.getStatus().isOK();
 
     if (inputs.intakeFollowerTalonConnected && !inputs.intakeTalonConnected && notSwapped) {
       intakeTalon.setControl(

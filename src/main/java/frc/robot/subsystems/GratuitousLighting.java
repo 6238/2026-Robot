@@ -2,7 +2,8 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.controls.EmptyAnimation;
-import com.ctre.phoenix6.controls.StrobeAnimation;
+import com.ctre.phoenix6.controls.LarsonAnimation;
+import com.ctre.phoenix6.controls.SolidColor;
 import com.ctre.phoenix6.hardware.CANdle;
 import com.ctre.phoenix6.signals.RGBWColor;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -20,14 +21,14 @@ public class GratuitousLighting extends SubsystemBase {
   // All colors/brightness kept at ~20% to avoid blinding drive teams.
   private static final EmptyAnimation idleAnimation = new EmptyAnimation(0);
 
-  private static final StrobeAnimation intakingAnimation =
-      new StrobeAnimation(0, 140).withColor(new RGBWColor(0, 50, 0)).withFrameRate(4);
+  private static final SolidColor intakingAnimation =
+      new SolidColor(0, 68).withColor(new RGBWColor(0, 50, 0));
 
-  private static final StrobeAnimation shootingAnimation =
-      new StrobeAnimation(0, 140).withColor(new RGBWColor(50, 20, 0)).withFrameRate(8);
+  private static final LarsonAnimation shootingAnimation =
+      new LarsonAnimation(8, 68).withColor(new RGBWColor(100, 0, 0)).withFrameRate(50).withSize(10);
 
-  private static final StrobeAnimation shiftSoonAnimation =
-      new StrobeAnimation(0, 140).withColor(new RGBWColor(0, 0, 50)).withFrameRate(6);
+  private static final SolidColor shiftSoonAnimation =
+      new SolidColor(0, 68).withColor(new RGBWColor(0, 0, 100));
 
   public GratuitousLighting() {
     candle = new CANdle(45, candleCanBus);

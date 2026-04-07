@@ -2,7 +2,6 @@ package frc.robot.subsystems.shooter;
 
 import static edu.wpi.first.units.Units.*;
 
-import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
@@ -15,14 +14,11 @@ public interface ShooterIO {
     public boolean feederTalonConnected = false;
 
     public AngularVelocity flywheelVelocity = RotationsPerSecond.of(0);
-    public AngularAcceleration flywheelAcceleration = RotationsPerSecondPerSecond.of(0);
     public Current flywheelSupplyCurrent = Amps.of(0);
     public Current flywheel2SupplyCurrent = Amps.of(0);
     public Voltage flywheelAppliedVoltage = Volts.of(0);
-    public Voltage flywheelSupplyVoltage = Volts.of(0);
 
     public AngularVelocity feederVelocity = RotationsPerSecond.of(0);
-    public AngularAcceleration feederAcceleration = RotationsPerSecondPerSecond.of(0);
     public Current feederSupplyCurrent = Amps.of(0);
     public Voltage feederAppliedVoltage = Volts.of(0);
   }

@@ -45,13 +45,11 @@ public class HopperIOSim implements HopperIO {
 
     inputs.indexerVelocity =
         RotationsPerSecond.of(indexerSim.getAngularVelocityRadPerSec() / (2.0 * Math.PI));
-    inputs.indexerAcceleration = RotationsPerSecondPerSecond.of(0.0);
     inputs.indexerSupplyCurrent = Amps.of(Math.abs(indexerSim.getCurrentDrawAmps()));
     inputs.indexerAppliedVoltage = Volts.of(indexerVolts);
 
     inputs.topIndexerVelocity =
         RotationsPerSecond.of(topIndexerSim.getAngularVelocityRadPerSec() / (2.0 * Math.PI));
-    inputs.topIndexerAcceleration = RotationsPerSecondPerSecond.of(0.0);
     inputs.topIndexerSupplyCurrent = Amps.of(Math.abs(topIndexerSim.getCurrentDrawAmps()));
     inputs.topIndexerAppliedVoltage = Volts.of(topIndexerVolts);
   }
