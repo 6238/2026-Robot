@@ -20,26 +20,31 @@ public class TestModeReport {
    * @param robotSerial roboRIO serial number
    * @param gitSha full git SHA (will be truncated to 8 chars in display)
    */
-  public static String generate(List<MotorResult> results, String robotSerial, String gitSha) {
+  public static String generate(
+      List<MotorResult> results, String robotSerial, String gitSha, boolean baselineMode) {
     String date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 
     long passCount = results.stream().filter(r -> r.status() == TestStatus.PASS).count();
     long warnCount = results.stream().filter(r -> r.status() == TestStatus.WARN).count();
     long failCount =
         results.stream()
-            .filter(r -> r.status() == TestStatus.FAIL || r.status() == TestStatus.NO_BASELINE)
+            .filter(
+                r ->
+                    r.status() == TestStatus.FAIL
+                        || r.status() == TestStatus.WARN
+                        || r.status() == TestStatus.NO_BASELINE)
             .count();
 
     String overallLabel;
     String overallColor;
-    if (failCount > 0) {
-      overallLabel = "FAIL &mdash; " + failCount + " issue(s)";
+    if (baselineMode) {
+      overallLabel = "BASELINE RECORDED";
+      overallColor = "#1565c0";
+    } else if (failCount > 0) {
+      overallLabel = "FAIL";
       overallColor = "#c62828";
-    } else if (warnCount > 0) {
-      overallLabel = "WARN &mdash; " + warnCount + " warning(s)";
-      overallColor = "#e65100";
     } else {
-      overallLabel = "PASS &mdash; all motors nominal";
+      overallLabel = "PASS";
       overallColor = "#2e7d32";
     }
 
@@ -146,7 +151,9 @@ public class TestModeReport {
     }
     renderSection.accept(passing);
 
-    if (anyFail || anyWarn) {
+    if (baselineMode) {
+      Logger.recordOutput("TestModeResult", "BASELINE");
+    } else if (anyFail || anyWarn) {
       Logger.recordOutput("TestModeResult", "FAIL");
     } else {
       Logger.recordOutput("TestModeResult", "PASS");

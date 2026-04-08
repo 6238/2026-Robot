@@ -4,7 +4,6 @@ import static edu.wpi.first.units.Units.*;
 
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.BuildConstants;
@@ -26,6 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.function.Consumer;
 import org.littletonrobotics.junction.Logger;
 
 /**
@@ -56,9 +56,9 @@ public class TestModeRunner {
   static final double PIVOT_SWEEP_TIMEOUT_S = 6.0; // safety timeout for full-range sweep
 
   // ── Pass/fail thresholds (ratio of measured/baseline) ───────────────────
-  static final double WARN_BELOW = 0.65; // WARN if measured < 75% of baseline
-  static final double FAIL_BELOW = 0.50; // FAIL if measured < 50% of baseline
-  static final double WARN_ABOVE = 1.50; // WARN if measured > 130% of baseline
+  static final double WARN_BELOW = 0.85; // WARN if measured < 75% of baseline
+  static final double FAIL_BELOW = 0.75; // FAIL if measured < 50% of baseline
+  static final double WARN_ABOVE = 1.25; // WARN if measured > 130% of baseline
 
   // ── Persistence ─────────────────────────────────────────────────────────
   static final String BASELINE_PATH = "/home/lvuser/test-baseline.properties";
@@ -67,7 +67,6 @@ public class TestModeRunner {
   private final Map<String, List<Double>> allSamples = new LinkedHashMap<>();
   private final List<MotorResult> results = new ArrayList<>();
   private Properties baseline = new Properties();
-  private boolean saveCurrentAsBaseline = false;
 
   // ── Public API ───────────────────────────────────────────────────────────
 
@@ -80,15 +79,15 @@ public class TestModeRunner {
       Shooter shooter,
       Hopper hopper,
       IntakeRoller intakeRoller,
-      IntakePivot intakePivot) {
+      IntakePivot intakePivot,
+      boolean baselineMode,
+      Consumer<Boolean> onComplete) {
 
     return Commands.sequence(
             Commands.runOnce(
                 () -> {
-                  loadBaseline();
-                  SmartDashboard.putBoolean("TestMode/SaveCurrentAsBaseline", false);
-                  saveCurrentAsBaseline =
-                      SmartDashboard.getBoolean("TestMode/SaveCurrentAsBaseline", false);
+                  if (!baselineMode) loadBaseline();
+                  Logger.recordOutput("TestMode/BaselineMode", baselineMode);
                   Logger.recordOutput("TestMode/ActiveStep", "INIT");
                   System.out.println("[TestMode] === Starting Robot Test Sequence ===");
                   DriverStation.reportWarning("[TestMode] Starting test sequence", false);
@@ -106,19 +105,111 @@ public class TestModeRunner {
             Commands.runOnce(
                 () -> {
                   Logger.recordOutput("TestMode/ActiveStep", "COMPLETE");
-                  if (saveCurrentAsBaseline || !hasBaseline()) {
-                    saveBaseline();
-                  }
+                  saveBaseline();
                   String html =
                       TestModeReport.generate(
-                          results, RobotController.getSerialNumber(), BuildConstants.GIT_SHA);
+                          results,
+                          RobotController.getSerialNumber(),
+                          BuildConstants.GIT_SHA,
+                          baselineMode);
                   TestModeReport.writeToDisk(html);
                   TestModeHttpServer.serveReport(html);
+                  if (baselineMode) {
+                    onComplete.accept(true);
+                  } else {
+                    boolean anyFailure =
+                        results.stream()
+                            .anyMatch(
+                                r ->
+                                    r.status() == TestStatus.FAIL || r.status() == TestStatus.WARN);
+                    onComplete.accept(!anyFailure);
+                  }
                   System.out.println("[TestMode] === Test Sequence Complete ===");
                   DriverStation.reportWarning(
                       "[TestMode] Complete — check HTML report on USB drive", false);
                 }))
         .withName("Robot Test Sequence");
+  }
+
+  /**
+   * Ball Path mode: actuates each mechanism in ball-path order without recording data or comparing
+   * baselines. Used to visually verify the full intake→shoot path.
+   */
+  public Command buildBallPathSequence(
+      Shooter shooter, Hopper hopper, IntakeRoller intakeRoller, IntakePivot intakePivot) {
+    double partialAngle =
+        (IntakeConstants.INTAKE_DOWN_VALUE.get() + IntakeConstants.INTAKE_UP_VALUE.get() + 30)
+            / 2.0;
+
+    return Commands.sequence(
+            // 1. Intake pivot down
+            Commands.runOnce(
+                () -> {
+                  Logger.recordOutput("TestMode/ActiveStep", "BALL_PATH_PIVOT_DOWN");
+                  System.out.println("[BallPath] Step 1: Pivot down");
+                }),
+            intakePivot.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
+            Commands.waitSeconds(PIVOT_SETUP_WAIT_S),
+
+            // 2. Intake roller
+            Commands.runOnce(
+                () -> {
+                  Logger.recordOutput("TestMode/ActiveStep", "BALL_PATH_ROLLER");
+                  System.out.println("[BallPath] Step 2: Intake roller");
+                }),
+            intakeRoller.spinIntake(),
+            Commands.waitSeconds(SHORT_STEP_DURATION_S),
+            intakeRoller.stopIntake(),
+            Commands.waitSeconds(STOP_GAP_S),
+
+            // 3. Intake pivot partially up
+            Commands.runOnce(
+                () -> {
+                  Logger.recordOutput("TestMode/ActiveStep", "BALL_PATH_PIVOT_PARTIAL");
+                  System.out.println("[BallPath] Step 3: Pivot partial");
+                }),
+            intakePivot.setIntakeAngle(() -> Degrees.of(partialAngle)),
+            Commands.waitSeconds(PIVOT_SETUP_WAIT_S),
+
+            // 4. Shooter flywheel 10 RPS
+            Commands.runOnce(
+                () -> {
+                  Logger.recordOutput("TestMode/ActiveStep", "BALL_PATH_FLYWHEEL");
+                  System.out.println("[BallPath] Step 4: Flywheel 4 Volts");
+                  shooter.setFlywheelVoltage(Volts.of(4));
+                },
+                shooter),
+            Commands.waitSeconds(SHORT_STEP_DURATION_S),
+
+            // 5. Feeder 10 RPS
+            Commands.runOnce(
+                () -> {
+                  Logger.recordOutput("TestMode/ActiveStep", "BALL_PATH_FEEDER");
+                  System.out.println("[BallPath] Step 5: Feeder 4 Volts");
+                  shooter.setFeederVoltage(Volts.of(4));
+                },
+                shooter),
+            Commands.waitSeconds(SHORT_STEP_DURATION_S),
+
+            // 6. Indexer
+            Commands.runOnce(
+                () -> {
+                  Logger.recordOutput("TestMode/ActiveStep", "BALL_PATH_INDEXER");
+                  System.out.println("[BallPath] Step 6: Indexer");
+                }),
+            hopper.spinFullIndexer(),
+            Commands.waitSeconds(SHORT_STEP_DURATION_S),
+
+            // Stop everything
+            Commands.runOnce(
+                () -> {
+                  Logger.recordOutput("TestMode/ActiveStep", "COMPLETE");
+                  shooter.setFlywheelVoltage(Volts.of(0));
+                  shooter.setFeederVoltage(Volts.of(0));
+                },
+                shooter),
+            hopper.stopFullIndexer())
+        .withName("Ball Path Sequence");
   }
 
   // ── Step builders ────────────────────────────────────────────────────────
@@ -296,7 +387,6 @@ public class TestModeRunner {
 
   private Command pivotStep(IntakePivot intakePivot, IntakeRoller intakeRoller) {
     final String stepUp = "INTAKE_PIVOT_UP";
-    final String stepDown = "INTAKE_PIVOT_DOWN";
     final String key = "Pivot";
 
     return Commands.sequence(
@@ -334,29 +424,6 @@ public class TestModeRunner {
               finalizeStep(stepUp, new String[] {key});
             },
             intakePivot),
-        Commands.waitSeconds(0.3),
-
-        // Down sweep: constant negative voltage from INTAKE_UP to INTAKE_DOWN
-        Commands.runOnce(() -> announceStep(stepDown)),
-        Commands.run(
-                () -> {
-                  intakePivot.io.setIntakeArmVoltage(Volts.of(-PIVOT_TEST_VOLTAGE));
-                  double vel =
-                      Math.abs(intakePivot.inputs.intakeArmVelocity.in(RotationsPerSecond));
-                  recordSample(stepDown, key, vel);
-                  Logger.recordOutput("TestMode/LiveVelocity/Pivot", vel);
-                },
-                intakePivot)
-            .until(
-                () ->
-                    intakePivot.inputs.intakeArmPosition.in(Degrees)
-                        <= IntakeConstants.INTAKE_DOWN_VALUE.get())
-            .withTimeout(PIVOT_SWEEP_TIMEOUT_S)
-            .finallyDo(
-                () -> {
-                  intakePivot.io.setIntakeArmVoltage(Volts.of(0));
-                  finalizeStep(stepDown, new String[] {key});
-                }),
         Commands.waitSeconds(STOP_GAP_S));
   }
 

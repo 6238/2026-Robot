@@ -18,8 +18,20 @@ public class GratuitousLighting extends SubsystemBase {
   /** Set by RobotContainer to reflect the current superstructure state. */
   public Supplier<CurrentState> superState = () -> CurrentState.IDLE;
 
+  /** Set after test-mode completes: true = all pass, false = any failure. Null while running. */
+  private Boolean testResult = null;
+
+  public void setTestResult(Boolean passed) {
+    testResult = passed;
+  }
+
   // All colors/brightness kept at ~20% to avoid blinding drive teams.
   private static final EmptyAnimation idleAnimation = new EmptyAnimation(0);
+
+  private static final SolidColor testPassAnimation =
+      new SolidColor(0, 68).withColor(new RGBWColor(0, 50, 0));
+  private static final SolidColor testFailAnimation =
+      new SolidColor(0, 68).withColor(new RGBWColor(50, 0, 0));
 
   private static final SolidColor intakingAnimation =
       new SolidColor(0, 68).withColor(new RGBWColor(0, 50, 0));
@@ -46,6 +58,11 @@ public class GratuitousLighting extends SubsystemBase {
 
   @Override
   public void periodic() {
+
+    if (testResult != null) {
+      candle.setControl(testResult ? testPassAnimation : testFailAnimation);
+      return;
+    }
 
     if (!DriverStation.isEnabled()) {
       candle.setControl(idleAnimation);

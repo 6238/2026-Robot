@@ -129,8 +129,8 @@ public class ShooterConstants {
 
   static {
     FLYWHEEL_MAP = new ExtrapolatingDoubleTreeMap();
-    FLYWHEEL_MAP.put(2.32, 42.7);
-    FLYWHEEL_MAP.put(2.53, 44.4);
+    FLYWHEEL_MAP.put(2.32, 43.3);
+    FLYWHEEL_MAP.put(2.53, 44.6);
     FLYWHEEL_MAP.put(3.52, 52.3);
     FLYWHEEL_MAP.put(4.14, 55.7);
 

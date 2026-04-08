@@ -4,28 +4,28 @@
     {
       "anchor": {
         "x": 2.2340638864241344,
-        "y": 1.301374622892636
+        "y": 6.750625377107363
       },
       "prevControl": null,
       "nextControl": {
         "x": 2.605367990874103,
-        "y": 0.36719079074141747
+        "y": 7.6848092092585825
       },
       "isLocked": false,
-      "linkedName": "Lower Trench Shoot"
+      "linkedName": "Upper Trench Shoot"
     },
     {
       "anchor": {
         "x": 6.499458740017746,
-        "y": 1.1981100266193425
+        "y": 6.853889973380657
       },
       "prevControl": {
         "x": 6.53729186580222,
-        "y": 0.6873628285289414
+        "y": 7.364637171471058
       },
       "nextControl": {
         "x": 6.418979591836735,
-        "y": 2.2845785270629984
+        "y": 5.767421472937001
       },
       "isLocked": false,
       "linkedName": null
@@ -33,11 +33,11 @@
     {
       "anchor": {
         "x": 6.04072759538598,
-        "y": 3.266424134871339
+        "y": 4.78557586512866
       },
       "prevControl": {
         "x": 6.18612225728017,
-        "y": 2.9696079303474034
+        "y": 5.082392069652596
       },
       "nextControl": null,
       "isLocked": false,
@@ -47,15 +47,15 @@
   "rotationTargets": [
     {
       "waypointRelativePos": 0.26831345826235087,
-      "rotationDegrees": 0.0
+      "rotationDegrees": -0.0
     },
     {
       "waypointRelativePos": 0.6643952299829641,
-      "rotationDegrees": 0.0
+      "rotationDegrees": -0.0
     },
     {
       "waypointRelativePos": 0.8620102214650767,
-      "rotationDegrees": -91.5
+      "rotationDegrees": 91.5
     }
   ],
   "constraintZones": [],
@@ -71,13 +71,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": -87.85855884135461
+    "rotation": 87.85855884135461
   },
   "reversed": false,
-  "folder": "Lower Trench 2.5",
+  "folder": "Upper Trench 2.5",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 48.69685862301559
+    "rotation": -48.69685862301559
   },
   "useDefaultConstraints": false
 }

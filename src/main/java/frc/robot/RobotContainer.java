@@ -95,6 +95,7 @@ public class RobotContainer {
 
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
+  private final LoggedDashboardChooser<String> testModeChooser;
 
   private SwerveDriveSimulation swerveDriveSimulation = null;
   private RobotBumpSim robotBumpSim = null;
@@ -234,6 +235,11 @@ public class RobotContainer {
     }
     autoChooser = tempChooser;
 
+    testModeChooser = new LoggedDashboardChooser<>("Test Mode");
+    testModeChooser.addDefaultOption("Normal", "Normal");
+    testModeChooser.addOption("Baseline", "Baseline");
+    testModeChooser.addOption("Ball Path", "Ball Path");
+
     configureButtonBindings();
   }
 
@@ -342,8 +348,8 @@ public class RobotContainer {
     //     .onFalse(superstructure.setWantedSuperStateCommand(() ->
     // Superstructure.WantedState.IDLE));
 
-    controller.b().whileTrue(AutomaticCommands.automaticCommand(drive, driverOverride));
-    controller.x().whileTrue(AutomaticCommands.neutralToAllianceCommand(drive, driverOverride));
+    controller.b().whileTrue(AutomaticCommands.automaticCommand(drive, () -> false));
+    controller.x().whileTrue(AutomaticCommands.neutralToAllianceCommand(drive, () -> false));
 
     // D-Pad: targeted automations
     // controller.povUp().whileTrue(AutomaticCommands.hubBackWallCommand(drive, driverOverride));
@@ -386,8 +392,22 @@ public class RobotContainer {
 
   /** Returns the test-mode command. Called once per {@code testInit()}. */
   public Command getTestCommand() {
-    return new TestModeRunner()
-        .buildTestSequence(drive, shooter, hopper, intakeRoller, intakePivot);
+    lighting.setTestResult(null);
+    String mode = testModeChooser.get();
+    TestModeRunner runner = new TestModeRunner();
+    if ("Ball Path".equals(mode)) {
+      return runner
+          .buildBallPathSequence(shooter, hopper, intakeRoller, intakePivot)
+          .andThen(Commands.runOnce(() -> lighting.setTestResult(true)));
+    }
+    return runner.buildTestSequence(
+        drive,
+        shooter,
+        hopper,
+        intakeRoller,
+        intakePivot,
+        "Baseline".equals(mode),
+        lighting::setTestResult);
   }
 
   public Drive getDriveSubsystem() {

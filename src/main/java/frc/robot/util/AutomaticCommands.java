@@ -35,7 +35,7 @@ public class AutomaticCommands {
   private static final double BUMP_DETECTION_RADIUS = 3.5;
 
   // Trench wall lineup only activates within this Y distance of the outer wall (trench is at 7.46)
-  private static final double TRENCH_Y_ACTIVATION = 6.0;
+  private static final double TRENCH_Y_ACTIVATION = 6.6;
 
   // Hub back wall (TODO: measure on field)
   public static final Pose2d hubBackWallPose = new Pose2d(4.0, 5.5, Rotation2d.fromDegrees(180));
@@ -150,9 +150,9 @@ public class AutomaticCommands {
     Logger.recordOutput(
         "AutomaticCommands/wallTower/toPose", new Pose2d(toEntry, traversalHeading));
 
-    // Drive field-relative along Y; time = distance / (0.5 joystick * ~3 m/s max)
+    // Drive field-relative along Y; time = distance / (0.5^2 joystick * ~3 m/s max)
     double yDir = toEntry.getY() > fromEntry.getY() ? 1.0 : -1.0;
-    double traversalSeconds = fromEntry.getDistance(toEntry) / 1.5;
+    double traversalSeconds = fromEntry.getDistance(toEntry) * 1.5;
 
     return AutoBuilder.pathfindToPose(fromPose, TRENCH_APPROACH_CONSTRAINTS, 0.0)
         .until(driverOverride)
@@ -256,9 +256,15 @@ public class AutomaticCommands {
   public static Command bumpCommand(Drive drive, BooleanSupplier driverOverride) {
     return Commands.defer(
         () -> {
-          Pose2d target = nearestBump(drive.getPose());
-          Logger.recordOutput("AutomaticCommands/target", target);
-          return AutoBuilder.pathfindToPose(target, CONSTRAINTS, 0.0).until(driverOverride);
+          Pose2d currentPose = drive.getPose();
+          Pose2d target = nearestBump(currentPose);
+          double headingDeg = ((currentPose.getRotation().getDegrees() % 360) + 360) % 360;
+          Rotation2d snappedHeading =
+              (headingDeg < 90 || headingDeg >= 270)
+                  ? Rotation2d.fromDegrees(0)
+                  : Rotation2d.fromDegrees(180);
+          target = new Pose2d(target.getTranslation(), snappedHeading);
+          return AutoBuilder.pathfindToPose(target, CONSTRAINTS, 3.0).until(driverOverride);
         },
         Set.of(drive));
   }
@@ -295,7 +301,7 @@ public class AutomaticCommands {
         .andThen(
             DriveCommands.joystickDriveRobotRelative(
                     drive, () -> 0.0, () -> robotYDir * driveSpeed, () -> 0.0)
-                .withTimeout(0.5));
+                .withTimeout(1.75));
   }
 
   // ── Other commands ────────────────────────────────────────────────────────
