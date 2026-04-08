@@ -233,7 +233,10 @@ public class Superstructure extends SubsystemBase {
         intakeRoller.spin();
         shooter.setFlywheelRPM(shotSetpoint.flywheelSpeed);
         shooter.setFeederSpeed(RotationsPerSecond.of(ShooterConstants.FEEDER_SPEED.get()));
-        hopper.setIndexerSpeed(RotationsPerSecond.of(HopperConstants.INDEXER_SPEED.get()));
+        boolean tooCloseShooting = isTooCloseToHub();
+        Logger.recordOutput("Superstructure/TooCloseToShoot", tooCloseShooting);
+        hopper.setIndexerSpeed(
+            RotationsPerSecond.of(tooCloseShooting ? 0 : HopperConstants.INDEXER_SPEED.get()));
 
         // Top-indexer jam recovery: run forward, reverse 0.2s if jammed (velocity drops to 0)
         // if (topIndexerJamming) {
@@ -406,6 +409,14 @@ public class Superstructure extends SubsystemBase {
       return ShooterConstants.HUB_ROTATION_TOLERANCE_TIGHT.in(Degrees);
     }
     return ShooterConstants.HUB_ROTATION_TOLERANCE.in(Degrees);
+  }
+
+  private boolean isTooCloseToHub() {
+    return drive
+            .getPose()
+            .getTranslation()
+            .getDistance(Constants.HUB_POSE_3D.get().getTranslation().toTranslation2d())
+        < ShooterConstants.MIN_SHOT_DISTANCE_METERS;
   }
 
   public boolean checkHubTolerance() {

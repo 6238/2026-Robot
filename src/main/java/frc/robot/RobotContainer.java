@@ -65,7 +65,6 @@ import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.testmode.TestModeRunner;
 import frc.robot.util.AlertUtils;
 import frc.robot.util.AutomaticCommands;
-import frc.robot.util.BatteryLogger;
 import frc.robot.util.RobotBumpSim;
 import frc.robot.util.RobotIdentity;
 import java.util.function.BooleanSupplier;
@@ -90,9 +89,6 @@ public class RobotContainer {
   private final IntakeRoller intakeRoller;
   private final IntakePivot intakePivot;
   private final Superstructure superstructure;
-  //   private final ObjectDetection objectDetection;
-
-  private final BatteryLogger batteryLogger = new BatteryLogger();
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -211,12 +207,6 @@ public class RobotContainer {
 
     lighting.superState = () -> superstructure.currentSuperState;
 
-    drive.setBatteryLogger(batteryLogger);
-    shooter.setBatteryLogger(batteryLogger);
-    hopper.setBatteryLogger(batteryLogger);
-    intakeRoller.setBatteryLogger(batteryLogger);
-    intakePivot.setBatteryLogger(batteryLogger);
-
     // Set up auto routines
     LoggedDashboardChooser<Command> tempChooser;
     try {
@@ -236,7 +226,6 @@ public class RobotContainer {
           "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
       tempChooser.addOption(
           "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
-      tempChooser.addOption("Flywheel SysId", shooter.flywheelSysId());
     } catch (Exception e) {
       e.printStackTrace();
       Alert alert = new Alert("auto failed to load", AlertType.kError);
@@ -436,10 +425,6 @@ public class RobotContainer {
     Logger.recordOutput("Drive/isOnRamp", robotBumpSim.isOnRamp());
     Logger.recordOutput(
         "FieldSimulation/Fuel", SimulatedArena.getInstance().getGamePiecesArrayByType("Fuel"));
-  }
-
-  public BatteryLogger getBatteryLogger() {
-    return batteryLogger;
   }
 
   public static boolean isRed() {

@@ -1,6 +1,6 @@
 package frc.robot.subsystems.hopper;
 
-import static edu.wpi.first.units.Units.*;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
 
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.Alert;
@@ -9,7 +9,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.util.AlertUtils;
-import frc.robot.util.BatteryLogger;
 import org.littletonrobotics.junction.Logger;
 
 public class Hopper extends SubsystemBase {
@@ -19,12 +18,6 @@ public class Hopper extends SubsystemBase {
   public HopperIO io;
   public HopperIOInputsAutoLogged inputs;
 
-  private BatteryLogger batteryLogger;
-
-  public void setBatteryLogger(BatteryLogger batteryLogger) {
-    this.batteryLogger = batteryLogger;
-  }
-
   public Hopper(HopperIO io) {
     this.io = io;
     this.inputs = new HopperIOInputsAutoLogged();
@@ -33,12 +26,6 @@ public class Hopper extends SubsystemBase {
   public void periodic() {
     io.updateInputs(inputs);
     Logger.processInputs("Hopper", inputs);
-
-    if (batteryLogger != null) {
-      batteryLogger.reportCurrentUsage("Hopper/Indexer", inputs.indexerSupplyCurrent.in(Amps));
-      batteryLogger.reportCurrentUsage(
-          "Hopper/TopIndexer", inputs.topIndexerSupplyCurrent.in(Amps));
-    }
 
     AlertUtils.processCriticalAlert(indexerMotorConnectedAlert, !inputs.indexerTalonConnected);
     // AlertUtils.processCriticalAlert(indexerMotorConnectedAlert,
