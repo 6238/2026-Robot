@@ -106,6 +106,7 @@ public class ShooterConstants {
   public static final Distance HUB_POSITION_TOLERANCE = Meters.of(0.04);
   public static final Angle HUB_ROTATION_TOLERANCE = Degrees.of(1.25);
   public static final Angle HUB_ROTATION_TOLERANCE_TIGHT = Degrees.of(1.25);
+  public static final double MIN_SHOT_DISTANCE_METERS = 2.2;
   public static final double HUB_NEAR_DISTANCE_METERS = 3.0;
   public static final double HUB_HIGH_ROBOT_SPEED_MPS = 2.5;
 
@@ -128,8 +129,8 @@ public class ShooterConstants {
 
   static {
     FLYWHEEL_MAP = new ExtrapolatingDoubleTreeMap();
-    FLYWHEEL_MAP.put(2.32, 42.3);
-    FLYWHEEL_MAP.put(2.53, 44.3);
+    FLYWHEEL_MAP.put(2.32, 42.7);
+    FLYWHEEL_MAP.put(2.53, 44.4);
     FLYWHEEL_MAP.put(3.52, 52.3);
     FLYWHEEL_MAP.put(4.14, 55.7);
 
@@ -144,7 +145,7 @@ public class ShooterConstants {
 
     PASSING_FLYWHEEL_MAP = new ExtrapolatingDoubleTreeMap();
     PASSING_FLYWHEEL_MAP.put(1.5, 27.5 / 0.75);
-    PASSING_FLYWHEEL_MAP.put(3.0, 32.75 / 0.75);
+    PASSING_FLYWHEEL_MAP.put(3.0, 34.75 / 0.75);
 
     PASSING_LEAD_TIME_MAP = new ExtrapolatingDoubleTreeMap();
     for (double d = 0.5; d <= 8.0; d += 0.25) {

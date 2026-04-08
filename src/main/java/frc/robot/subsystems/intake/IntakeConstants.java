@@ -84,23 +84,6 @@ public class IntakeConstants {
   public static final LoggedNetworkNumber OSCILLATE_DUTY_CYCLE =
       new LoggedNetworkNumber("Intake/OscillateDutyCycle", 0.7);
 
-  // DRS (Dynamic Recovery System) — intake lower block detection & mitigation
-  // Detection: pivot targeting DOWN, high current, AND stuck above target for DRS_STUCK_TIMEOUT_S
-  public static final LoggedNetworkNumber DRS_CURRENT_THRESHOLD_AMPS =
-      new LoggedNetworkNumber("DRS/CurrentThresholdAmps", 15.0);
-  public static final LoggedNetworkNumber DRS_ANGLE_ERROR_THRESHOLD_DEGREES =
-      new LoggedNetworkNumber("DRS/AngleErrorThresholdDeg", 30.0);
-  public static final double DRS_TARGET_TOLERANCE_DEGREES = 5.0;
-  public static final double DRS_STUCK_TIMEOUT_SECONDS = 0.1;
-  // Mitigation: lift to middle, drive backward, lower back down
-  public static final LoggedNetworkNumber DRS_MIDDLE_ANGLE_DEGREES =
-      new LoggedNetworkNumber("DRS/MiddleAngleDeg", 70.0);
-  public static final double DRS_MIDDLE_ANGLE_TOLERANCE_DEGREES = 5.0;
-  public static final double DRS_DOWN_ANGLE_TOLERANCE_DEGREES = 5.0;
-  public static final LoggedNetworkNumber DRS_BACKUP_SPEED_MPS =
-      new LoggedNetworkNumber("DRS/BackupSpeedMps", 1.0);
-  public static final double DRS_BACKUP_DURATION_SECONDS = 0.3;
-
   // Roller recovery acceleration
   public static final double ROLLER_RECOVERY_THRESHOLD_RPS = 50.0;
   public static final double ROLLER_RECOVERY_ACCELERATION_RPS2 = 150.0;

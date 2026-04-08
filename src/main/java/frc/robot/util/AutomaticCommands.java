@@ -26,6 +26,17 @@ public class AutomaticCommands {
   public static final Translation2d trenchNeutralEntry = new Translation2d(5.7, 7.46);
   public static final Translation2d trenchAllianceEntry = new Translation2d(3.3, 7.46);
 
+  // One bump on the blue-alliance, top-half side. Two crossing poses: alliance side and neutral
+  // side.
+  // Mirrored over each midline → 4 bumps total on the field.
+  private static final Pose2d bumpAllianceSide =
+      new Pose2d(3.546, 5.455, Rotation2d.fromDegrees(0));
+  private static final Pose2d bumpNeutralSide = new Pose2d(5.654, 5.455, Rotation2d.fromDegrees(0));
+  private static final double BUMP_DETECTION_RADIUS = 3.5;
+
+  // Trench wall lineup only activates within this Y distance of the outer wall (trench is at 7.46)
+  private static final double TRENCH_Y_ACTIVATION = 6.0;
+
   // Hub back wall (TODO: measure on field)
   public static final Pose2d hubBackWallPose = new Pose2d(4.0, 5.5, Rotation2d.fromDegrees(180));
 
@@ -204,26 +215,50 @@ public class AutomaticCommands {
   // ── X Button ─────────────────────────────────────────────────────────────
 
   /**
-   * X button: trench wall lineup. Pathfinds to the neutral entry with the shooter facing field
-   * center (intake facing the outer wall), then backs the intake into the wall to localize.
+   * X button: context-aware.
+   *
+   * <p>Near the horizontal midline (|y - 4.1| &lt; 1.0): navigates over the bump.
+   *
+   * <p>Otherwise: trench wall lineup — pathfinds to neutral entry with intake facing the outer
+   * wall, then backs into the wall to localize.
    */
   public static Command neutralToAllianceCommand(Drive drive, BooleanSupplier driverOverride) {
     return Commands.defer(
         () -> {
           Pose2d pose = drive.getPose();
-          if (pose.getX() < 8 && pose.getY() > 4) {
+          double fieldHeight = 8.21;
+          boolean nearTopWall = pose.getY() > TRENCH_Y_ACTIVATION;
+          boolean nearBottomWall = pose.getY() < fieldHeight - TRENCH_Y_ACTIVATION;
+          if (pose.getX() < 8 && nearTopWall) {
             return trenchWallLineup(drive, trenchNeutralEntry, driverOverride);
           }
-          if (pose.getX() < 8 && pose.getY() < 4) {
+          if (pose.getX() < 8 && nearBottomWall) {
             return trenchWallLineup(
                 drive, FieldFlipUtil.flipHorizontalMidline(trenchNeutralEntry), driverOverride);
           }
-          if (pose.getX() > 8 && pose.getY() > 4) {
+          if (pose.getX() > 8 && nearTopWall) {
             return trenchWallLineup(
                 drive, FieldFlipUtil.flipVerticalMidline(trenchNeutralEntry), driverOverride);
           }
-          return trenchWallLineup(
-              drive, FieldFlipUtil.flipBothMidlines(trenchNeutralEntry), driverOverride);
+          if (pose.getX() > 8 && nearBottomWall) {
+            return trenchWallLineup(
+                drive, FieldFlipUtil.flipBothMidlines(trenchNeutralEntry), driverOverride);
+          }
+          if (nearBump(pose)) {
+            return bumpCommand(drive, driverOverride);
+          }
+          return Commands.none();
+        },
+        Set.of(drive));
+  }
+
+  /** Navigates the robot over the bump to the target crossing pose. */
+  public static Command bumpCommand(Drive drive, BooleanSupplier driverOverride) {
+    return Commands.defer(
+        () -> {
+          Pose2d target = nearestBump(drive.getPose());
+          Logger.recordOutput("AutomaticCommands/target", target);
+          return AutoBuilder.pathfindToPose(target, CONSTRAINTS, 0.0).until(driverOverride);
         },
         Set.of(drive));
   }
@@ -313,6 +348,47 @@ public class AutomaticCommands {
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
+
+  /**
+   * Returns the bump crossing pose the robot should target. The field has 4 bumps (one pose
+   * mirrored over each midline). Each bump has an alliance-side and neutral-side crossing point;
+   * the robot navigates to whichever side it is currently on.
+   */
+  private static Pose2d nearestBump(Pose2d robotPose) {
+    Pose2d allianceSide = bumpAllianceSide;
+    Pose2d neutralSide = bumpNeutralSide;
+    boolean redSide = robotPose.getX() > 8;
+    if (robotPose.getY() < 4.105) {
+      allianceSide =
+          new Pose2d(
+              FieldFlipUtil.flipHorizontalMidline(allianceSide.getTranslation()),
+              allianceSide.getRotation());
+      neutralSide =
+          new Pose2d(
+              FieldFlipUtil.flipHorizontalMidline(neutralSide.getTranslation()),
+              neutralSide.getRotation());
+    }
+    if (redSide) {
+      allianceSide =
+          new Pose2d(
+              FieldFlipUtil.flipVerticalMidline(allianceSide.getTranslation()),
+              allianceSide.getRotation());
+      neutralSide =
+          new Pose2d(
+              FieldFlipUtil.flipVerticalMidline(neutralSide.getTranslation()),
+              neutralSide.getRotation());
+    }
+    // Navigate to the side of the bump that the robot is currently on
+    double bumpMidX = (allianceSide.getX() + neutralSide.getX()) / 2.0;
+    boolean inAllianceZone = redSide ? robotPose.getX() > bumpMidX : robotPose.getX() < bumpMidX;
+    return inAllianceZone ? neutralSide : allianceSide;
+  }
+
+  /** Returns true if the robot is within BUMP_DETECTION_RADIUS of the nearest bump. */
+  private static boolean nearBump(Pose2d robotPose) {
+    return robotPose.getTranslation().getDistance(nearestBump(robotPose).getTranslation())
+        < BUMP_DETECTION_RADIUS;
+  }
 
   /**
    * Returns true if the robot is inside the trench corridor and close enough to the wall that it

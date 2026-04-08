@@ -10,7 +10,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.util.AlertUtils;
-import frc.robot.util.BatteryLogger;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
@@ -24,19 +23,6 @@ public class IntakePivot extends SubsystemBase {
   public Angle targetAngle = Degrees.of(-100);
   private boolean isBrakeMode = true;
 
-  // DRS (Dynamic Recovery System) — intake lower-block detection
-  private double drsStuckTimer = 0.0;
-  private boolean drsTriggered = false;
-  // Ignore DRS for 0.3 s after a new setpoint is commanded (motor inrush looks like a block)
-  private double drsIgnoreTimer = 0.0;
-  private static final double DRS_IGNORE_SECONDS = 0.25;
-
-  private BatteryLogger batteryLogger;
-
-  public void setBatteryLogger(BatteryLogger batteryLogger) {
-    this.batteryLogger = batteryLogger;
-  }
-
   public IntakePivot(IntakePivotIO io) {
     this.io = io;
     this.inputs = new IntakePivotIOInputsAutoLogged();
@@ -47,83 +33,25 @@ public class IntakePivot extends SubsystemBase {
     io.updateInputs(inputs);
     Logger.processInputs("IntakePivot", inputs);
 
-    if (batteryLogger != null) {
-      batteryLogger.reportCurrentUsage("Intake/Pivot", inputs.intakeArmSupplyCurrent.in(Amps));
-    }
-
     AlertUtils.processCriticalAlert(intakeArmMotorConnectedAlert, !inputs.intakeArmTalonConnected);
-
-    // DRS detection: pivot is targeting the ground setpoint, current is high, and it's stuck
-    boolean targetingDown =
-        Math.abs(targetAngle.in(Degrees) - IntakeConstants.INTAKE_DOWN_VALUE.get())
-            < IntakeConstants.DRS_TARGET_TOLERANCE_DEGREES;
-    boolean highCurrent =
-        inputs.intakeArmSupplyCurrent.in(Amps) > IntakeConstants.DRS_CURRENT_THRESHOLD_AMPS.get();
-    boolean stuckAboveTarget =
-        inputs.intakeArmPosition.in(Degrees) - IntakeConstants.INTAKE_DOWN_VALUE.get()
-            > IntakeConstants.DRS_ANGLE_ERROR_THRESHOLD_DEGREES.get();
-    if (drsIgnoreTimer > 0.0) {
-      drsIgnoreTimer -= 0.02;
-    }
-    boolean drsCondition = targetingDown && stuckAboveTarget && drsIgnoreTimer <= 0.0;
-    if (drsCondition) {
-      drsStuckTimer += 0.02;
-      if (drsStuckTimer >= IntakeConstants.DRS_STUCK_TIMEOUT_SECONDS) {
-        drsTriggered = true;
-      }
-    } else {
-      drsStuckTimer = 0.0;
-      drsTriggered = false;
-    }
 
     Logger.recordOutput("Intake/currentAngle", inputs.intakeArmPosition.in(Degrees));
     Logger.recordOutput("Intake/targetAngle", targetAngle.in(Degrees));
-    Logger.recordOutput("IntakePivot/DRS/Triggered", drsTriggered);
-    Logger.recordOutput("IntakePivot/DRS/Condition", drsCondition);
-    Logger.recordOutput("IntakePivot/DRS/StuckTimerSecs", drsStuckTimer);
-    Logger.recordOutput("IntakePivot/DRS/IgnoreTimerSecs", drsIgnoreTimer);
-  }
-
-  /** Returns true when a lower-block has been detected and DRS should fire. */
-  public boolean isDRSTriggered() {
-    return drsTriggered;
-  }
-
-  /** Clears the DRS latch and resets the stuck timer. Call after recovery is complete. */
-  public void resetDRS() {
-    drsTriggered = false;
-    drsStuckTimer = 0.0;
-    drsIgnoreTimer = DRS_IGNORE_SECONDS;
-  }
-
-  /** Force-triggers DRS immediately. For testing only. */
-  public void forceTriggerDRS() {
-    drsTriggered = true;
   }
 
   public Command setIntakeAngle(Supplier<Angle> angleSupplier) {
     return runOnce(
         () -> {
           Angle newAngle = angleSupplier.get();
-          boolean changed = Math.abs(newAngle.in(Degrees) - targetAngle.in(Degrees)) > 2.0;
           targetAngle = newAngle;
           Logger.recordOutput("Intake/targetAngle", targetAngle);
           io.setIntakePosition(newAngle);
-          if (changed) {
-            drsIgnoreTimer = DRS_IGNORE_SECONDS;
-            drsStuckTimer = 0.0;
-          }
         });
   }
 
   public void setAngle(Angle angle) {
-    boolean changed = Math.abs(angle.in(Degrees) - targetAngle.in(Degrees)) > 2.0;
     targetAngle = angle;
     io.setIntakePosition(angle);
-    if (changed) {
-      drsIgnoreTimer = DRS_IGNORE_SECONDS;
-      drsStuckTimer = 0.0;
-    }
   }
 
   public Command setIntakeArmVoltage(Supplier<Voltage> voltageSupplier) {

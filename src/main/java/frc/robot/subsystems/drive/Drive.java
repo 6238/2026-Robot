@@ -62,7 +62,6 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
-import frc.robot.util.BatteryLogger;
 import frc.robot.util.LocalADStarAK;
 import frc.robot.util.RobotIdentity;
 import java.util.Optional;
@@ -98,6 +97,22 @@ public class Drive extends SubsystemBase {
               Math.hypot(
                   RobotIdentity.getTunerConstants().BackRight.LocationX,
                   RobotIdentity.getTunerConstants().BackRight.LocationY)));
+
+  private static final Translation2d[] MODULE_TRANSLATIONS =
+      new Translation2d[] {
+        new Translation2d(
+            RobotIdentity.getTunerConstants().FrontLeft.LocationX,
+            RobotIdentity.getTunerConstants().FrontLeft.LocationY),
+        new Translation2d(
+            RobotIdentity.getTunerConstants().FrontRight.LocationX,
+            RobotIdentity.getTunerConstants().FrontRight.LocationY),
+        new Translation2d(
+            RobotIdentity.getTunerConstants().BackLeft.LocationX,
+            RobotIdentity.getTunerConstants().BackLeft.LocationY),
+        new Translation2d(
+            RobotIdentity.getTunerConstants().BackRight.LocationX,
+            RobotIdentity.getTunerConstants().BackRight.LocationY)
+      };
 
   // PathPlanner config constants
   private static final double ROBOT_MASS_KG = Pounds.of(105).in(Kilograms);
@@ -137,17 +152,29 @@ public class Drive extends SubsystemBase {
   private SwerveDrivePoseEstimator poseEstimator =
       new SwerveDrivePoseEstimator(kinematics, rawGyroRotation, lastModulePositions, new Pose2d());
 
+  // Pre-allocated odometry arrays — reused every cycle to avoid per-sample allocation.
+  // Elements are initialized in the constructor and mutated in place each cycle.
+  private final SwerveModulePosition[] odometryModulePositions =
+      new SwerveModulePosition[] {
+        new SwerveModulePosition(),
+        new SwerveModulePosition(),
+        new SwerveModulePosition(),
+        new SwerveModulePosition()
+      };
+  private final SwerveModulePosition[] odometryModuleDeltas =
+      new SwerveModulePosition[] {
+        new SwerveModulePosition(),
+        new SwerveModulePosition(),
+        new SwerveModulePosition(),
+        new SwerveModulePosition()
+      };
+
   private final SwerveSetpointGenerator setpointGenerator;
   private SwerveSetpoint previousSetpoint;
   private SwerveDriveSimulation sim;
   private final Field2d m_field = new Field2d();
 
-  private BatteryLogger batteryLogger;
   private BaseStatusSignal[] allSignals;
-
-  public void setBatteryLogger(BatteryLogger batteryLogger) {
-    this.batteryLogger = batteryLogger;
-  }
 
   public Drive(
       GyroIO gyroIO,
@@ -240,16 +267,6 @@ public class Drive extends SubsystemBase {
     }
     odometryLock.unlock();
 
-    if (batteryLogger != null) {
-      String[] moduleNames = {"Module0", "Module1", "Module2", "Module3"};
-      for (int i = 0; i < 4; i++) {
-        batteryLogger.reportCurrentUsage(
-            "Drive/" + moduleNames[i] + "-Drive", modules[i].getDriveSupplyCurrentAmps());
-        batteryLogger.reportCurrentUsage(
-            "Drive/" + moduleNames[i] + "-Turn", modules[i].getTurnSupplyCurrentAmps());
-      }
-    }
-
     // Stop moving when disabled
     if (DriverStation.isDisabled()) {
       for (var module : modules) {
@@ -268,17 +285,15 @@ public class Drive extends SubsystemBase {
         modules[0].getOdometryTimestamps(); // All signals are sampled together
     int sampleCount = sampleTimestamps.length;
     for (int i = 0; i < sampleCount; i++) {
-      // Read wheel positions and deltas from each module
-      SwerveModulePosition[] modulePositions = new SwerveModulePosition[4];
-      SwerveModulePosition[] moduleDeltas = new SwerveModulePosition[4];
+      // Read wheel positions and deltas from each module, mutating pre-allocated objects
       for (int moduleIndex = 0; moduleIndex < 4; moduleIndex++) {
-        modulePositions[moduleIndex] = modules[moduleIndex].getOdometryPositions()[i];
-        moduleDeltas[moduleIndex] =
-            new SwerveModulePosition(
-                modulePositions[moduleIndex].distanceMeters
-                    - lastModulePositions[moduleIndex].distanceMeters,
-                modulePositions[moduleIndex].angle);
-        lastModulePositions[moduleIndex] = modulePositions[moduleIndex];
+        SwerveModulePosition odometryPos = modules[moduleIndex].getOdometryPositions()[i];
+        odometryModuleDeltas[moduleIndex].distanceMeters =
+            odometryPos.distanceMeters - lastModulePositions[moduleIndex].distanceMeters;
+        odometryModuleDeltas[moduleIndex].angle = odometryPos.angle;
+        odometryModulePositions[moduleIndex].distanceMeters = odometryPos.distanceMeters;
+        odometryModulePositions[moduleIndex].angle = odometryPos.angle;
+        lastModulePositions[moduleIndex] = odometryPos;
       }
 
       // Update gyro angle
@@ -287,12 +302,12 @@ public class Drive extends SubsystemBase {
         rawGyroRotation = gyroInputs.odometryYawPositions[i];
       } else {
         // Use the angle delta from the kinematics and module deltas
-        Twist2d twist = kinematics.toTwist2d(moduleDeltas);
+        Twist2d twist = kinematics.toTwist2d(odometryModuleDeltas);
         rawGyroRotation = rawGyroRotation.plus(new Rotation2d(twist.dtheta));
       }
 
       // Apply update
-      poseEstimator.updateWithTime(sampleTimestamps[i], rawGyroRotation, modulePositions);
+      poseEstimator.updateWithTime(sampleTimestamps[i], rawGyroRotation, odometryModulePositions);
     }
 
     // Update gyro alert
@@ -475,22 +490,9 @@ public class Drive extends SubsystemBase {
     return getMaxLinearSpeedMetersPerSec() / DRIVE_BASE_RADIUS;
   }
 
-  /** Returns an array of module translations. */
+  /** Returns the cached array of module translations. */
   public static Translation2d[] getModuleTranslations() {
-    return new Translation2d[] {
-      new Translation2d(
-          RobotIdentity.getTunerConstants().FrontLeft.LocationX,
-          RobotIdentity.getTunerConstants().FrontLeft.LocationY),
-      new Translation2d(
-          RobotIdentity.getTunerConstants().FrontRight.LocationX,
-          RobotIdentity.getTunerConstants().FrontRight.LocationY),
-      new Translation2d(
-          RobotIdentity.getTunerConstants().BackLeft.LocationX,
-          RobotIdentity.getTunerConstants().BackLeft.LocationY),
-      new Translation2d(
-          RobotIdentity.getTunerConstants().BackRight.LocationX,
-          RobotIdentity.getTunerConstants().BackRight.LocationY)
-    };
+    return MODULE_TRANSLATIONS;
   }
 
   public Command pathfindToPoseFaced(

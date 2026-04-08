@@ -11,7 +11,6 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.util.AlertUtils;
-import frc.robot.util.BatteryLogger;
 import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.Logger;
 
@@ -35,12 +34,6 @@ public class IntakeRoller extends SubsystemBase {
       new Debouncer(IntakeConstants.STALL_DEBOUNCE_SECONDS, DebounceType.kRising);
   private final Runnable onJamDetected;
 
-  private BatteryLogger batteryLogger;
-
-  public void setBatteryLogger(BatteryLogger batteryLogger) {
-    this.batteryLogger = batteryLogger;
-  }
-
   public void setPivotAngleSupplier(DoubleSupplier supplier) {
     this.pivotAngleDegSupplier = supplier;
   }
@@ -62,10 +55,6 @@ public class IntakeRoller extends SubsystemBase {
 
     Logger.recordOutput(
         "IntakeRoller/currentVelocity", inputs.intakeVelocity.in(RotationsPerSecond));
-
-    if (batteryLogger != null) {
-      batteryLogger.reportCurrentUsage("Intake/Roller", inputs.intakeSupplyCurrent.in(Amps));
-    }
 
     AlertUtils.processCriticalAlert(intakeMotorConnectedAlert, !inputs.intakeTalonConnected);
 
