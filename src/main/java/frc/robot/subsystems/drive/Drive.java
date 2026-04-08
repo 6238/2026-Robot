@@ -114,6 +114,8 @@ public class Drive extends SubsystemBase {
             RobotIdentity.getTunerConstants().BackRight.LocationY)
       };
 
+  private static final SwerveModuleState[] EMPTY_MODULE_STATES = new SwerveModuleState[] {};
+
   // PathPlanner config constants
   private static final double ROBOT_MASS_KG = Pounds.of(105).in(Kilograms);
   private static final double ROBOT_MOI = 4.35;
@@ -276,8 +278,8 @@ public class Drive extends SubsystemBase {
 
     // Log empty setpoint states when disabled
     if (DriverStation.isDisabled()) {
-      Logger.recordOutput("SwerveStates/Setpoints", new SwerveModuleState[] {});
-      Logger.recordOutput("SwerveStates/SetpointsOptimized", new SwerveModuleState[] {});
+      Logger.recordOutput("SwerveStates/Setpoints", EMPTY_MODULE_STATES);
+      Logger.recordOutput("SwerveStates/SetpointsOptimized", EMPTY_MODULE_STATES);
     }
 
     // Update odometry
@@ -293,7 +295,8 @@ public class Drive extends SubsystemBase {
         odometryModuleDeltas[moduleIndex].angle = odometryPos.angle;
         odometryModulePositions[moduleIndex].distanceMeters = odometryPos.distanceMeters;
         odometryModulePositions[moduleIndex].angle = odometryPos.angle;
-        lastModulePositions[moduleIndex] = odometryPos;
+        lastModulePositions[moduleIndex].distanceMeters = odometryPos.distanceMeters;
+        lastModulePositions[moduleIndex].angle = odometryPos.angle;
       }
 
       // Update gyro angle
