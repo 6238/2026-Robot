@@ -168,7 +168,7 @@ public class Robot extends LoggedRobot {
       shiftTimeRemaining = matchTime;
     }
     Logger.recordOutput("Match/CurrentShift", shiftName);
-    Logger.recordOutput("Match/ShiftTimeRemaining", shiftTimeRemaining);
+    Logger.recordOutput("Match/ShiftTimeRemaining", String.format("%.1f", shiftTimeRemaining));
 
     Logger.recordOutput("ACTIVE", RobotContainer.isHubActive(matchTime));
   }

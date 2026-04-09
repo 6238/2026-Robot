@@ -76,11 +76,11 @@ public class AutomaticCommands {
         () -> {
           Pose2d pose = drive.getPose();
           // Wall tower (near own alliance wall)
-          if (pose.getX() < 2.0) {
+          if (pose.getX() < 1.0) {
             return wallTowerCommand(
                 drive, wallTowerTopEntry, wallTowerBottomEntry, pose, driverOverride);
           }
-          if (pose.getX() > 14.0) {
+          if (pose.getX() > 15.0) {
             return wallTowerCommand(
                 drive,
                 FieldFlipUtil.flipVerticalMidline(wallTowerTopEntry),
@@ -151,7 +151,9 @@ public class AutomaticCommands {
         "AutomaticCommands/wallTower/toPose", new Pose2d(toEntry, traversalHeading));
 
     // Drive field-relative along Y; time = distance / (0.5^2 joystick * ~3 m/s max)
-    double yDir = toEntry.getY() > fromEntry.getY() ? 1.0 : -1.0;
+    // joystickDrive negates field-relative velocity on red alliance, so compensate here.
+    double rawYDir = toEntry.getY() > fromEntry.getY() ? 1.0 : -1.0;
+    double yDir = fromEntry.getX() > 8 ? -rawYDir : rawYDir;
     double traversalSeconds = fromEntry.getDistance(toEntry) * 1.5;
 
     return AutoBuilder.pathfindToPose(fromPose, TRENCH_APPROACH_CONSTRAINTS, 0.0)
@@ -288,7 +290,7 @@ public class AutomaticCommands {
     // Compute the robot-Y direction that points toward the alliance zone.
     double fieldXToAlliance = neutralEntry.getX() < 8 ? -1.0 : 1.0;
     double robotYDir = fieldXToAlliance * (-shooterFacing.getSin());
-    double driveSpeed = 1.4 / 3.0; // 1.4 m/s as fraction of ~3 m/s max
+    double driveSpeed = 0.65; // 1.4 m/s as fraction of ~3 m/s max
 
     return AutoBuilder.pathfindToPose(alignPose, TRENCH_APPROACH_CONSTRAINTS, 0.0)
         .until(driverOverride)

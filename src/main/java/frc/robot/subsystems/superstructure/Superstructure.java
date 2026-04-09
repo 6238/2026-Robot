@@ -197,11 +197,11 @@ public class Superstructure extends SubsystemBase {
         if (ShooterConstants.SPINUP_WHEN_HUB_ACTIVE && hubSpinupActive.getAsBoolean()) {
           shooter.setFlywheelRPM(
               RotationsPerSecond.of(ShooterConstants.SPINUP_FLYWHEEL_SPEED.get()));
-          hopper.spinFullIndexer(RotationsPerSecond.of(-20), RotationsPerSecond.of(-20));
+          // hopper.spinFullIndexer(RotationsPerSecond.of(-20), RotationsPerSecond.of(-20));
           wasHubSpinupActive = true;
         } else if (wasHubSpinupActive) {
           shooter.setFlywheelVoltage(Volts.of(0));
-          hopper.stopFullIndexer();
+          // hopper.stopFullIndexer();
           wasHubSpinupActive = false;
         }
         break;
@@ -225,7 +225,7 @@ public class Superstructure extends SubsystemBase {
             || wantedSuperState == WantedState.PASS_INTAKE) intakeRoller.spin();
         hopper.setIndexerSpeed(RotationsPerSecond.of(firstSpinup ? -14 : 0));
         hopper.setTopIndexerSpeed(RotationsPerSecond.of(firstSpinup ? -14 : 0));
-        shooter.setFeederVoltage(Volts.of(firstSpinup ? -12 : 0));
+        shooter.setFeederVoltage(Volts.of(firstSpinup ? 0 : 0));
         shooter.setFlywheelRPM(shotSetpoint.flywheelSpeed);
         if (!readyToShoot()) break;
         if (wantedSuperState == WantedState.SHOOTING

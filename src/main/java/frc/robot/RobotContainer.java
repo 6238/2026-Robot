@@ -499,7 +499,7 @@ public class RobotContainer {
     if (!DriverStation.isTeleopEnabled()) return false;
 
     String gameData = DriverStation.getGameSpecificMessage();
-    if (gameData.isEmpty()) return true;
+    if (gameData.isEmpty()) return false;
 
     boolean redInactiveFirst =
         switch (gameData.charAt(0)) {

@@ -32,7 +32,7 @@ public class ShooterConstants {
 
   public static final LoggedNetworkPIDFeedforwardGains FLYWHEEL_GAINS =
       new LoggedNetworkPIDFeedforwardGains(
-          0.5, // kP
+          0.7, // kP
           0, // kI
           0, // kD
           0.17 * 1 / FLYWHEEL_GEARING, // kA
@@ -57,7 +57,7 @@ public class ShooterConstants {
 
   public static final LoggedNetworkPIDFeedforwardGains FEEDER_GAINS =
       new LoggedNetworkPIDFeedforwardGains(
-          0.5, // kP
+          0.7, // kP
           0.0, // kI
           0, // kD
           0.1725 * FEEDER_GEARING, // kA
