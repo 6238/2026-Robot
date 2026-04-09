@@ -107,7 +107,7 @@ public class IntakeRollerIOTalonFX implements IntakeRollerIO {
       notSwapped = false;
     }
 
-    Logger.recordOutput("swapped leader follower", !notSwapped);
+    if (!Constants.MINIMAL_LOGGING) Logger.recordOutput("swapped leader follower", !notSwapped);
   }
 
   @Override
@@ -125,7 +125,7 @@ public class IntakeRollerIOTalonFX implements IntakeRollerIO {
     double targetVelocity = speed.in(RotationsPerSecond);
     boolean recovering =
         currentVelocity < (targetVelocity - IntakeConstants.ROLLER_RECOVERY_THRESHOLD_RPS);
-    Logger.recordOutput("intakerollerrecovering", recovering);
+    if (!Constants.MINIMAL_LOGGING) Logger.recordOutput("intakerollerrecovering", recovering);
     if (!notSwapped) {
       intakeFollowerTalon.setControl(
           velocityVoltage

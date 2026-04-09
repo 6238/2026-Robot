@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants;
 import frc.robot.util.AlertUtils;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
@@ -35,8 +36,10 @@ public class IntakePivot extends SubsystemBase {
 
     AlertUtils.processCriticalAlert(intakeArmMotorConnectedAlert, !inputs.intakeArmTalonConnected);
 
-    Logger.recordOutput("Intake/currentAngle", inputs.intakeArmPosition.in(Degrees));
-    Logger.recordOutput("Intake/targetAngle", targetAngle.in(Degrees));
+    if (!Constants.MINIMAL_LOGGING) {
+      Logger.recordOutput("Intake/currentAngle", inputs.intakeArmPosition.in(Degrees));
+      Logger.recordOutput("Intake/targetAngle", targetAngle.in(Degrees));
+    }
   }
 
   public Command setIntakeAngle(Supplier<Angle> angleSupplier) {
@@ -44,7 +47,6 @@ public class IntakePivot extends SubsystemBase {
         () -> {
           Angle newAngle = angleSupplier.get();
           targetAngle = newAngle;
-          Logger.recordOutput("Intake/targetAngle", targetAngle);
           io.setIntakePosition(newAngle);
         });
   }
@@ -131,18 +133,18 @@ public class IntakePivot extends SubsystemBase {
                 }
               }
 
-              Logger.recordOutput("IntakePivot/CrawlIsBackingOff", isBackingOff[0]);
-              Logger.recordOutput("IntakePivot/CrawlBackoffTriggered", backoffTriggered[0]);
-              Logger.recordOutput("IntakePivot/CrawlScaledVoltage", scaledVoltage);
-              Logger.recordOutput(
-                  "IntakePivot/CrawlScaledCurrentThreshold", scaledCurrentThreshold);
+              if (!Constants.MINIMAL_LOGGING) {
+                Logger.recordOutput("IntakePivot/CrawlIsBackingOff", isBackingOff[0]);
+                Logger.recordOutput("IntakePivot/CrawlBackoffTriggered", backoffTriggered[0]);
+                Logger.recordOutput("IntakePivot/CrawlScaledVoltage", scaledVoltage);
+                Logger.recordOutput(
+                    "IntakePivot/CrawlScaledCurrentThreshold", scaledCurrentThreshold);
+              }
             },
             this)
         .finallyDo(
             () -> {
               io.setIntakeArmVoltage(Volts.of(0));
-              Logger.recordOutput("IntakePivot/CrawlIsBackingOff", false);
-              Logger.recordOutput("IntakePivot/CrawlBackoffTriggered", false);
             });
   }
 
@@ -151,7 +153,6 @@ public class IntakePivot extends SubsystemBase {
             () -> {
               isBrakeMode = !isBrakeMode;
               io.setBrakeMode(isBrakeMode);
-              Logger.recordOutput("IntakePivot/IsBrakeMode", isBrakeMode);
             })
         .ignoringDisable(true);
   }

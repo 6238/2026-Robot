@@ -525,6 +525,6 @@ public class RobotContainer {
   }
 
   public void teleopInit() {
-    superstructure.setWantedSuperState(WantedState.INTAKING); 
+    superstructure.setWantedSuperState(WantedState.INTAKING);
   }
 }

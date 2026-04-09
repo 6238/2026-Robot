@@ -77,16 +77,10 @@ public class ShooterConstants {
           0.0, // kG
           "ShooterFeeder");
 
-  // RPS of flywheel speed added per RPS of feeder deficit (feeder below target → boost flywheel)
-  public static final LoggedNetworkNumber FEEDER_COMPENSATION_GAIN =
-      new LoggedNetworkNumber("Shooter/FeederCompensationGain", 0.5);
-
   public static final LoggedNetworkNumber SPINUP_FLYWHEEL_SPEED =
       new LoggedNetworkNumber("Shooter/SpinupFlywheelRPM", 70);
   public static final LoggedNetworkNumber FEEDER_SPEED =
       new LoggedNetworkNumber("Shooter/FeederRPS", 60);
-  public static final LoggedNetworkNumber LEAD_TIME_SEC =
-      new LoggedNetworkNumber("Shooter/LEAD_TIME", 0.1);
 
   // SHOT SETPOINTS
   public static final Angle FIXED_HOOD_ANGLE_DEGREES = Degrees.of(60.5);

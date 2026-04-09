@@ -8,6 +8,7 @@ import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants;
 import frc.robot.util.AlertUtils;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
@@ -72,9 +73,11 @@ public class Shooter extends SubsystemBase {
       ballShotDetected = false;
     }
 
-    Logger.recordOutput("Shooter/velocityBelowThreshold", !prevAboveThreshold);
-    Logger.recordOutput("Shooter/ballExitedFlywheel", ballExitedFlywheel());
-    Logger.recordOutput("Shooter/targetVelocity", targetFlywheelVelocity.in(RotationsPerSecond));
+    if (!Constants.MINIMAL_LOGGING) {
+      Logger.recordOutput("Shooter/velocityBelowThreshold", !prevAboveThreshold);
+      Logger.recordOutput("Shooter/ballExitedFlywheel", ballExitedFlywheel());
+      Logger.recordOutput("Shooter/targetVelocity", targetFlywheelVelocity.in(RotationsPerSecond));
+    }
 
     // update alerts based on motor connection status
     AlertUtils.processCriticalAlert(shooterMotorConnectedAlert, !inputs.flywheelTalonConnected);

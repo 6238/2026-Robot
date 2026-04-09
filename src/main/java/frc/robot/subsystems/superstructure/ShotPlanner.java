@@ -42,10 +42,12 @@ public class ShotPlanner {
     double predictedDistanceM = robotTranslation.getDistance(virtualTarget);
     double flywheelSpeed = ShooterConstants.FLYWHEEL_MAP.get(predictedDistanceM);
 
-    Logger.recordOutput(
-        "ShotPlanner/predictedTranslation", new Pose2d(virtualTarget, Rotation2d.kZero));
-    Logger.recordOutput("ShotPlanner/leadTime", leadTimeSec);
-    Logger.recordOutput("ShotPlanner/predictedDistance", predictedDistanceM);
+    if (!Constants.MINIMAL_LOGGING) {
+      Logger.recordOutput(
+          "ShotPlanner/predictedTranslation", new Pose2d(virtualTarget, Rotation2d.kZero));
+      Logger.recordOutput("ShotPlanner/leadTime", leadTimeSec);
+      Logger.recordOutput("ShotPlanner/predictedDistance", predictedDistanceM);
+    }
 
     Pose2d lookAtHubPose2d =
         new Pose2d(robotTranslation, virtualTarget.minus(robotTranslation).getAngle());
@@ -89,10 +91,12 @@ public class ShotPlanner {
     double flywheelSpeed =
         Math.min(ShooterConstants.PASSING_FLYWHEEL_MAP.get(predictedDistanceM), 85.0);
 
-    Logger.recordOutput(
-        "ShotPlanner/predictedTranslation", new Pose2d(virtualTarget, Rotation2d.kZero));
-    Logger.recordOutput("ShotPlanner/leadTime", leadTimeSec);
-    Logger.recordOutput("ShotPlanner/predictedDistance", predictedDistanceM);
+    if (!Constants.MINIMAL_LOGGING) {
+      Logger.recordOutput(
+          "ShotPlanner/predictedTranslation", new Pose2d(virtualTarget, Rotation2d.kZero));
+      Logger.recordOutput("ShotPlanner/leadTime", leadTimeSec);
+      Logger.recordOutput("ShotPlanner/predictedDistance", predictedDistanceM);
+    }
 
     Pose2d lookAtHubPose2d =
         new Pose2d(robotTranslation, virtualTarget.minus(robotTranslation).getAngle());
@@ -147,9 +151,11 @@ public class ShotPlanner {
         new Pose2d(drivePose.getTranslation(), Rotation2d.fromDegrees(chassisHeadingDeg));
 
     // Log the polynomial outputs
-    Logger.recordOutput("ShotPlanner/polyFlywheelMps", flywheelSpeedMps);
-    Logger.recordOutput("ShotPlanner/polyHoodDeg", hoodAngleDeg);
-    Logger.recordOutput("ShotPlanner/polyChassisHeadingDeg", chassisHeadingDeg);
+    if (!Constants.MINIMAL_LOGGING) {
+      Logger.recordOutput("ShotPlanner/polyFlywheelMps", flywheelSpeedMps);
+      Logger.recordOutput("ShotPlanner/polyHoodDeg", hoodAngleDeg);
+      Logger.recordOutput("ShotPlanner/polyChassisHeadingDeg", chassisHeadingDeg);
+    }
 
     return new ShotSetpoint(
         flywheelRps, hoodAngle, robotPose, driveChassisSpeeds, hubTranslation2d);

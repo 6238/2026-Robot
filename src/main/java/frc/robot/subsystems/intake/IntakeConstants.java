@@ -87,11 +87,4 @@ public class IntakeConstants {
   // Roller recovery acceleration
   public static final double ROLLER_RECOVERY_THRESHOLD_RPS = 50.0;
   public static final double ROLLER_RECOVERY_ACCELERATION_RPS2 = 150.0;
-
-  // Slingshot (roller pullback + release during shooting)
-  public static final double SLINGSHOT_PULLBACK_ROTATIONS = 0.5;
-  public static final LoggedNetworkNumber SLINGSHOT_PULLBACK_SPEED_RPS =
-      new LoggedNetworkNumber("Intake/SlingshotPullbackSpeed", 5.0);
-  public static final LoggedNetworkNumber SLINGSHOT_FORWARD_WAIT_SECONDS =
-      new LoggedNetworkNumber("Intake/SlingshotForwardWait", 0.5);
 }

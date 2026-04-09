@@ -64,6 +64,9 @@ public class Superstructure extends SubsystemBase {
   private final Timer noShotTimer = new Timer();
   // Prevents jam-recovery from re-triggering for 1.5 s after it last fired
   private final Timer noShotCooldownTimer = new Timer();
+  // Holds flywheel at shot speed for 0.5 s after returning to IDLE
+  private final Timer postShotHoldTimer = new Timer();
+  private static final double POST_SHOT_HOLD_SECONDS = 0.5;
   private boolean crawlUpScheduled = false;
   private boolean firstSpinup = true;
 
@@ -99,6 +102,7 @@ public class Superstructure extends SubsystemBase {
     this.intakeRoller = intakeRoller;
     this.swerveDriveSimulation = swerveDriveSimulation;
     noShotCooldownTimer.start(); // already-elapsed at match start
+    postShotHoldTimer.start(); // already-elapsed at match start
   }
 
   public void setWantedSuperState(WantedState wantedSuperState) {
@@ -118,14 +122,19 @@ public class Superstructure extends SubsystemBase {
     switch (wantedSuperState) {
       case IDLE:
         if (currentSuperState != CurrentState.IDLE) {
+          boolean wasShootingOrPassing =
+              currentSuperState == CurrentState.SHOOTING
+                  || currentSuperState == CurrentState.PASSING
+                  || currentSuperState == CurrentState.SPINNING_UP;
+          if (wasShootingOrPassing) postShotHoldTimer.restart();
           currentSuperState = CurrentState.IDLE;
           crawlUpScheduled = false;
           hopper.setIndexerSpeed(RotationsPerSecond.of(0));
           hopper.setTopIndexerSpeed(RotationsPerSecond.of(0));
-          shooter.setFlywheelVoltage(Volts.of(0));
           shooter.setFeederVoltage(Volts.of(0));
           intakeRoller.stop();
           intake.io.setIntakeArmVoltage(Volts.of(0));
+          if (!wasShootingOrPassing) shooter.setFlywheelVoltage(Volts.of(0));
         }
         break;
       case INTAKING:
@@ -180,6 +189,11 @@ public class Superstructure extends SubsystemBase {
         // hopper.setIndexerSpeed(RotationsPerSecond.of(firstSpinup ? -10 : 0));
         // hopper.setTopIndexerSpeed(RotationsPerSecond.of(firstSpinup ? -10 : 0));
         // shooter.setFeederVoltage(Volts.of(firstSpinup ? -2 : 0));
+        if (!postShotHoldTimer.hasElapsed(POST_SHOT_HOLD_SECONDS)) {
+          shooter.setFlywheelRPM(shotSetpoint.flywheelSpeed);
+          break;
+        }
+        shooter.setFlywheelVoltage(Volts.of(0));
         if (ShooterConstants.SPINUP_WHEN_HUB_ACTIVE && hubSpinupActive.getAsBoolean()) {
           shooter.setFlywheelRPM(
               RotationsPerSecond.of(ShooterConstants.SPINUP_FLYWHEEL_SPEED.get()));
@@ -246,7 +260,8 @@ public class Superstructure extends SubsystemBase {
         shooter.setFlywheelRPM(shotSetpoint.flywheelSpeed);
         shooter.setFeederSpeed(RotationsPerSecond.of(ShooterConstants.FEEDER_SPEED.get()));
         boolean tooCloseShooting = isTooCloseToHub();
-        Logger.recordOutput("Superstructure/TooCloseToShoot", tooCloseShooting);
+        if (!Constants.MINIMAL_LOGGING)
+          Logger.recordOutput("Superstructure/TooCloseToShoot", tooCloseShooting);
         hopper.setIndexerSpeed(
             RotationsPerSecond.of(tooCloseShooting ? 0 : HopperConstants.INDEXER_SPEED.get()));
 
@@ -292,11 +307,9 @@ public class Superstructure extends SubsystemBase {
           noShotCooldownTimer.restart();
           crawlUpScheduled = false;
           oscTimer = 0.0;
-          Logger.recordOutput("Superstructure/NoShotTrigger", true);
+          if (!Constants.MINIMAL_LOGGING) Logger.recordOutput("Superstructure/NoShotTrigger", true);
           intake.io.setIntakeArmVoltage(Volts.of(0));
           intake.setAngle(Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get()));
-        } else {
-          Logger.recordOutput("Superstructure/NoShotTrigger", false);
         }
 
         simulateShot();
@@ -338,8 +351,10 @@ public class Superstructure extends SubsystemBase {
 
     intake.setAngle(Degrees.of(setpoint));
 
-    Logger.recordOutput("Superstructure/OscillationCenter", center);
-    Logger.recordOutput("Superstructure/OscillationSetpoint", setpoint);
+    if (!Constants.MINIMAL_LOGGING) {
+      Logger.recordOutput("Superstructure/OscillationCenter", center);
+      Logger.recordOutput("Superstructure/OscillationSetpoint", setpoint);
+    }
   }
 
   public void simulateShot() {
@@ -395,18 +410,20 @@ public class Superstructure extends SubsystemBase {
         shooter.flywheelUpToSpeed(ShooterConstants.BIG_FLYWHEEL_TOLERANCE_BEFORE_SHOT);
     boolean hubSetpoint = checkHubTolerance();
 
-    Logger.recordOutput("Superstructure/ShooterSpeedSetpoint", shooterSpeedSetpoint);
-    Logger.recordOutput("Superstructure/HubRotationSetpoint", hubSetpoint);
-    Logger.recordOutput("Superstructure/HubRotationTarget", shotSetpoint.robotPose.getRotation());
-    Logger.recordOutput("Superstructure/HubRotationCurrent", drive.getPose().getRotation());
-    Logger.recordOutput(
-        "Superstructure/HubRotationError",
-        Math.abs(
-            drive
-                .getPose()
-                .getRotation()
-                .minus(shotSetpoint.robotPose.getRotation())
-                .getDegrees()));
+    if (!Constants.MINIMAL_LOGGING) {
+      Logger.recordOutput("Superstructure/ShooterSpeedSetpoint", shooterSpeedSetpoint);
+      Logger.recordOutput("Superstructure/HubRotationSetpoint", hubSetpoint);
+      Logger.recordOutput("Superstructure/HubRotationTarget", shotSetpoint.robotPose.getRotation());
+      Logger.recordOutput("Superstructure/HubRotationCurrent", drive.getPose().getRotation());
+      Logger.recordOutput(
+          "Superstructure/HubRotationError",
+          Math.abs(
+              drive
+                  .getPose()
+                  .getRotation()
+                  .minus(shotSetpoint.robotPose.getRotation())
+                  .getDegrees()));
+    }
 
     return shooterSpeedSetpoint && hubSetpoint;
   }
@@ -442,19 +459,22 @@ public class Superstructure extends SubsystemBase {
     boolean shooterSpeedSetpoint = shooter.flywheelUpToSpeed(); // && shooter.feederUpToSpeed();
     boolean hubSetpoint = checkHubTolerance();
 
-    Logger.recordOutput("Superstructure/ShooterSpeedSetpoint", shooterSpeedSetpoint);
-    Logger.recordOutput("Superstructure/HubRotationSetpoint", hubSetpoint);
-    Logger.recordOutput("Superstructure/HubRotationTarget", shotSetpoint.robotPose);
-    Logger.recordOutput("Superstructure/HubRotationCurrent", drive.getPose());
-    Logger.recordOutput("Superstructure/HubRotationToleranceDeg", getDynamicHubToleranceDegrees());
-    Logger.recordOutput(
-        "Superstructure/HubRotationError",
-        Math.abs(
-            drive
-                .getPose()
-                .getRotation()
-                .minus(shotSetpoint.robotPose.getRotation())
-                .getDegrees()));
+    if (!Constants.MINIMAL_LOGGING) {
+      Logger.recordOutput("Superstructure/ShooterSpeedSetpoint", shooterSpeedSetpoint);
+      Logger.recordOutput("Superstructure/HubRotationSetpoint", hubSetpoint);
+      Logger.recordOutput("Superstructure/HubRotationTarget", shotSetpoint.robotPose);
+      Logger.recordOutput("Superstructure/HubRotationCurrent", drive.getPose());
+      Logger.recordOutput(
+          "Superstructure/HubRotationToleranceDeg", getDynamicHubToleranceDegrees());
+      Logger.recordOutput(
+          "Superstructure/HubRotationError",
+          Math.abs(
+              drive
+                  .getPose()
+                  .getRotation()
+                  .minus(shotSetpoint.robotPose.getRotation())
+                  .getDegrees()));
+    }
 
     return shooterSpeedSetpoint && hubSetpoint;
   }
@@ -487,8 +507,10 @@ public class Superstructure extends SubsystemBase {
     handleWantedState();
     applyStates();
 
-    Logger.recordOutput("Superstructure/CurrentSuperState", currentSuperState);
-    Logger.recordOutput("Superstructure/WantedSuperState", wantedSuperState);
+    if (!Constants.MINIMAL_LOGGING) {
+      Logger.recordOutput("Superstructure/CurrentSuperState", currentSuperState);
+      Logger.recordOutput("Superstructure/WantedSuperState", wantedSuperState);
+    }
   }
 
   @Override
