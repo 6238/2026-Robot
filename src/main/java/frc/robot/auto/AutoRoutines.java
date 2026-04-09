@@ -1,7 +1,5 @@
 package frc.robot.auto;
 
-import static edu.wpi.first.units.Units.RotationsPerSecond;
-
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.FileVersionException;
@@ -11,7 +9,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.intake.IntakePivot;
-import frc.robot.subsystems.shooter.ShooterConstants;
 import frc.robot.subsystems.superstructure.Superstructure;
 import java.io.IOException;
 import org.json.simple.parser.ParseException;
@@ -43,7 +40,20 @@ public class AutoRoutines {
                 () -> 0,
                 () -> 0,
                 () -> superstructure.getShotSetpoint().robotPose.getRotation())),
-        superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.SHOOT_INTAKE));
+        superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.INTAKING));
+  }
+
+  private Command passCommand(double time) {
+    return Commands.sequence(
+        Commands.deadline(
+            Commands.waitSeconds(time),
+            superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.PASSING),
+            DriveCommands.joystickDriveAtAngle(
+                drive,
+                () -> 0,
+                () -> 0,
+                () -> superstructure.getShotSetpoint().robotPose.getRotation())),
+        superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.INTAKING));
   }
 
   public SendableChooser<Command> buildAutoChooser()
@@ -57,20 +67,17 @@ public class AutoRoutines {
     autoChooser.addOption(
         "Right Trench Mid Rush (double)",
         Commands.sequence(
-            superstructure.shooter.setFlywheelRPM(
-                () -> RotationsPerSecond.of(ShooterConstants.SPINUP_FLYWHEEL_SPEED.get())),
             resetPoseCommand(lowerTrenchCycle1),
             Commands.parallel(
                 AutoBuilder.followPath(lowerTrenchCycle1),
                 Commands.sequence(
                     Commands.waitSeconds(0.2),
                     superstructure.setWantedSuperStateCommand(
-                        () -> Superstructure.WantedState.SHOOT_INTAKE))),
+                        () -> Superstructure.WantedState.INTAKING))),
             shootCommand(3.5),
             AutoBuilder.followPath(lowerTrenchCycle2),
             shootCommand(3.5),
-            AutoBuilder.followPath(lowerTrenchCycle3),
-            superstructure.shooter.setFlywheelRPM(() -> RotationsPerSecond.of(0))));
+            AutoBuilder.followPath(lowerTrenchCycle3)));
 
     PathPlannerPath lowerTrenchDelayMidPath =
         PathPlannerPath.fromPathFile("Lower Trench Delay Path");
@@ -83,37 +90,31 @@ public class AutoRoutines {
         "Left Trench Delay Mid -> Depot",
         Commands.sequence(
             Commands.waitSeconds(autoDelay.get()),
-            superstructure.shooter.setFlywheelRPM(
-                () -> RotationsPerSecond.of(ShooterConstants.SPINUP_FLYWHEEL_SPEED.get())),
             resetPoseCommand(lowerTrenchDelayMidPath),
             Commands.parallel(
                 AutoBuilder.followPath(lowerTrenchDelayMidPath),
                 Commands.sequence(
                     Commands.waitSeconds(0.06),
                     superstructure.setWantedSuperStateCommand(
-                        () -> Superstructure.WantedState.SHOOT_INTAKE))),
+                        () -> Superstructure.WantedState.INTAKING))),
             shootCommand(4.5),
             AutoBuilder.followPath(lowerTrenchDelayToDepot),
-            shootCommand(4.5),
-            superstructure.shooter.setFlywheelRPM(() -> RotationsPerSecond.of(0))));
+            shootCommand(4.5)));
 
     autoChooser.addOption(
         "Left Risky Trench Delay Mid -> Depot",
         Commands.sequence(
             Commands.waitSeconds(autoDelay.get()),
-            superstructure.shooter.setFlywheelRPM(
-                () -> RotationsPerSecond.of(ShooterConstants.SPINUP_FLYWHEEL_SPEED.get())),
             resetPoseCommand(lowerRiskyTrenchDelayMidPath),
             Commands.parallel(
                 AutoBuilder.followPath(lowerRiskyTrenchDelayMidPath),
                 Commands.sequence(
                     Commands.waitSeconds(0.06),
                     superstructure.setWantedSuperStateCommand(
-                        () -> Superstructure.WantedState.SHOOT_INTAKE))),
+                        () -> Superstructure.WantedState.INTAKING))),
             shootCommand(4.5),
             AutoBuilder.followPath(lowerTrenchDelayToDepot),
-            shootCommand(4.5),
-            superstructure.shooter.setFlywheelRPM(() -> RotationsPerSecond.of(0))));
+            shootCommand(4.5)));
 
     PathPlannerPath upperTrenchCycle1 = PathPlannerPath.fromPathFile("Upper Trench Cycle 1");
     PathPlannerPath upperTrenchCycle2 = PathPlannerPath.fromPathFile("Upper Trench Cycle 2");
@@ -122,20 +123,17 @@ public class AutoRoutines {
     autoChooser.addOption(
         "Left Trench Mid Rush (double)",
         Commands.sequence(
-            superstructure.shooter.setFlywheelRPM(
-                () -> RotationsPerSecond.of(ShooterConstants.SPINUP_FLYWHEEL_SPEED.get())),
             resetPoseCommand(upperTrenchCycle1),
             Commands.parallel(
                 AutoBuilder.followPath(upperTrenchCycle1),
                 Commands.sequence(
                     Commands.waitSeconds(0.2),
                     superstructure.setWantedSuperStateCommand(
-                        () -> Superstructure.WantedState.SHOOT_INTAKE))),
+                        () -> Superstructure.WantedState.INTAKING))),
             shootCommand(3.5),
             AutoBuilder.followPath(upperTrenchCycle2),
             shootCommand(3.5),
-            AutoBuilder.followPath(upperTrenchCycle3),
-            superstructure.shooter.setFlywheelRPM(() -> RotationsPerSecond.of(0))));
+            AutoBuilder.followPath(upperTrenchCycle3)));
 
     PathPlannerPath upperTrenchDelayMidPath =
         PathPlannerPath.fromPathFile("Upper Trench Delay Path");
@@ -146,33 +144,49 @@ public class AutoRoutines {
         "Right Trench Delay Mid",
         Commands.sequence(
             Commands.waitSeconds(autoDelay.get()),
-            superstructure.shooter.setFlywheelRPM(
-                () -> RotationsPerSecond.of(ShooterConstants.SPINUP_FLYWHEEL_SPEED.get())),
             resetPoseCommand(upperTrenchDelayMidPath),
             Commands.parallel(
                 AutoBuilder.followPath(upperTrenchDelayMidPath),
                 Commands.sequence(
                     Commands.waitSeconds(0.06),
                     superstructure.setWantedSuperStateCommand(
-                        () -> Superstructure.WantedState.SHOOT_INTAKE))),
-            shootCommand(10),
-            superstructure.shooter.setFlywheelRPM(() -> RotationsPerSecond.of(0))));
+                        () -> Superstructure.WantedState.INTAKING))),
+            shootCommand(10)));
 
     autoChooser.addOption(
         "Right Risky Trench Delay Mid",
         Commands.sequence(
             Commands.waitSeconds(autoDelay.get()),
-            superstructure.shooter.setFlywheelRPM(
-                () -> RotationsPerSecond.of(ShooterConstants.SPINUP_FLYWHEEL_SPEED.get())),
             resetPoseCommand(upperRiskyTrenchDelayMidPath),
             Commands.parallel(
                 AutoBuilder.followPath(upperRiskyTrenchDelayMidPath),
                 Commands.sequence(
                     Commands.waitSeconds(0.06),
                     superstructure.setWantedSuperStateCommand(
-                        () -> Superstructure.WantedState.SHOOT_INTAKE))),
-            shootCommand(10),
-            superstructure.shooter.setFlywheelRPM(() -> RotationsPerSecond.of(0))));
+                        () -> Superstructure.WantedState.INTAKING))),
+            shootCommand(10)));
+
+    PathPlannerPath trenchToMid = PathPlannerPath.fromPathFile("Trench to mid");
+    PathPlannerPath midintake1 = PathPlannerPath.fromPathFile("Mid intake");
+    PathPlannerPath midintake2 = PathPlannerPath.fromPathFile("Mid intake part 2");
+    PathPlannerPath midintake3 = PathPlannerPath.fromPathFile("Mid intake part 3");
+
+    autoChooser.addOption(
+        "Elliot Special",
+        Commands.sequence(
+            resetPoseCommand(trenchToMid),
+            Commands.parallel(
+                AutoBuilder.followPath(trenchToMid),
+                Commands.sequence(
+                    Commands.waitSeconds(0.2),
+                    superstructure.setWantedSuperStateCommand(
+                        () -> Superstructure.WantedState.INTAKING))),
+            AutoBuilder.followPath(midintake1),
+            passCommand(4.5),
+            AutoBuilder.followPath(midintake2),
+            passCommand(4.5),
+            AutoBuilder.followPath(midintake3),
+            passCommand(4.5)));
 
     return autoChooser;
   }

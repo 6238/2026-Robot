@@ -58,6 +58,7 @@ import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.ShooterIOSim;
 import frc.robot.subsystems.shooter.ShooterIOTalonFX;
 import frc.robot.subsystems.superstructure.Superstructure;
+import frc.robot.subsystems.superstructure.Superstructure.WantedState;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOPhotonVision;
@@ -203,12 +204,11 @@ public class RobotContainer {
 
     intakeRoller.setPivotAngleSupplier(() -> intakePivot.inputs.intakeArmPosition.in(Degrees));
 
-    superstructure.hubSpinupActive =
-        () -> false; // () -> shouldSpinupFlywheel(DriverStation.getMatchTime());
+    superstructure.hubSpinupActive = () -> shouldSpinupFlywheel(DriverStation.getMatchTime());
 
     lighting.superState = () -> superstructure.currentSuperState;
 
-    // Set up auto routines
+    // Set up auto routinesw
     LoggedDashboardChooser<Command> tempChooser;
     try {
       AutoRoutines autoRoutines = new AutoRoutines(drive, superstructure, intakePivot);
@@ -522,5 +522,9 @@ public class RobotContainer {
     if (matchTime > 55) return true; // last 2s shift 3 / pre-spinup shift 4
     if (matchTime > 30) return !shift1ActiveForUs; // shift 4
     return true; // end game
+  }
+
+  public void teleopInit() {
+    superstructure.setWantedSuperState(WantedState.INTAKING); 
   }
 }
