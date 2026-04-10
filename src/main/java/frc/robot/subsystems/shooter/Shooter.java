@@ -1,5 +1,6 @@
 package frc.robot.subsystems.shooter;
 
+import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -76,8 +77,9 @@ public class Shooter extends SubsystemBase {
     if (!Constants.MINIMAL_LOGGING) {
       Logger.recordOutput("Shooter/velocityBelowThreshold", !prevAboveThreshold);
       Logger.recordOutput("Shooter/ballExitedFlywheel", ballExitedFlywheel());
-      Logger.recordOutput("Shooter/targetVelocity", targetFlywheelVelocity.in(RotationsPerSecond));
     }
+    Logger.recordOutput("Shooter/targetVelocity", targetFlywheelVelocity.in(RadiansPerSecond));
+    Logger.recordOutput("Shooter/targetFeederVelocity", targetFeederVelocity.in(RadiansPerSecond));
 
     // update alerts based on motor connection status
     AlertUtils.processCriticalAlert(shooterMotorConnectedAlert, !inputs.flywheelTalonConnected);

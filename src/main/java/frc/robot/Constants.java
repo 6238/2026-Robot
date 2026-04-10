@@ -27,7 +27,7 @@ import java.util.function.Supplier;
  * (log replay from a file).
  */
 public final class Constants {
-  public static final Mode simMode = Mode.SIM;
+  public static final Mode simMode = Mode.REPLAY;
   public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
 
   public static enum Mode {
@@ -84,7 +84,7 @@ public final class Constants {
    * When true, suppresses non-essential Logger.recordOutput calls to reduce log file size. All IO
    * inputs (Logger.processInputs) are always logged regardless of this flag.
    */
-  public static final boolean MINIMAL_LOGGING = true;
+  public static final boolean MINIMAL_LOGGING = false;
 
   public static final double loopPeriodSecs = 0.02;
 }

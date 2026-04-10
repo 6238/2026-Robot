@@ -44,7 +44,8 @@ public class Superstructure extends SubsystemBase {
     SHOOTING,
     PASSING,
     SHOOT_INTAKE,
-    PASS_INTAKE
+    PASS_INTAKE,
+    MANUAL_SHOOTING
   }
 
   public enum CurrentState {
@@ -168,6 +169,15 @@ public class Superstructure extends SubsystemBase {
           firstSpinup = true;
         }
         break;
+      case MANUAL_SHOOTING:
+        if (currentSuperState != CurrentState.SHOOTING) {
+          currentSuperState = CurrentState.SHOOTING;
+          firstSpinup = false;
+          noShotTimer.restart();
+          crawlUpScheduled = false;
+          oscTimer = 0.0;
+        }
+        break;
       default:
         if (currentSuperState != CurrentState.IDLE) {
           currentSuperState = CurrentState.IDLE;
@@ -208,6 +218,9 @@ public class Superstructure extends SubsystemBase {
       case INTAKING:
         intake.setAngle(Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get()));
         intakeRoller.spin();
+        hopper.setIndexerSpeed(RotationsPerSecond.of(0));
+        hopper.setTopIndexerSpeed(RotationsPerSecond.of(0));
+        shooter.setFeederVoltage(Volts.of(0));
         if (ShooterConstants.SPINUP_WHEN_HUB_ACTIVE && hubSpinupActive.getAsBoolean()) {
           shooter.setFlywheelRPM(
               RotationsPerSecond.of(ShooterConstants.SPINUP_FLYWHEEL_SPEED.get()));
@@ -507,10 +520,8 @@ public class Superstructure extends SubsystemBase {
     handleWantedState();
     applyStates();
 
-    if (!Constants.MINIMAL_LOGGING) {
-      Logger.recordOutput("Superstructure/CurrentSuperState", currentSuperState);
-      Logger.recordOutput("Superstructure/WantedSuperState", wantedSuperState);
-    }
+    Logger.recordOutput("Superstructure/CurrentSuperState", currentSuperState);
+    Logger.recordOutput("Superstructure/WantedSuperState", wantedSuperState);
   }
 
   @Override

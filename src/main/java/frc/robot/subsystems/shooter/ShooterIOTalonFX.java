@@ -1,5 +1,6 @@
 package frc.robot.subsystems.shooter;
 
+import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 import static frc.robot.util.PhoenixUtil.tryUntilOk;
 
@@ -68,11 +69,11 @@ public class ShooterIOTalonFX implements ShooterIO {
     flywheelConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
     flywheelConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-    flywheelConfig.CurrentLimits.StatorCurrentLimit = 90;
+    flywheelConfig.CurrentLimits.StatorCurrentLimit = 130;
 
-    flywheelConfig.CurrentLimits.SupplyCurrentLimit = 40;
+    flywheelConfig.CurrentLimits.SupplyCurrentLimit = 60;
     flywheelConfig.CurrentLimits.SupplyCurrentLowerLimit = 40;
-    flywheelConfig.CurrentLimits.SupplyCurrentLowerTime = 0.1;
+    flywheelConfig.CurrentLimits.SupplyCurrentLowerTime = 0.5;
     flywheelConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
 
     flywheel2Talon = new TalonFX(ShooterConstants.FLYWHEEL2_MOTOR_ID, ShooterConstants.CAN_BUS);
@@ -84,6 +85,14 @@ public class ShooterIOTalonFX implements ShooterIO {
     feederConfig.Slot0 = ShooterConstants.FEEDER_GAINS.toSlot0Configs();
     feederConfig.MotorOutput.Inverted = ShooterConstants.FEEDER_INVERTED;
     feederConfig.MotionMagic = ShooterConstants.FLYWHEEL_MOTION_MAGIC_CONFIGS;
+
+    feederConfig.CurrentLimits.StatorCurrentLimitEnable = true;
+    feederConfig.CurrentLimits.StatorCurrentLimit = 80;
+
+    feederConfig.CurrentLimits.SupplyCurrentLimit = 50;
+    feederConfig.CurrentLimits.SupplyCurrentLowerLimit = 40;
+    feederConfig.CurrentLimits.SupplyCurrentLowerTime = 0.5;
+    feederConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
 
     AlertUtils.processCriticalAlert(
         flywheelConfigAlert,
@@ -153,8 +162,8 @@ public class ShooterIOTalonFX implements ShooterIO {
   }
 
   public void setFlywheelSpeed(AngularVelocity speed) {
-    double currentVelocity = flywheelVelocity.getValueAsDouble();
-    double targetVelocity = speed.baseUnitMagnitude();
+    double currentVelocity = flywheelVelocity.getValue().in(RotationsPerSecond);
+    double targetVelocity = speed.in(RotationsPerSecond);
     boolean recovering =
         currentVelocity < (targetVelocity - ShooterConstants.FLYWHEEL_RECOVERY_THRESHOLD_RPS);
     flywheelTalon.setControl(
@@ -173,8 +182,8 @@ public class ShooterIOTalonFX implements ShooterIO {
   }
 
   public void setFeederSpeed(AngularVelocity speed) {
-    double currentVelocity = feederVelocity.getValueAsDouble();
-    double targetVelocity = speed.baseUnitMagnitude();
+    double currentVelocity = feederVelocity.getValue().in(RotationsPerSecond);
+    double targetVelocity = speed.in(RotationsPerSecond);
     boolean recovering =
         currentVelocity < (targetVelocity - ShooterConstants.FLYWHEEL_RECOVERY_THRESHOLD_RPS);
     feederTalon.setControl(

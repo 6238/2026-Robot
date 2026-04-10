@@ -42,7 +42,7 @@ public class IntakePivotIOTalonFX implements IntakePivotIO {
         new TalonFX(IntakeConstants.INTAKE_ARM_MOTOR_ID, IntakeConstants.PIVOT_CAN_BUS);
 
     TalonFXConfiguration intakeArmConfig = new TalonFXConfiguration();
-    intakeArmConfig.Feedback.SensorToMechanismRatio = IntakeConstants.INTAKE_ARM_GEARING;
+    // intakeArmConfig.Feedback.RotorToSensorRatio = IntakeConstants.INTAKE_ARM_GEARING;
     intakeArmConfig.MotorOutput.Inverted = IntakeConstants.INTAKE_ARM_MOTOR_DIRECTION;
     intakeArmConfig.Slot0 = IntakeConstants.INTAKE_ARM_GAINS.toSlot0Configs();
     intakeArmConfig.MotionMagic = IntakeConstants.INTAKE_ARM_MOTION_MAGIC_CONFIGS;

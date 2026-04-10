@@ -30,8 +30,8 @@ public class AutomaticCommands {
   // side.
   // Mirrored over each midline → 4 bumps total on the field.
   private static final Pose2d bumpAllianceSide =
-      new Pose2d(3.546, 5.455, Rotation2d.fromDegrees(0));
-  private static final Pose2d bumpNeutralSide = new Pose2d(5.654, 5.455, Rotation2d.fromDegrees(0));
+      new Pose2d(3.246, 5.455, Rotation2d.fromDegrees(0));
+  private static final Pose2d bumpNeutralSide = new Pose2d(6.054, 5.455, Rotation2d.fromDegrees(0));
   private static final double BUMP_DETECTION_RADIUS = 3.5;
 
   // Trench wall lineup only activates within this Y distance of the outer wall (trench is at 7.46)

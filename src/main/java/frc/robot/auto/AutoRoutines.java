@@ -94,7 +94,7 @@ public class AutoRoutines {
             Commands.parallel(
                 AutoBuilder.followPath(lowerTrenchDelayMidPath),
                 Commands.sequence(
-                    Commands.waitSeconds(0.06),
+                    Commands.waitSeconds(0.1),
                     superstructure.setWantedSuperStateCommand(
                         () -> Superstructure.WantedState.INTAKING))),
             shootCommand(4.5),
@@ -109,7 +109,7 @@ public class AutoRoutines {
             Commands.parallel(
                 AutoBuilder.followPath(lowerRiskyTrenchDelayMidPath),
                 Commands.sequence(
-                    Commands.waitSeconds(0.06),
+                    Commands.waitSeconds(0.1),
                     superstructure.setWantedSuperStateCommand(
                         () -> Superstructure.WantedState.INTAKING))),
             shootCommand(4.5),
@@ -148,7 +148,7 @@ public class AutoRoutines {
             Commands.parallel(
                 AutoBuilder.followPath(upperTrenchDelayMidPath),
                 Commands.sequence(
-                    Commands.waitSeconds(0.06),
+                    Commands.waitSeconds(0.1),
                     superstructure.setWantedSuperStateCommand(
                         () -> Superstructure.WantedState.INTAKING))),
             shootCommand(10)));
@@ -161,7 +161,7 @@ public class AutoRoutines {
             Commands.parallel(
                 AutoBuilder.followPath(upperRiskyTrenchDelayMidPath),
                 Commands.sequence(
-                    Commands.waitSeconds(0.06),
+                    Commands.waitSeconds(0.1),
                     superstructure.setWantedSuperStateCommand(
                         () -> Superstructure.WantedState.INTAKING))),
             shootCommand(10)));

@@ -55,6 +55,7 @@ import frc.robot.subsystems.intake.IntakeRollerIO;
 import frc.robot.subsystems.intake.IntakeRollerIOSim;
 import frc.robot.subsystems.intake.IntakeRollerIOTalonFX;
 import frc.robot.subsystems.shooter.Shooter;
+import frc.robot.subsystems.shooter.ShooterConstants;
 import frc.robot.subsystems.shooter.ShooterIOSim;
 import frc.robot.subsystems.shooter.ShooterIOTalonFX;
 import frc.robot.subsystems.superstructure.Superstructure;
@@ -204,7 +205,8 @@ public class RobotContainer {
 
     intakeRoller.setPivotAngleSupplier(() -> intakePivot.inputs.intakeArmPosition.in(Degrees));
 
-    superstructure.hubSpinupActive = () -> shouldSpinupFlywheel(DriverStation.getMatchTime());
+    superstructure.hubSpinupActive =
+        () -> false; // () -> shouldSpinupFlywheel(DriverStation.getMatchTime());
 
     lighting.superState = () -> superstructure.currentSuperState;
 
@@ -257,6 +259,12 @@ public class RobotContainer {
             () -> -controller.getLeftY(),
             () -> -controller.getLeftX(),
             () -> -controller.getRightX()));
+
+    controller
+        .povRight()
+        .onTrue(
+            shooter.setFlywheelRPM(
+                () -> RotationsPerSecond.of(ShooterConstants.SPINUP_FLYWHEEL_SPEED.get())));
 
     // Reset Drive Rotation
     controller
@@ -356,6 +364,14 @@ public class RobotContainer {
     // controller.povDown().whileTrue(AutomaticCommands.wallShootSetupCommand(drive,
     // driverOverride));
     // controller.povLeft().whileTrue(AutomaticCommands.underTowerCommand(drive, driverOverride));
+    controller
+        .povLeft()
+        .whileTrue(
+            Commands.startEnd(
+                () ->
+                    superstructure.setWantedSuperState(Superstructure.WantedState.MANUAL_SHOOTING),
+                () -> superstructure.setWantedSuperState(Superstructure.WantedState.IDLE),
+                superstructure));
 
     // spinup command
     // controller
@@ -365,20 +381,8 @@ public class RobotContainer {
     //             shooter.setFlywheelRPM(
     //                 () -> RotationsPerSecond.of(ShooterConstants.SPINUP_FLYWHEEL_SPEED.get())),
     //             shooter.setFlywheelVoltage(() -> Volts.of(0))));
+    //  }
 
-    // D-Pad Right: shoot while drifting in -x direction
-    controller
-        .povRight()
-        .whileTrue(
-            Commands.parallel(
-                DriveCommands.joystickDriveAtAngle(
-                    drive,
-                    () -> -0.4,
-                    () -> 0.0,
-                    () -> superstructure.getShotSetpoint().robotPose.getRotation()),
-                superstructure.setWantedSuperStateCommand(
-                    () -> Superstructure.WantedState.SHOOTING)))
-        .onFalse(superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.IDLE));
   }
 
   /**

@@ -52,24 +52,24 @@
         "y": 2.5563034605146404
       },
       "prevControl": {
-        "x": 6.0025931361385245,
-        "y": 2.764915603480068
+        "x": 5.967036684587266,
+        "y": 2.8151737388374958
       },
       "nextControl": {
-        "x": 5.05734654234516,
-        "y": 2.1985471817508353
+        "x": 5.034738243123336,
+        "y": 2.0431410825199636
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 1.7350931677018626,
-        "y": 2.6528784383318547
+        "x": 1.8477639751552788,
+        "y": 1.7051286601597155
       },
       "prevControl": {
-        "x": 3.5531096696817857,
-        "y": 2.751148625864504
+        "x": 2.998615794143744,
+        "y": 2.9364596273291914
       },
       "nextControl": null,
       "isLocked": false,
@@ -110,10 +110,10 @@
     "rotation": 27.96711550611938
   },
   "reversed": false,
-  "folder": "Upper Weird Trench",
+  "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": -0.0
+    "rotation": 178.71873381322655
   },
   "useDefaultConstraints": true
 }

@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 1.7350931677018626,
-        "y": 5.399121561668145
+        "x": 2.217968056787932,
+        "y": 5.729086069210293
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.060059096934313,
-        "y": 5.543925526041191
+        "x": 2.5429339860203823,
+        "y": 5.873890033583339
       },
       "isLocked": false,
       "linkedName": "Trench Delay Depot Start"
@@ -48,12 +48,12 @@
     },
     {
       "anchor": {
-        "x": 1.4856078083407271,
-        "y": 6.952369121561668
+        "x": 1.7753327417923686,
+        "y": 6.3729192546583855
       },
       "prevControl": {
-        "x": 1.2956158262131985,
-        "y": 6.786643137531506
+        "x": 1.3326974267968053,
+        "y": 6.831650399290151
       },
       "nextControl": null,
       "isLocked": false,
@@ -77,10 +77,10 @@
     "rotation": -42.61084845802561
   },
   "reversed": false,
-  "folder": "Weird Trench",
+  "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": -27.96711550611938
+    "rotation": -35.60916344360652
   },
   "useDefaultConstraints": false
 }
