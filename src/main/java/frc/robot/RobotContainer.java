@@ -204,10 +204,7 @@ public class RobotContainer {
     }
 
     intakeRoller.setPivotAngleSupplier(() -> intakePivot.inputs.intakeArmPosition.in(Degrees));
-
-    superstructure.hubSpinupActive =
-        () -> false; // () -> shouldSpinupFlywheel(DriverStation.getMatchTime());
-
+    superstructure.hubSpinupActive = () -> shouldSpinupFlywheel(DriverStation.getMatchTime());
     lighting.superState = () -> superstructure.currentSuperState;
 
     // Set up auto routinesw

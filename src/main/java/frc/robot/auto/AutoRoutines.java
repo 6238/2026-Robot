@@ -11,6 +11,7 @@ import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.intake.IntakePivot;
 import frc.robot.subsystems.superstructure.Superstructure;
 import java.io.IOException;
+import java.util.Set;
 import org.json.simple.parser.ParseException;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
@@ -67,6 +68,7 @@ public class AutoRoutines {
     autoChooser.addOption(
         "Right Trench Mid Rush (double)",
         Commands.sequence(
+            Commands.defer(() -> Commands.waitSeconds(autoDelay.get()), Set.of()),
             resetPoseCommand(lowerTrenchCycle1),
             Commands.parallel(
                 AutoBuilder.followPath(lowerTrenchCycle1),
@@ -76,7 +78,7 @@ public class AutoRoutines {
                         () -> Superstructure.WantedState.INTAKING))),
             shootCommand(3.5),
             AutoBuilder.followPath(lowerTrenchCycle2),
-            shootCommand(3.5),
+            shootCommand(4),
             AutoBuilder.followPath(lowerTrenchCycle3)));
 
     PathPlannerPath lowerTrenchDelayMidPath =
@@ -89,7 +91,7 @@ public class AutoRoutines {
     autoChooser.addOption(
         "Left Trench Delay Mid -> Depot",
         Commands.sequence(
-            Commands.waitSeconds(autoDelay.get()),
+            Commands.defer(() -> Commands.waitSeconds(autoDelay.get()), Set.of()),
             resetPoseCommand(lowerTrenchDelayMidPath),
             Commands.parallel(
                 AutoBuilder.followPath(lowerTrenchDelayMidPath),
@@ -104,7 +106,7 @@ public class AutoRoutines {
     autoChooser.addOption(
         "Left Risky Trench Delay Mid -> Depot",
         Commands.sequence(
-            Commands.waitSeconds(autoDelay.get()),
+            Commands.defer(() -> Commands.waitSeconds(autoDelay.get()), Set.of()),
             resetPoseCommand(lowerRiskyTrenchDelayMidPath),
             Commands.parallel(
                 AutoBuilder.followPath(lowerRiskyTrenchDelayMidPath),
@@ -123,6 +125,7 @@ public class AutoRoutines {
     autoChooser.addOption(
         "Left Trench Mid Rush (double)",
         Commands.sequence(
+            Commands.defer(() -> Commands.waitSeconds(autoDelay.get()), Set.of()),
             resetPoseCommand(upperTrenchCycle1),
             Commands.parallel(
                 AutoBuilder.followPath(upperTrenchCycle1),
@@ -132,7 +135,7 @@ public class AutoRoutines {
                         () -> Superstructure.WantedState.INTAKING))),
             shootCommand(3.5),
             AutoBuilder.followPath(upperTrenchCycle2),
-            shootCommand(3.5),
+            shootCommand(4),
             AutoBuilder.followPath(upperTrenchCycle3)));
 
     PathPlannerPath upperTrenchDelayMidPath =
@@ -143,7 +146,7 @@ public class AutoRoutines {
     autoChooser.addOption(
         "Right Trench Delay Mid",
         Commands.sequence(
-            Commands.waitSeconds(autoDelay.get()),
+            Commands.defer(() -> Commands.waitSeconds(autoDelay.get()), Set.of()),
             resetPoseCommand(upperTrenchDelayMidPath),
             Commands.parallel(
                 AutoBuilder.followPath(upperTrenchDelayMidPath),
@@ -156,7 +159,7 @@ public class AutoRoutines {
     autoChooser.addOption(
         "Right Risky Trench Delay Mid",
         Commands.sequence(
-            Commands.waitSeconds(autoDelay.get()),
+            Commands.defer(() -> Commands.waitSeconds(autoDelay.get()), Set.of()),
             resetPoseCommand(upperRiskyTrenchDelayMidPath),
             Commands.parallel(
                 AutoBuilder.followPath(upperRiskyTrenchDelayMidPath),
@@ -187,6 +190,21 @@ public class AutoRoutines {
             passCommand(4.5),
             AutoBuilder.followPath(midintake3),
             passCommand(4.5)));
+
+    PathPlannerPath depotPath = PathPlannerPath.fromPathFile("Depot");
+
+    autoChooser.addOption(
+        "Depot",
+        Commands.sequence(
+            Commands.waitSeconds(autoDelay.get()),
+            resetPoseCommand(depotPath),
+            Commands.parallel(
+                AutoBuilder.followPath(depotPath),
+                Commands.sequence(
+                    Commands.waitSeconds(0.1),
+                    superstructure.setWantedSuperStateCommand(
+                        () -> Superstructure.WantedState.INTAKING))),
+            shootCommand(10)));
 
     return autoChooser;
   }

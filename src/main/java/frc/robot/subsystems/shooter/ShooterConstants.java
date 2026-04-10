@@ -123,10 +123,10 @@ public class ShooterConstants {
 
   static {
     FLYWHEEL_MAP = new ExtrapolatingDoubleTreeMap();
-    FLYWHEEL_MAP.put(2.32, 43.5);
-    FLYWHEEL_MAP.put(2.53, 44.8);
-    FLYWHEEL_MAP.put(3.52, 52.4);
-    FLYWHEEL_MAP.put(4.14, 55.8);
+    FLYWHEEL_MAP.put(2.32, 43.9);
+    FLYWHEEL_MAP.put(2.53, 45.0);
+    FLYWHEEL_MAP.put(3.52, 52.5);
+    FLYWHEEL_MAP.put(4.14, 55.9);
 
     // Physics-based: t_lead = d / (rps × BALL_SPEED_PER_FLYWHEEL_RPS × cos(hood))
     LEAD_TIME_MAP = new ExtrapolatingDoubleTreeMap();
