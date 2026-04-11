@@ -23,7 +23,7 @@ public class Hopper extends SubsystemBase {
   public HopperIOInputsAutoLogged inputs;
 
   private AngularVelocity targetTopIndexerVelocity = RotationsPerSecond.of(0);
-  private final Debouncer topIndexerJamDebouncer = new Debouncer(0.1, DebounceType.kRising);
+  private final Debouncer topIndexerJamDebouncer = new Debouncer(0.225, DebounceType.kRising);
   private boolean isUnjamming = false;
 
   public Hopper(HopperIO io) {
@@ -39,8 +39,7 @@ public class Hopper extends SubsystemBase {
     // AlertUtils.processCriticalAlert(indexerMotorConnectedAlert,
     // !inputs.topIndexerTalonConnected);
 
-    boolean topIndexerShouldRun =
-        targetTopIndexerVelocity.magnitude() > 0 && HopperConstants.USE_TOP_INDEXER;
+    boolean topIndexerShouldRun = targetTopIndexerVelocity.in(RotationsPerSecond) > 0;
     boolean topIndexerStalled =
         inputs.topIndexerVelocity.isNear(
             RotationsPerSecond.of(0), HopperConstants.TOP_INDEXER_JAM_THRESHOLD);
@@ -63,8 +62,7 @@ public class Hopper extends SubsystemBase {
   public Command spinTopIndexer() {
     return runOnce(
         () -> {
-          targetTopIndexerVelocity =
-              RotationsPerSecond.of(HopperConstants.TOP_INDEXER_SPEED.get());
+          targetTopIndexerVelocity = RotationsPerSecond.of(HopperConstants.TOP_INDEXER_SPEED.get());
           io.setTopIndexerSpeed(targetTopIndexerVelocity);
         });
   }
@@ -81,8 +79,7 @@ public class Hopper extends SubsystemBase {
     return runOnce(
         () -> {
           io.setIndexerSpeed(RotationsPerSecond.of(HopperConstants.INDEXER_SPEED.get()));
-          targetTopIndexerVelocity =
-              RotationsPerSecond.of(HopperConstants.TOP_INDEXER_SPEED.get());
+          targetTopIndexerVelocity = RotationsPerSecond.of(HopperConstants.TOP_INDEXER_SPEED.get());
           io.setTopIndexerSpeed(targetTopIndexerVelocity);
         });
   }
@@ -117,7 +114,7 @@ public class Hopper extends SubsystemBase {
               isUnjamming = true;
               io.setTopIndexerVoltage(Volts.of(-12));
             }),
-        Commands.waitSeconds(0.25),
+        Commands.waitSeconds(0.225),
         Commands.runOnce(
             () -> {
               io.setTopIndexerSpeed(targetTopIndexerVelocity);
