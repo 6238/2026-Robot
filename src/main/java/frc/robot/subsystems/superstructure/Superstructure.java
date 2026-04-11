@@ -275,6 +275,8 @@ public class Superstructure extends SubsystemBase {
         boolean tooCloseShooting = isTooCloseToHub();
         if (!Constants.MINIMAL_LOGGING)
           Logger.recordOutput("Superstructure/TooCloseToShoot", tooCloseShooting);
+        hopper.setTopIndexerSpeed(
+            RotationsPerSecond.of(tooCloseShooting ? 0 : HopperConstants.INDEXER_SPEED.get()));
         hopper.setIndexerSpeed(
             RotationsPerSecond.of(tooCloseShooting ? 0 : HopperConstants.INDEXER_SPEED.get()));
 

@@ -30,4 +30,7 @@ public interface HopperIO {
 
   public default void setTopIndexerSpeed(AngularVelocity speed) {}
   ;
+
+  public default void setTopIndexerVoltage(Voltage voltage) {}
+  ;
 }

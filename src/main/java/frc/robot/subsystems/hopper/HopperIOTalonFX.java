@@ -6,11 +6,13 @@ import static frc.robot.util.PhoenixUtil.tryUntilOk;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
+import static edu.wpi.first.units.Units.Volts;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.robot.Constants;
@@ -43,6 +45,7 @@ public class HopperIOTalonFX implements HopperIO {
       new MotionMagicVelocityVoltage(0).withSlot(0);
   private final MotionMagicVelocityVoltage topIndexerVelocityRequest =
       new MotionMagicVelocityVoltage(0).withSlot(0);
+  private final VoltageOut topIndexerVoltageRequest = new VoltageOut(0);
 
   public HopperIOTalonFX() {
     this.indexerTalon = new TalonFX(HopperConstants.INDEXER_MOTOR_ID, HopperConstants.CAN_BUS);
@@ -144,13 +147,13 @@ public class HopperIOTalonFX implements HopperIO {
 
   @Override
   public void setIndexerSpeed(AngularVelocity speed) {
-    if (speed.isNear(RotationsPerSecond.of(0), RotationsPerSecond.of(0))) {
+    if (speed.isNear(RotationsPerSecond.of(0), RotationsPerSecond.of(2))) {
       indexerTalon.stopMotor();
     } else {
       indexerTalon.setControl(indexerVelocityRequest.withVelocity(speed));
     }
     if (HopperConstants.USE_TOP_INDEXER) {
-      if (speed.isNear(RotationsPerSecond.of(0), RotationsPerSecond.of(0))) {
+      if (speed.isNear(RotationsPerSecond.of(0), RotationsPerSecond.of(2))) {
         topIndexerTalon.stopMotor();
       } else {
         topIndexerTalon.setControl(topIndexerVelocityRequest.withVelocity(speed));
@@ -161,10 +164,21 @@ public class HopperIOTalonFX implements HopperIO {
   @Override
   public void setTopIndexerSpeed(AngularVelocity speed) {
     if (HopperConstants.USE_TOP_INDEXER) {
-      if (speed.isNear(RotationsPerSecond.of(0), RotationsPerSecond.of(0))) {
+      if (speed.isNear(RotationsPerSecond.of(0), RotationsPerSecond.of(2))) {
         topIndexerTalon.stopMotor();
       } else {
         topIndexerTalon.setControl(topIndexerVelocityRequest.withVelocity(speed));
+      }
+    }
+  }
+
+  @Override
+  public void setTopIndexerVoltage(Voltage voltage) {
+    if (HopperConstants.USE_TOP_INDEXER) {
+      if (voltage.isNear(Volts.of(0), Volts.of(2))) {
+        topIndexerTalon.stopMotor();
+      } else {
+        topIndexerTalon.setControl(topIndexerVoltageRequest.withOutput(voltage));
       }
     }
   }

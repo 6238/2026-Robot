@@ -25,6 +25,7 @@ public class HopperConstants {
       InvertedValue.CounterClockwise_Positive;
 
   public static final AngularVelocity HOPPER_TOLERANCE_BEFORE_SHOT = RotationsPerSecond.of(10);
+  public static final AngularVelocity TOP_INDEXER_JAM_THRESHOLD = RotationsPerSecond.of(2);
 
   public static final double simulatedHopperThroughput = 8;
 
@@ -47,10 +48,10 @@ public class HopperConstants {
 
   public static final LoggedNetworkPIDFeedforwardGains TOP_INDEXER_GAINS =
       new LoggedNetworkPIDFeedforwardGains(
-          0.6, // kP
+          0.4, // kP
           0.0, // kI
           0.0, // kD
-          0.0, // kA
+          0.08, // kA
           0.10, // kV
           0.24, // kS
           0.0, // kG
