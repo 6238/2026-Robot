@@ -76,9 +76,9 @@ public class AutoRoutines {
                     Commands.waitSeconds(0.2),
                     superstructure.setWantedSuperStateCommand(
                         () -> Superstructure.WantedState.INTAKING))),
-            shootCommand(9),
-            //AutoBuilder.followPath(lowerTrenchCycle2),
-            //shootCommand(4),
+            shootCommand(4),
+            AutoBuilder.followPath(lowerTrenchCycle2),
+            shootCommand(4),
             AutoBuilder.followPath(lowerTrenchCycle3)));
 
     PathPlannerPath lowerTrenchDelayMidPath =
