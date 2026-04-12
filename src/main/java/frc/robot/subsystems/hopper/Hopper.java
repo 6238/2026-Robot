@@ -114,7 +114,7 @@ public class Hopper extends SubsystemBase {
               isUnjamming = true;
               io.setTopIndexerVoltage(Volts.of(-12));
             }),
-        Commands.waitSeconds(0.225),
+        Commands.waitSeconds(0.15),
         Commands.runOnce(
             () -> {
               io.setTopIndexerSpeed(targetTopIndexerVelocity);
