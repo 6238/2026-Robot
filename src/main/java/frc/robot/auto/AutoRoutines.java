@@ -76,7 +76,7 @@ public class AutoRoutines {
                     Commands.waitSeconds(0.2),
                     superstructure.setWantedSuperStateCommand(
                         () -> Superstructure.WantedState.INTAKING))),
-            shootCommand(4),
+            shootCommand(4.5),
             AutoBuilder.followPath(lowerTrenchCycle2),
             shootCommand(4),
             AutoBuilder.followPath(lowerTrenchCycle3)));
@@ -133,7 +133,7 @@ public class AutoRoutines {
                     Commands.waitSeconds(0.2),
                     superstructure.setWantedSuperStateCommand(
                         () -> Superstructure.WantedState.INTAKING))),
-            shootCommand(3.5),
+            shootCommand(4.5),
             AutoBuilder.followPath(upperTrenchCycle2),
             shootCommand(4),
             AutoBuilder.followPath(upperTrenchCycle3)));
