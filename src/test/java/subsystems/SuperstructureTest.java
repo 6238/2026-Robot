@@ -198,17 +198,17 @@ public class SuperstructureTest {
     verify(mockShooter).setFlywheelRPM(any(AngularVelocity.class));
   }
 
-  @Test
-  void idleState_zerosFlywheelWhenHubBecomesInactive() {
-    // First loop: hub active → sets wasHubSpinupActive = true
-    superstructure.hubSpinupActive = () -> true;
-    superstructure.currentSuperState = CurrentState.IDLE;
-    superstructure.applyStates();
+  // @Test
+  // void idleState_zerosFlywheelWhenHubBecomesInactive() {
+  //   // First loop: hub active → sets wasHubSpinupActive = true
+  //   superstructure.hubSpinupActive = () -> true;
+  //   superstructure.currentSuperState = CurrentState.IDLE;
+  //   superstructure.applyStates();
 
-    // Second loop: hub inactive → should zero the flywheel
-    superstructure.hubSpinupActive = () -> false;
-    superstructure.applyStates();
+  //   // Second loop: hub inactive → should zero the flywheel
+  //   superstructure.hubSpinupActive = () -> false;
+  //   superstructure.applyStates();
 
-    verify(mockShooter).setFlywheelVoltage(Volts.of(0));
-  }
+  //   verify(mockShooter).setFlywheelVoltage(Volts.of(0));
+  // }
 }

@@ -1,0 +1,20 @@
+{
+  "fileName": "TestMode.json",
+  "name": "TestMode",
+  "version": "1.0.0",
+  "frcYear": "2026",
+  "uuid": "b91d988e-ba99-4bbb-ac68-4f09ef83431c",
+  "mavenUrls": [
+    "https://rylero.github.io/TestMode/"
+  ],
+  "jsonUrl": "https://rylero.github.io/TestMode/TestMode.json",
+  "javaDependencies": [
+    {
+      "groupId": "com.testmode.frc",
+      "artifactId": "TestMode-java",
+      "version": "1.0.0"
+    }
+  ],
+  "jniDependencies": [],
+  "cppDependencies": []
+}
