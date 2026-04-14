@@ -19,7 +19,7 @@ public class AutoRoutines {
   private final Drive drive;
   private final Superstructure superstructure;
   private final IntakePivot intakePivot;
-  private final LoggedNetworkNumber autoDelay = new LoggedNetworkNumber("Auto Delay");
+  private final LoggedNetworkNumber autoDelay = new LoggedNetworkNumber("Auto Delay", 1.35);
 
   public AutoRoutines(Drive drive, Superstructure superstructure, IntakePivot intakePivot) {
     this.drive = drive;
@@ -156,6 +156,15 @@ public class AutoRoutines {
                         () -> Superstructure.WantedState.INTAKING))),
             shootCommand(10)));
 
+    PathPlannerPath newnewPath = PathPlannerPath.fromPathFile("New New Path");
+    autoChooser.addOption(
+        "no intake",
+        Commands.sequence(
+            Commands.defer(() -> Commands.waitSeconds(autoDelay.get()), Set.of()),
+            resetPoseCommand(newnewPath),
+            AutoBuilder.followPath(newnewPath),
+            shootCommand(10)));
+
     autoChooser.addOption(
         "Right Risky Trench Delay Mid",
         Commands.sequence(
@@ -200,6 +209,21 @@ public class AutoRoutines {
             resetPoseCommand(depotPath),
             Commands.parallel(
                 AutoBuilder.followPath(depotPath),
+                Commands.sequence(
+                    Commands.waitSeconds(0.1),
+                    superstructure.setWantedSuperStateCommand(
+                        () -> Superstructure.WantedState.INTAKING))),
+            shootCommand(10)));
+
+    PathPlannerPath twofivefour = PathPlannerPath.fromPathFile("254");
+
+    autoChooser.addOption(
+        "254 follow",
+        Commands.sequence(
+            Commands.defer(() -> Commands.waitSeconds(autoDelay.get()), Set.of()),
+            resetPoseCommand(twofivefour),
+            Commands.parallel(
+                AutoBuilder.followPath(twofivefour),
                 Commands.sequence(
                     Commands.waitSeconds(0.1),
                     superstructure.setWantedSuperStateCommand(

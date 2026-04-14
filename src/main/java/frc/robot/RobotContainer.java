@@ -370,16 +370,10 @@ public class RobotContainer {
                 () -> superstructure.setWantedSuperState(Superstructure.WantedState.IDLE),
                 superstructure));
 
-    // spinup command
-    // controller
-    //     .y()
-    //     .onTrue(
-    //         new ToggleCommand(
-    //             shooter.setFlywheelRPM(
-    //                 () -> RotationsPerSecond.of(ShooterConstants.SPINUP_FLYWHEEL_SPEED.get())),
-    //             shooter.setFlywheelVoltage(() -> Volts.of(0))));
-    //  }
-
+    controller
+        .y()
+        .whileTrue(AutomaticCommands.passIntakeCommand(drive, superstructure))
+        .onFalse(superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.IDLE));
   }
 
   /**

@@ -5,10 +5,13 @@ import com.pathplanner.lib.path.PathConstraints;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.superstructure.Superstructure;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
 import org.littletonrobotics.junction.Logger;
@@ -54,6 +57,56 @@ public class AutomaticCommands {
   // Under-tower (D-Pad Left, TODO: measure on field)
   public static final Pose2d towerEntryPose = new Pose2d(4.0, 6.5, Rotation2d.fromDegrees(270));
   public static final Pose2d towerExitPose = new Pose2d(4.0, 4.5, Rotation2d.fromDegrees(90));
+
+  // Pass/intake positions (defined for red alliance; top = Y > field midline)
+  // Blue poses are mirrored across the vertical midline: X → fieldLength - X, heading → 180° - θ
+  private static final Pose2d passIntakePoseRedTop =
+      new Pose2d(6.572, 7.606, Rotation2d.fromDegrees(-30));
+  private static final Pose2d passIntakePoseRedBottom =
+      new Pose2d(6.572, FieldFlipUtil.FIELD_WIDTH_METERS - 7.606, Rotation2d.fromDegrees(30));
+  private static final Pose2d passIntakePoseBlueTop =
+      new Pose2d(
+          FieldFlipUtil.flipVerticalMidline(passIntakePoseRedTop.getTranslation()),
+          Rotation2d.fromDegrees(210));
+  private static final Pose2d passIntakePoseBlueBottom =
+      new Pose2d(
+          FieldFlipUtil.flipVerticalMidline(passIntakePoseRedBottom.getTranslation()),
+          Rotation2d.fromDegrees(150));
+
+  // ── Y Button ─────────────────────────────────────────────────────────────
+
+  /**
+   * Y button: pathfinds to the nearest pass/intake pose (top or bottom half, red or blue alliance),
+   * then drives straight backward at 3/4 speed while running PASS_INTAKE. Runs until cancelled.
+   */
+  public static Command passIntakeCommand(Drive drive, Superstructure superstructure) {
+    return Commands.defer(
+        () -> {
+          Pose2d robotPose = drive.getPose();
+          boolean isRed = DriverStation.getAlliance().orElse(Alliance.Blue).equals(Alliance.Red);
+          boolean useTop = robotPose.getY() > FieldFlipUtil.FIELD_WIDTH_METERS / 2.0;
+
+          Pose2d target;
+          if (isRed) {
+            target = useTop ? passIntakePoseRedTop : passIntakePoseRedBottom;
+          } else {
+            target = useTop ? passIntakePoseBlueTop : passIntakePoseBlueBottom;
+          }
+          Logger.recordOutput("AutomaticCommands/passIntakeTarget", target);
+
+          return AutoBuilder.pathfindToPose(target, CONSTRAINTS, 0.0)
+              .andThen(
+                  Commands.parallel(
+                      DriveCommands.joystickDriveAtAngle(
+                          drive,
+                          () -> 0.75,
+                          () -> 0.0,
+                          () -> superstructure.getShotSetpoint().robotPose.getRotation()),
+                      superstructure.setWantedSuperStateCommand(
+                          () -> Superstructure.WantedState.PASS_INTAKE)));
+        },
+        Set.of(drive, superstructure));
+  }
 
   private static Pose2d flipVertical(Pose2d pose) {
     return new Pose2d(FieldFlipUtil.flipVerticalMidline(pose.getTranslation()), pose.getRotation());

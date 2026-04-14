@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 2.217968056787932,
-        "y": 5.729086069210293
+        "x": 1.1878349600709845,
+        "y": 1.1739662821650392
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.5429339860203823,
-        "y": 5.873890033583339
+        "x": 1.5128008893034348,
+        "y": 1.318770246538085
       },
       "isLocked": false,
       "linkedName": "Trench Delay Depot Start"
@@ -80,7 +80,7 @@
   "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": -35.60916344360652
+    "rotation": 39.859458477752305
   },
   "useDefaultConstraints": false
 }
