@@ -27,7 +27,7 @@ class VisionIOPhotonVisionTest {
     // Multitag reports camera at field origin with no rotation (identity transform)
     Transform3d fieldToCamera = new Transform3d();
 
-    Pose3d result = VisionIOPhotonVision.computeRobotPose(fieldToCamera, robotToCamera);
+    Pose3d result = VisionIOPhotonVision.computeRobotPose(fieldToCamera, robotToCamera.inverse());
 
     // Robot center must sit at the inverse of the camera offset from the field origin
     Pose3d expected =
@@ -43,7 +43,7 @@ class VisionIOPhotonVisionTest {
     // Multitag reports camera at field origin
     Transform3d fieldToCamera = new Transform3d();
 
-    Pose3d result = VisionIOPhotonVision.computeRobotPose(fieldToCamera, robotToCamera);
+    Pose3d result = VisionIOPhotonVision.computeRobotPose(fieldToCamera, robotToCamera.inverse());
 
     Pose3d expected =
         Pose3d.kZero.relativeTo(aprilTagLayout.getOrigin()).plus(robotToCamera.inverse());
@@ -59,7 +59,7 @@ class VisionIOPhotonVisionTest {
     // Multitag places camera at X = 1.0 in field coordinates
     Transform3d fieldToCamera = new Transform3d(new Translation3d(1.0, 0.0, 0.0), new Rotation3d());
 
-    Pose3d result = VisionIOPhotonVision.computeRobotPose(fieldToCamera, robotToCamera);
+    Pose3d result = VisionIOPhotonVision.computeRobotPose(fieldToCamera, robotToCamera.inverse());
 
     // Robot center is 0.5 m behind camera → field X = 0.5
     assertEquals(0.5, result.getX(), DELTA);
@@ -74,7 +74,7 @@ class VisionIOPhotonVisionTest {
     // Multitag places camera at Y = 1.0 in field coordinates
     Transform3d fieldToCamera = new Transform3d(new Translation3d(0.0, 1.0, 0.0), new Rotation3d());
 
-    Pose3d result = VisionIOPhotonVision.computeRobotPose(fieldToCamera, robotToCamera);
+    Pose3d result = VisionIOPhotonVision.computeRobotPose(fieldToCamera, robotToCamera.inverse());
 
     // Robot center is 0.2 m to the right of camera → field Y = 0.8
     assertEquals(0.0, result.getX(), DELTA);

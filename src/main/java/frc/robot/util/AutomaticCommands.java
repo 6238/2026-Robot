@@ -5,10 +5,13 @@ import com.pathplanner.lib.path.PathConstraints;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.superstructure.Superstructure;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
 import org.littletonrobotics.junction.Logger;
@@ -30,12 +33,12 @@ public class AutomaticCommands {
   // side.
   // Mirrored over each midline → 4 bumps total on the field.
   private static final Pose2d bumpAllianceSide =
-      new Pose2d(3.546, 5.455, Rotation2d.fromDegrees(0));
-  private static final Pose2d bumpNeutralSide = new Pose2d(5.654, 5.455, Rotation2d.fromDegrees(0));
+      new Pose2d(3.246, 5.455, Rotation2d.fromDegrees(0));
+  private static final Pose2d bumpNeutralSide = new Pose2d(6.054, 5.455, Rotation2d.fromDegrees(0));
   private static final double BUMP_DETECTION_RADIUS = 3.5;
 
   // Trench wall lineup only activates within this Y distance of the outer wall (trench is at 7.46)
-  private static final double TRENCH_Y_ACTIVATION = 6.0;
+  private static final double TRENCH_Y_ACTIVATION = 6.6;
 
   // Hub back wall (TODO: measure on field)
   public static final Pose2d hubBackWallPose = new Pose2d(4.0, 5.5, Rotation2d.fromDegrees(180));
@@ -54,6 +57,56 @@ public class AutomaticCommands {
   // Under-tower (D-Pad Left, TODO: measure on field)
   public static final Pose2d towerEntryPose = new Pose2d(4.0, 6.5, Rotation2d.fromDegrees(270));
   public static final Pose2d towerExitPose = new Pose2d(4.0, 4.5, Rotation2d.fromDegrees(90));
+
+  // Pass/intake positions (defined for red alliance; top = Y > field midline)
+  // Blue poses are mirrored across the vertical midline: X → fieldLength - X, heading → 180° - θ
+  private static final Pose2d passIntakePoseRedTop =
+      new Pose2d(6.572, 7.606, Rotation2d.fromDegrees(-30));
+  private static final Pose2d passIntakePoseRedBottom =
+      new Pose2d(6.572, FieldFlipUtil.FIELD_WIDTH_METERS - 7.606, Rotation2d.fromDegrees(30));
+  private static final Pose2d passIntakePoseBlueTop =
+      new Pose2d(
+          FieldFlipUtil.flipVerticalMidline(passIntakePoseRedTop.getTranslation()),
+          Rotation2d.fromDegrees(210));
+  private static final Pose2d passIntakePoseBlueBottom =
+      new Pose2d(
+          FieldFlipUtil.flipVerticalMidline(passIntakePoseRedBottom.getTranslation()),
+          Rotation2d.fromDegrees(150));
+
+  // ── Y Button ─────────────────────────────────────────────────────────────
+
+  /**
+   * Y button: pathfinds to the nearest pass/intake pose (top or bottom half, red or blue alliance),
+   * then drives straight backward at 3/4 speed while running PASS_INTAKE. Runs until cancelled.
+   */
+  public static Command passIntakeCommand(Drive drive, Superstructure superstructure) {
+    return Commands.defer(
+        () -> {
+          Pose2d robotPose = drive.getPose();
+          boolean isRed = DriverStation.getAlliance().orElse(Alliance.Blue).equals(Alliance.Red);
+          boolean useTop = robotPose.getY() > FieldFlipUtil.FIELD_WIDTH_METERS / 2.0;
+
+          Pose2d target;
+          if (isRed) {
+            target = useTop ? passIntakePoseRedTop : passIntakePoseRedBottom;
+          } else {
+            target = useTop ? passIntakePoseBlueTop : passIntakePoseBlueBottom;
+          }
+          Logger.recordOutput("AutomaticCommands/passIntakeTarget", target);
+
+          return AutoBuilder.pathfindToPose(target, CONSTRAINTS, 0.0)
+              .andThen(
+                  Commands.parallel(
+                      DriveCommands.joystickDriveAtAngle(
+                          drive,
+                          () -> 0.75,
+                          () -> 0.0,
+                          () -> superstructure.getShotSetpoint().robotPose.getRotation()),
+                      superstructure.setWantedSuperStateCommand(
+                          () -> Superstructure.WantedState.PASS_INTAKE)));
+        },
+        Set.of(drive, superstructure));
+  }
 
   private static Pose2d flipVertical(Pose2d pose) {
     return new Pose2d(FieldFlipUtil.flipVerticalMidline(pose.getTranslation()), pose.getRotation());
@@ -76,11 +129,11 @@ public class AutomaticCommands {
         () -> {
           Pose2d pose = drive.getPose();
           // Wall tower (near own alliance wall)
-          if (pose.getX() < 2.0) {
+          if (pose.getX() < 1.0) {
             return wallTowerCommand(
                 drive, wallTowerTopEntry, wallTowerBottomEntry, pose, driverOverride);
           }
-          if (pose.getX() > 14.0) {
+          if (pose.getX() > 15.0) {
             return wallTowerCommand(
                 drive,
                 FieldFlipUtil.flipVerticalMidline(wallTowerTopEntry),
@@ -150,9 +203,11 @@ public class AutomaticCommands {
     Logger.recordOutput(
         "AutomaticCommands/wallTower/toPose", new Pose2d(toEntry, traversalHeading));
 
-    // Drive field-relative along Y; time = distance / (0.5 joystick * ~3 m/s max)
-    double yDir = toEntry.getY() > fromEntry.getY() ? 1.0 : -1.0;
-    double traversalSeconds = fromEntry.getDistance(toEntry) / 1.5;
+    // Drive field-relative along Y; time = distance / (0.5^2 joystick * ~3 m/s max)
+    // joystickDrive negates field-relative velocity on red alliance, so compensate here.
+    double rawYDir = toEntry.getY() > fromEntry.getY() ? 1.0 : -1.0;
+    double yDir = fromEntry.getX() > 8 ? -rawYDir : rawYDir;
+    double traversalSeconds = fromEntry.getDistance(toEntry) * 1.5;
 
     return AutoBuilder.pathfindToPose(fromPose, TRENCH_APPROACH_CONSTRAINTS, 0.0)
         .until(driverOverride)
@@ -256,9 +311,15 @@ public class AutomaticCommands {
   public static Command bumpCommand(Drive drive, BooleanSupplier driverOverride) {
     return Commands.defer(
         () -> {
-          Pose2d target = nearestBump(drive.getPose());
-          Logger.recordOutput("AutomaticCommands/target", target);
-          return AutoBuilder.pathfindToPose(target, CONSTRAINTS, 0.0).until(driverOverride);
+          Pose2d currentPose = drive.getPose();
+          Pose2d target = nearestBump(currentPose);
+          double headingDeg = ((currentPose.getRotation().getDegrees() % 360) + 360) % 360;
+          Rotation2d snappedHeading =
+              (headingDeg < 90 || headingDeg >= 270)
+                  ? Rotation2d.fromDegrees(0)
+                  : Rotation2d.fromDegrees(180);
+          target = new Pose2d(target.getTranslation(), snappedHeading);
+          return AutoBuilder.pathfindToPose(target, CONSTRAINTS, 3.0).until(driverOverride);
         },
         Set.of(drive));
   }
@@ -282,7 +343,7 @@ public class AutomaticCommands {
     // Compute the robot-Y direction that points toward the alliance zone.
     double fieldXToAlliance = neutralEntry.getX() < 8 ? -1.0 : 1.0;
     double robotYDir = fieldXToAlliance * (-shooterFacing.getSin());
-    double driveSpeed = 1.4 / 3.0; // 1.4 m/s as fraction of ~3 m/s max
+    double driveSpeed = 0.65; // 1.4 m/s as fraction of ~3 m/s max
 
     return AutoBuilder.pathfindToPose(alignPose, TRENCH_APPROACH_CONSTRAINTS, 0.0)
         .until(driverOverride)
@@ -295,7 +356,7 @@ public class AutomaticCommands {
         .andThen(
             DriveCommands.joystickDriveRobotRelative(
                     drive, () -> 0.0, () -> robotYDir * driveSpeed, () -> 0.0)
-                .withTimeout(0.5));
+                .withTimeout(1.75));
   }
 
   // ── Other commands ────────────────────────────────────────────────────────

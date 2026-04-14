@@ -35,7 +35,7 @@ public class ShooterConstants {
           0.6, // kP
           0, // kI
           0, // kD
-          0.1725 * 1 / FLYWHEEL_GEARING, // kA
+          0.172 * 1 / FLYWHEEL_GEARING, // kA
           0.0631 * 1 / FLYWHEEL_GEARING, // kV
           0.25 * 1 / FLYWHEEL_GEARING, // 0.3, // kS
           0.0, // kG
@@ -57,12 +57,12 @@ public class ShooterConstants {
 
   public static final LoggedNetworkPIDFeedforwardGains FEEDER_GAINS =
       new LoggedNetworkPIDFeedforwardGains(
-          0.7, // kP
+          0.6, // kP
           0.0, // kI
           0, // kD
-          0.1725 * FEEDER_GEARING, // kA
-          0.0631 * FEEDER_GEARING, // kV
-          0.25 * FEEDER_GEARING, // 0.3, // kS
+          0.172 * 1 / FLYWHEEL_GEARING, // kA
+          0.0831 * 1 / FLYWHEEL_GEARING, // kV
+          0.35 * 1 / FLYWHEEL_GEARING, // 0.3, // kS
           0.0, // kG
           "ShooterFeeder");
 
@@ -77,26 +77,20 @@ public class ShooterConstants {
           0.0, // kG
           "ShooterFeeder");
 
-  // RPS of flywheel speed added per RPS of feeder deficit (feeder below target → boost flywheel)
-  public static final LoggedNetworkNumber FEEDER_COMPENSATION_GAIN =
-      new LoggedNetworkNumber("Shooter/FeederCompensationGain", 0.5);
-
   public static final LoggedNetworkNumber SPINUP_FLYWHEEL_SPEED =
-      new LoggedNetworkNumber("Shooter/SpinupFlywheelRPM", 70);
+      new LoggedNetworkNumber("Shooter/SpinupFlywheelRPM", 50);
   public static final LoggedNetworkNumber FEEDER_SPEED =
-      new LoggedNetworkNumber("Shooter/FeederRPS", 60);
-  public static final LoggedNetworkNumber LEAD_TIME_SEC =
-      new LoggedNetworkNumber("Shooter/LEAD_TIME", 0.1);
+      new LoggedNetworkNumber("Shooter/FeederRPS", 50);
 
   // SHOT SETPOINTS
   public static final Angle FIXED_HOOD_ANGLE_DEGREES = Degrees.of(60.5);
   // Fraction below target at which bang-through (full 12 V) is applied instead of PID/FF
   public static final double FLYWHEEL_BANG_THROUGH_THRESHOLD = 0.04;
   // RPS below target at which recovery acceleration is injected
-  public static final double FLYWHEEL_RECOVERY_THRESHOLD_RPS = 2.0;
+  public static final double FLYWHEEL_RECOVERY_THRESHOLD_RPS = 3.5;
   // Acceleration (RPS/s) injected during flywheel speed recovery
   // Set just above measured physical max (~110 RPS/s from 0→55 RPS in 0.5s)
-  public static final double FLYWHEEL_RECOVERY_ACCELERATION_RPS2 = 150.0;
+  public static final double FLYWHEEL_RECOVERY_ACCELERATION_RPS2 = 200.0;
   public static final AngularVelocity FLYWHEEL_TOLERANCE_BEFORE_SHOT = RotationsPerSecond.of(0.5);
   public static final AngularVelocity FEEDER_TOLERANCE_BEFORE_SHOT = RotationsPerSecond.of(2.0);
   public static final LoggedNetworkNumber FEEDER_REVERSE_VOLTAGE =
@@ -129,10 +123,10 @@ public class ShooterConstants {
 
   static {
     FLYWHEEL_MAP = new ExtrapolatingDoubleTreeMap();
-    FLYWHEEL_MAP.put(2.32, 42.7);
-    FLYWHEEL_MAP.put(2.53, 44.4);
-    FLYWHEEL_MAP.put(3.52, 52.3);
-    FLYWHEEL_MAP.put(4.14, 55.7);
+    FLYWHEEL_MAP.put(2.32, 43.9);
+    FLYWHEEL_MAP.put(2.53, 45.0);
+    FLYWHEEL_MAP.put(3.52, 52.5);
+    FLYWHEEL_MAP.put(4.14, 55.9);
 
     // Physics-based: t_lead = d / (rps × BALL_SPEED_PER_FLYWHEEL_RPS × cos(hood))
     LEAD_TIME_MAP = new ExtrapolatingDoubleTreeMap();

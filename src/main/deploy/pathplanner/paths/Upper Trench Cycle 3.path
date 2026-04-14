@@ -3,41 +3,41 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 1.8236202307009757,
-        "y": 1.1659183673469387
+        "x": 1.9765306122448978,
+        "y": 6.904081632653061
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.194924335150944,
-        "y": 0.23173453519572018
+        "x": 2.3478347166948663,
+        "y": 7.83826546480428
       },
       "isLocked": false,
-      "linkedName": "Lower Trench Shoot"
+      "linkedName": "Upper Trench Shoot"
     },
     {
       "anchor": {
-        "x": 6.563842058562556,
-        "y": 0.674995563442768
+        "x": 6.499458740017746,
+        "y": 6.853889973380657
       },
       "prevControl": {
-        "x": 6.07797722016875,
-        "y": 0.5130406173114992
+        "x": 6.53729186580222,
+        "y": 7.364637171471058
       },
       "nextControl": {
-        "x": 6.805279503105591,
-        "y": 0.7554747116237797
+        "x": 6.418979591836735,
+        "y": 5.767421472937001
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 7.183531499556344,
-        "y": 1.1981100266193425
+        "x": 6.04072759538598,
+        "y": 4.78557586512866
       },
       "prevControl": {
-        "x": 7.328926161450534,
-        "y": 0.9012938220954068
+        "x": 6.18612225728017,
+        "y": 5.082392069652596
       },
       "nextControl": null,
       "isLocked": false,
@@ -47,15 +47,15 @@
   "rotationTargets": [
     {
       "waypointRelativePos": 0.26831345826235087,
-      "rotationDegrees": 0.0
+      "rotationDegrees": -0.0
     },
     {
       "waypointRelativePos": 0.6643952299829641,
-      "rotationDegrees": 0.0
+      "rotationDegrees": -0.0
     },
     {
       "waypointRelativePos": 0.8620102214650767,
-      "rotationDegrees": -91.5
+      "rotationDegrees": 91.5
     }
   ],
   "constraintZones": [],
@@ -71,13 +71,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": -87.85855884135461
+    "rotation": 87.85855884135461
   },
   "reversed": false,
-  "folder": "Lower Trench 2.5",
+  "folder": "Upper Trench 2.5",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 48.69685862301559
+    "rotation": -48.69685862301559
   },
   "useDefaultConstraints": false
 }

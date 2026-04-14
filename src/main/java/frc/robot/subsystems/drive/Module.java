@@ -36,7 +36,9 @@ public class Module {
   private final Alert turnDisconnectedAlert;
   private final Alert turnEncoderDisconnectedAlert;
   private final String logKey;
-  private SwerveModulePosition[] odometryPositions = new SwerveModulePosition[] {};
+  private static final int MAX_ODOMETRY_SAMPLES = 20;
+  // Pre-allocated pool — elements are mutated in-place each cycle, no per-cycle allocation.
+  private final SwerveModulePosition[] odometryPositions;
 
   public Module(
       ModuleIO io,
@@ -47,6 +49,10 @@ public class Module {
     this.index = index;
     this.constants = constants;
     this.logKey = "Drive/Module" + index;
+    odometryPositions = new SwerveModulePosition[MAX_ODOMETRY_SAMPLES];
+    for (int i = 0; i < MAX_ODOMETRY_SAMPLES; i++) {
+      odometryPositions[i] = new SwerveModulePosition();
+    }
     driveDisconnectedAlert =
         new Alert(
             "Disconnected drive motor on module " + Integer.toString(index) + ".",
@@ -64,13 +70,12 @@ public class Module {
     io.updateInputs(inputs);
     Logger.processInputs(logKey, inputs);
 
-    // Calculate positions for odometry
+    // Calculate positions for odometry — mutate pool in-place, no per-cycle allocation
     int sampleCount = inputs.odometryTimestamps.length; // All signals are sampled together
-    odometryPositions = new SwerveModulePosition[sampleCount];
     for (int i = 0; i < sampleCount; i++) {
-      double positionMeters = inputs.odometryDrivePositionsRad[i] * constants.WheelRadius;
-      Rotation2d angle = inputs.odometryTurnPositions[i];
-      odometryPositions[i] = new SwerveModulePosition(positionMeters, angle);
+      odometryPositions[i].distanceMeters =
+          inputs.odometryDrivePositionsRad[i] * constants.WheelRadius;
+      odometryPositions[i].angle = inputs.odometryTurnPositions[i];
     }
 
     // Update alerts

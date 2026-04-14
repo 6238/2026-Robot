@@ -55,9 +55,11 @@ import frc.robot.subsystems.intake.IntakeRollerIO;
 import frc.robot.subsystems.intake.IntakeRollerIOSim;
 import frc.robot.subsystems.intake.IntakeRollerIOTalonFX;
 import frc.robot.subsystems.shooter.Shooter;
+import frc.robot.subsystems.shooter.ShooterConstants;
 import frc.robot.subsystems.shooter.ShooterIOSim;
 import frc.robot.subsystems.shooter.ShooterIOTalonFX;
 import frc.robot.subsystems.superstructure.Superstructure;
+import frc.robot.subsystems.superstructure.Superstructure.WantedState;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOPhotonVision;
@@ -95,6 +97,7 @@ public class RobotContainer {
 
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
+  private final LoggedDashboardChooser<String> testModeChooser;
 
   private SwerveDriveSimulation swerveDriveSimulation = null;
   private RobotBumpSim robotBumpSim = null;
@@ -201,13 +204,10 @@ public class RobotContainer {
     }
 
     intakeRoller.setPivotAngleSupplier(() -> intakePivot.inputs.intakeArmPosition.in(Degrees));
-
-    superstructure.hubSpinupActive =
-        () -> false; // () -> shouldSpinupFlywheel(DriverStation.getMatchTime());
-
+    superstructure.hubSpinupActive = () -> shouldSpinupFlywheel(DriverStation.getMatchTime());
     lighting.superState = () -> superstructure.currentSuperState;
 
-    // Set up auto routines
+    // Set up auto routinesw
     LoggedDashboardChooser<Command> tempChooser;
     try {
       AutoRoutines autoRoutines = new AutoRoutines(drive, superstructure, intakePivot);
@@ -234,6 +234,11 @@ public class RobotContainer {
     }
     autoChooser = tempChooser;
 
+    testModeChooser = new LoggedDashboardChooser<>("Test Mode");
+    testModeChooser.addDefaultOption("Normal", "Normal");
+    testModeChooser.addOption("Baseline", "Baseline");
+    testModeChooser.addOption("Ball Path", "Ball Path");
+
     configureButtonBindings();
   }
 
@@ -251,6 +256,12 @@ public class RobotContainer {
             () -> -controller.getLeftY(),
             () -> -controller.getLeftX(),
             () -> -controller.getRightX()));
+
+    controller
+        .povRight()
+        .onTrue(
+            shooter.setFlywheelRPM(
+                () -> RotationsPerSecond.of(ShooterConstants.SPINUP_FLYWHEEL_SPEED.get())));
 
     // Reset Drive Rotation
     controller
@@ -342,36 +353,26 @@ public class RobotContainer {
     //     .onFalse(superstructure.setWantedSuperStateCommand(() ->
     // Superstructure.WantedState.IDLE));
 
-    controller.b().whileTrue(AutomaticCommands.automaticCommand(drive, driverOverride));
-    controller.x().whileTrue(AutomaticCommands.neutralToAllianceCommand(drive, driverOverride));
+    controller.b().whileTrue(AutomaticCommands.automaticCommand(drive, () -> false));
+    controller.x().whileTrue(AutomaticCommands.neutralToAllianceCommand(drive, () -> false));
 
     // D-Pad: targeted automations
     // controller.povUp().whileTrue(AutomaticCommands.hubBackWallCommand(drive, driverOverride));
     // controller.povDown().whileTrue(AutomaticCommands.wallShootSetupCommand(drive,
     // driverOverride));
     // controller.povLeft().whileTrue(AutomaticCommands.underTowerCommand(drive, driverOverride));
-
-    // spinup command
-    // controller
-    //     .y()
-    //     .onTrue(
-    //         new ToggleCommand(
-    //             shooter.setFlywheelRPM(
-    //                 () -> RotationsPerSecond.of(ShooterConstants.SPINUP_FLYWHEEL_SPEED.get())),
-    //             shooter.setFlywheelVoltage(() -> Volts.of(0))));
-
-    // D-Pad Right: shoot while drifting in -x direction
     controller
-        .povRight()
+        .povLeft()
         .whileTrue(
-            Commands.parallel(
-                DriveCommands.joystickDriveAtAngle(
-                    drive,
-                    () -> -0.4,
-                    () -> 0.0,
-                    () -> superstructure.getShotSetpoint().robotPose.getRotation()),
-                superstructure.setWantedSuperStateCommand(
-                    () -> Superstructure.WantedState.SHOOTING)))
+            Commands.startEnd(
+                () ->
+                    superstructure.setWantedSuperState(Superstructure.WantedState.MANUAL_SHOOTING),
+                () -> superstructure.setWantedSuperState(Superstructure.WantedState.IDLE),
+                superstructure));
+
+    controller
+        .y()
+        .whileTrue(AutomaticCommands.passIntakeCommand(drive, superstructure))
         .onFalse(superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.IDLE));
   }
 
@@ -386,8 +387,22 @@ public class RobotContainer {
 
   /** Returns the test-mode command. Called once per {@code testInit()}. */
   public Command getTestCommand() {
-    return new TestModeRunner()
-        .buildTestSequence(drive, shooter, hopper, intakeRoller, intakePivot);
+    lighting.setTestResult(null);
+    String mode = testModeChooser.get();
+    TestModeRunner runner = new TestModeRunner();
+    if ("Ball Path".equals(mode)) {
+      return runner
+          .buildBallPathSequence(shooter, hopper, intakeRoller, intakePivot)
+          .andThen(Commands.runOnce(() -> lighting.setTestResult(true)));
+    }
+    return runner.buildTestSequence(
+        drive,
+        shooter,
+        hopper,
+        intakeRoller,
+        intakePivot,
+        "Baseline".equals(mode),
+        lighting::setTestResult);
   }
 
   public Drive getDriveSubsystem() {
@@ -479,7 +494,7 @@ public class RobotContainer {
     if (!DriverStation.isTeleopEnabled()) return false;
 
     String gameData = DriverStation.getGameSpecificMessage();
-    if (gameData.isEmpty()) return true;
+    if (gameData.isEmpty()) return false;
 
     boolean redInactiveFirst =
         switch (gameData.charAt(0)) {
@@ -502,5 +517,9 @@ public class RobotContainer {
     if (matchTime > 55) return true; // last 2s shift 3 / pre-spinup shift 4
     if (matchTime > 30) return !shift1ActiveForUs; // shift 4
     return true; // end game
+  }
+
+  public void teleopInit() {
+    superstructure.setWantedSuperState(WantedState.INTAKING);
   }
 }

@@ -237,17 +237,20 @@ public class ModuleIOTalonFX implements ModuleIO {
     inputs.turnAppliedVolts = turnAppliedVolts.getValueAsDouble();
     inputs.turnSupplyCurrentAmps = turnSupplyCurrent.getValueAsDouble();
 
-    // Update odometry inputs
-    inputs.odometryTimestamps =
-        timestampQueue.stream().mapToDouble((Double value) -> value).toArray();
-    inputs.odometryDrivePositionsRad =
-        drivePositionQueue.stream()
-            .mapToDouble((Double value) -> Units.rotationsToRadians(value))
-            .toArray();
-    inputs.odometryTurnPositions =
-        turnPositionQueue.stream()
-            .map((Double value) -> Rotation2d.fromRotations(value))
-            .toArray(Rotation2d[]::new);
+    // Update odometry inputs — imperative loops avoid stream pipeline and lambda overhead
+    int n = timestampQueue.size();
+    double[] timestamps = new double[n];
+    double[] drivePositions = new double[n];
+    Rotation2d[] turnPositions = new Rotation2d[n];
+    int idx = 0;
+    for (double v : timestampQueue) timestamps[idx++] = v;
+    idx = 0;
+    for (double v : drivePositionQueue) drivePositions[idx++] = Units.rotationsToRadians(v);
+    idx = 0;
+    for (double v : turnPositionQueue) turnPositions[idx++] = Rotation2d.fromRotations(v);
+    inputs.odometryTimestamps = timestamps;
+    inputs.odometryDrivePositionsRad = drivePositions;
+    inputs.odometryTurnPositions = turnPositions;
     timestampQueue.clear();
     drivePositionQueue.clear();
     turnPositionQueue.clear();

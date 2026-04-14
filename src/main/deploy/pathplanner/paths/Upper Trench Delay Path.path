@@ -1,0 +1,119 @@
+{
+  "version": "2025.0",
+  "waypoints": [
+    {
+      "anchor": {
+        "x": 3.5780656610470274,
+        "y": 1.8319911268855371
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 1.0107808340727589,
+        "y": 0.07754569653948451
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 6.813327417923691,
+        "y": 0.7133309671694761
+      },
+      "prevControl": {
+        "x": 6.330452528837622,
+        "y": 0.6811393078970714
+      },
+      "nextControl": {
+        "x": 7.664126675960507,
+        "y": 0.7700509177052641
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 7.046716947648624,
+        "y": 3.53010115350488
+      },
+      "prevControl": {
+        "x": 7.89723348891409,
+        "y": 3.2910787747401145
+      },
+      "nextControl": {
+        "x": 6.399152653022652,
+        "y": 3.712087453117971
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 5.654427684117125,
+        "y": 2.5563034605146404
+      },
+      "prevControl": {
+        "x": 5.889036121851266,
+        "y": 2.8875089694027607
+      },
+      "nextControl": {
+        "x": 5.2681277728482705,
+        "y": 2.0109494232475593
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 1.8477639751552788,
+        "y": 1.7051286601597155
+      },
+      "prevControl": {
+        "x": 3.328580301685892,
+        "y": 2.6869742679680564
+      },
+      "nextControl": null,
+      "isLocked": false,
+      "linkedName": "Upper Trench Delay Depot Start"
+    }
+  ],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 0.7320954907161804,
+      "rotationDegrees": -0.0
+    },
+    {
+      "waypointRelativePos": 1.177718832891247,
+      "rotationDegrees": -110.65805554271734
+    },
+    {
+      "waypointRelativePos": 2.854111405835548,
+      "rotationDegrees": -0.0
+    },
+    {
+      "waypointRelativePos": 3.6710875331565,
+      "rotationDegrees": -0.0
+    }
+  ],
+  "constraintZones": [],
+  "pointTowardsZones": [],
+  "eventMarkers": [],
+  "globalConstraints": {
+    "maxVelocity": 3.0,
+    "maxAcceleration": 3.0,
+    "maxAngularVelocity": 540.0,
+    "maxAngularAcceleration": 720.0,
+    "nominalVoltage": 12.0,
+    "unlimited": false
+  },
+  "goalEndState": {
+    "velocity": 0,
+    "rotation": 27.96711550611938
+  },
+  "reversed": false,
+  "folder": null,
+  "idealStartingState": {
+    "velocity": 0,
+    "rotation": 175.6506770532136
+  },
+  "useDefaultConstraints": true
+}

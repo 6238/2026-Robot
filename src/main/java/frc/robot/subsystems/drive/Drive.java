@@ -114,6 +114,8 @@ public class Drive extends SubsystemBase {
             RobotIdentity.getTunerConstants().BackRight.LocationY)
       };
 
+  private static final SwerveModuleState[] EMPTY_MODULE_STATES = new SwerveModuleState[] {};
+
   // PathPlanner config constants
   private static final double ROBOT_MASS_KG = Pounds.of(105).in(Kilograms);
   private static final double ROBOT_MOI = 4.35;
@@ -217,19 +219,21 @@ public class Drive extends SubsystemBase {
         this::getChassisSpeeds,
         (speeds, feedforwards) -> runVelocity(speeds, feedforwards),
         new PPHolonomicDriveController(
-            new PIDConstants(5, 0.02, 0.1), new PIDConstants(5.2, 0.02, 0.1)),
+            new PIDConstants(5.6, 0.02, 0.35), new PIDConstants(5.2, 0.02, 0.35)),
         PP_CONFIG,
         () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
         this);
     Pathfinding.setPathfinder(new LocalADStarAK());
     PathPlannerLogging.setLogActivePathCallback(
         (activePath) -> {
-          Logger.recordOutput(
-              "Odometry/Trajectory", activePath.toArray(new Pose2d[activePath.size()]));
+          if (!Constants.MINIMAL_LOGGING)
+            Logger.recordOutput(
+                "Odometry/Trajectory", activePath.toArray(new Pose2d[activePath.size()]));
         });
     PathPlannerLogging.setLogTargetPoseCallback(
         (targetPose) -> {
-          Logger.recordOutput("Odometry/TrajectorySetpoint", targetPose);
+          if (!Constants.MINIMAL_LOGGING)
+            Logger.recordOutput("Odometry/TrajectorySetpoint", targetPose);
         });
 
     // Configure SysId
@@ -275,9 +279,9 @@ public class Drive extends SubsystemBase {
     }
 
     // Log empty setpoint states when disabled
-    if (DriverStation.isDisabled()) {
-      Logger.recordOutput("SwerveStates/Setpoints", new SwerveModuleState[] {});
-      Logger.recordOutput("SwerveStates/SetpointsOptimized", new SwerveModuleState[] {});
+    if (DriverStation.isDisabled() && !Constants.MINIMAL_LOGGING) {
+      Logger.recordOutput("SwerveStates/Setpoints", EMPTY_MODULE_STATES);
+      Logger.recordOutput("SwerveStates/SetpointsOptimized", EMPTY_MODULE_STATES);
     }
 
     // Update odometry
@@ -293,7 +297,8 @@ public class Drive extends SubsystemBase {
         odometryModuleDeltas[moduleIndex].angle = odometryPos.angle;
         odometryModulePositions[moduleIndex].distanceMeters = odometryPos.distanceMeters;
         odometryModulePositions[moduleIndex].angle = odometryPos.angle;
-        lastModulePositions[moduleIndex] = odometryPos;
+        lastModulePositions[moduleIndex].distanceMeters = odometryPos.distanceMeters;
+        lastModulePositions[moduleIndex].angle = odometryPos.angle;
       }
 
       // Update gyro angle
@@ -332,8 +337,10 @@ public class Drive extends SubsystemBase {
     SwerveModuleState[] setpointStates = previousSetpoint.moduleStates();
 
     // Log unoptimized setpoints and setpoint speeds
-    Logger.recordOutput("SwerveStates/Setpoints", setpointStates);
-    Logger.recordOutput("SwerveChassisSpeeds/Setpoints", previousSetpoint.robotRelativeSpeeds());
+    if (!Constants.MINIMAL_LOGGING) {
+      Logger.recordOutput("SwerveStates/Setpoints", setpointStates);
+      Logger.recordOutput("SwerveChassisSpeeds/Setpoints", previousSetpoint.robotRelativeSpeeds());
+    }
 
     // Send setpoints to modules with PathPlanner torque-current feedforwards.
     // Copy each state so that Module.runSetpoint's optimize() mutation doesn't corrupt
@@ -346,7 +353,8 @@ public class Drive extends SubsystemBase {
     }
 
     // Log optimized setpoints (runSetpoint mutates each state)
-    Logger.recordOutput("SwerveStates/SetpointsOptimized", setpointStates);
+    if (!Constants.MINIMAL_LOGGING)
+      Logger.recordOutput("SwerveStates/SetpointsOptimized", setpointStates);
   }
 
   /** Runs the drive in a straight line with the specified drive output. */
@@ -498,7 +506,7 @@ public class Drive extends SubsystemBase {
   public Command pathfindToPoseFaced(
       Pose2d targetPose, PathConstraints constraints, Supplier<Translation2d> aimTargetSupplier) {
 
-    Logger.recordOutput("Pathfinding/targetPose", targetPose);
+    if (!Constants.MINIMAL_LOGGING) Logger.recordOutput("Pathfinding/targetPose", targetPose);
 
     // Initialize with null to indicate we haven't latched yet
     AtomicReference<Double> latchedYaw = new AtomicReference<>(null);
@@ -560,7 +568,7 @@ public class Drive extends SubsystemBase {
       Supplier<Translation2d> aimTargetSupplier,
       double goalEndVelocity) {
 
-    Logger.recordOutput("Pathfinding/targetPose", targetPose);
+    if (!Constants.MINIMAL_LOGGING) Logger.recordOutput("Pathfinding/targetPose", targetPose);
 
     return new PathfindingCommand(
         targetPose,
@@ -569,7 +577,7 @@ public class Drive extends SubsystemBase {
         this::getPose,
         this::getChassisSpeeds,
         (speeds, feedforwards) -> {
-          Logger.recordOutput("Pathfinding/speeds", speeds);
+          if (!Constants.MINIMAL_LOGGING) Logger.recordOutput("Pathfinding/speeds", speeds);
 
           Pose2d currentPose = getPose();
           Translation2d aimTarget = aimTargetSupplier.get();
@@ -610,10 +618,12 @@ public class Drive extends SubsystemBase {
               runVelocity(
                   ChassisSpeeds.fromFieldRelativeSpeeds(
                       fieldVx, fieldVy, 0, getPose().getRotation()));
-              ChassisSpeeds actual = getChassisSpeeds();
-              Logger.recordOutput(
-                  "DriveIntoWall/actualSpeed",
-                  Math.hypot(actual.vxMetersPerSecond, actual.vyMetersPerSecond));
+              if (!Constants.MINIMAL_LOGGING) {
+                ChassisSpeeds actual = getChassisSpeeds();
+                Logger.recordOutput(
+                    "DriveIntoWall/actualSpeed",
+                    Math.hypot(actual.vxMetersPerSecond, actual.vyMetersPerSecond));
+              }
             })
         .until(
             () -> {

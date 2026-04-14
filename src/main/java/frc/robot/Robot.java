@@ -16,6 +16,7 @@ package frc.robot;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants.DriveMotorArrangement;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants.SteerMotorArrangement;
+import com.pathplanner.lib.commands.PathfindingCommand;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -111,6 +112,10 @@ public class Robot extends LoggedRobot {
     // Instantiate our RobotContainer. This will perform all our button bindings,
     // and put our autonomous chooser on the dashboard.
     robotContainer = new RobotContainer();
+
+    // Warm up PathPlanner pathfinding to JIT-compile hot paths before match start,
+    // eliminating the one-time spike when the first real pathfind result arrives.
+    PathfindingCommand.warmupCommand().schedule();
   }
 
   /** This function is called periodically during all modes. */
@@ -126,7 +131,6 @@ public class Robot extends LoggedRobot {
     // This must be called from the robot's periodic block in order for anything in
     // the Command-based framework to work.
     CommandScheduler.getInstance().run();
-    // robotContainer.getBatteryLogger().periodicAfterScheduler();
 
     // Return to non-RT thread priority (do not modify the first argument)
     // Threads.setCurrentThreadPriority(false, 10);
@@ -163,7 +167,7 @@ public class Robot extends LoggedRobot {
       shiftTimeRemaining = matchTime;
     }
     Logger.recordOutput("Match/CurrentShift", shiftName);
-    Logger.recordOutput("Match/ShiftTimeRemaining", shiftTimeRemaining);
+    Logger.recordOutput("Match/ShiftTimeRemaining", String.format("%.1f", shiftTimeRemaining));
 
     Logger.recordOutput("ACTIVE", RobotContainer.isHubActive(matchTime));
   }
@@ -205,6 +209,7 @@ public class Robot extends LoggedRobot {
     if (autonomousCommand != null) {
       autonomousCommand.cancel();
     }
+    robotContainer.teleopInit();
   }
 
   /** This function is called periodically during operator control. */
