@@ -21,7 +21,6 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.robot.testmode.TestModeHttpServer;
 import frc.robot.util.RobotIdentity;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.seasonspecific.rebuilt2026.Arena2026Rebuilt;
@@ -220,7 +219,6 @@ public class Robot extends LoggedRobot {
   @Override
   public void testInit() {
     CommandScheduler.getInstance().cancelAll();
-    TestModeHttpServer.start();
     robotContainer.getTestCommand().schedule();
   }
 

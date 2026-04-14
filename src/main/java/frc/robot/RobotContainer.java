@@ -16,6 +16,9 @@ package frc.robot;
 import static edu.wpi.first.units.Units.*;
 import static frc.robot.subsystems.vision.VisionConstants.*;
 
+import com.testmode.frc.TestModeBuilder;
+import com.testmode.frc.TestModeReport;
+import com.testmode.frc.TestStepConfig;
 import edu.wpi.first.hal.HALUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -26,6 +29,8 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -64,7 +69,6 @@ import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOPhotonVision;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
-import frc.robot.testmode.TestModeRunner;
 import frc.robot.util.AlertUtils;
 import frc.robot.util.AutomaticCommands;
 import frc.robot.util.RobotBumpSim;
@@ -97,7 +101,7 @@ public class RobotContainer {
 
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
-  private final LoggedDashboardChooser<String> testModeChooser;
+  private SendableChooser<Command> testModeChooser;
 
   private SwerveDriveSimulation swerveDriveSimulation = null;
   private RobotBumpSim robotBumpSim = null;
@@ -234,11 +238,7 @@ public class RobotContainer {
     }
     autoChooser = tempChooser;
 
-    testModeChooser = new LoggedDashboardChooser<>("Test Mode");
-    testModeChooser.addDefaultOption("Normal", "Normal");
-    testModeChooser.addOption("Baseline", "Baseline");
-    testModeChooser.addOption("Ball Path", "Ball Path");
-
+    configureTestMode();
     configureButtonBindings();
   }
 
@@ -339,7 +339,7 @@ public class RobotContainer {
     BooleanSupplier driverOverride =
         () ->
             Math.hypot(controller.getLeftX(), controller.getLeftY()) > OVERRIDE_DEADBAND
-                || Math.abs(controller.getRightX()) > OVERRIDE_DEADBAND;
+                || (controller.getRightX()) > OVERRIDE_DEADBAND;
 
     // B button: continuous ball intake — follow the detected ball cluster path while intaking,
     // replanning automatically as new detections arrive. Driver stick movement cancels.
@@ -385,24 +385,105 @@ public class RobotContainer {
     return autoChooser.get();
   }
 
+  private void configureTestMode() {
+    TestModeBuilder builder =
+        new TestModeBuilder()
+            // All 4 drive motors in parallel, measured separately
+            .withMultiFlywheelStep(
+                new TestStepConfig("drive"),
+                drive::runCharacterization,
+                () -> (drive.getModuleDriveVelocityRadPerSec(0)),
+                () -> (drive.getModuleDriveVelocityRadPerSec(1)),
+                () -> (drive.getModuleDriveVelocityRadPerSec(2)),
+                () -> (drive.getModuleDriveVelocityRadPerSec(3)))
+            // All 4 steer motors in parallel, measured separately
+            .withMultiFlywheelStep(
+                new TestStepConfig("steer"),
+                drive::runSteerOpenLoop,
+                () -> (drive.getModuleSteerVelocityRadPerSec(0)),
+                () -> (drive.getModuleSteerVelocityRadPerSec(1)),
+                () -> (drive.getModuleSteerVelocityRadPerSec(2)),
+                () -> (drive.getModuleSteerVelocityRadPerSec(3)))
+            // Flywheel
+            .withFlywheelStep(
+              new TestStepConfig("flywheel"),
+              v -> shooter.setFlywheelVoltage(Volts.of(v)),
+              () -> shooter.inputs.flywheelVelocity.in(RotationsPerSecond))
+            // Feeder
+            .withFlywheelStep(
+              new TestStepConfig("feeder"),
+              v -> shooter.setFlywheelVoltage(Volts.of(v)),
+              () -> shooter.inputs.feederVelocity.in(RotationsPerSecond))
+            // Indexer + top indexer in parallel, measured separately
+            .withMultiFlywheelStep(
+                new TestStepConfig("hopper"),
+                v -> {
+                  hopper.io.setIndexerSpeed(RotationsPerSecond.of(v));
+                  hopper.io.setTopIndexerSpeed(RotationsPerSecond.of(v));
+                },
+                () -> (hopper.inputs.indexerVelocity.in(RotationsPerSecond)),
+                () -> (hopper.inputs.topIndexerVelocity.in(RotationsPerSecond)))
+            // Intake Roller
+            .withFlywheelStep(
+              new TestStepConfig("intake_roller"),
+              v -> intakeRoller.io.setIntakeVoltage(Volts.of(v)),
+              () -> intakeRoller.inputs.intakeVelocity.in(RotationsPerSecond))
+            // Intake Arm Position
+            .withPositionalStep(
+              new TestStepConfig("intake_arm")
+                .withPositionTolerance(2)
+                .withTargetPosition(IntakeConstants.INTAKE_DOWN_VALUE.get()),
+              v -> intakePivot.io.setIntakeArmVoltage(Volts.of(v)),
+              () -> intakePivot.inputs.intakeArmVelocity.in(RotationsPerSecond),
+              p -> intakePivot.setAngle(Degrees.of(p)),
+              () -> intakePivot.inputs.intakeArmPosition.in(Degrees))
+            .withTestResultConsumer(new TestModeReport())
+            .withOverallResultConsumer(lighting::setTestResult);
+
+    testModeChooser = new SendableChooser<>();
+    testModeChooser.setDefaultOption("Test", builder.buildTestCommand());
+    testModeChooser.addOption("Baseline", builder.buildBaselineCommand());
+    testModeChooser.addOption("Ball Path", buildBallPathCommand());
+    SmartDashboard.putData("Test Mode", testModeChooser);
+  }
+
+  private Command buildBallPathCommand() {
+    double partialAngle =
+        (IntakeConstants.INTAKE_DOWN_VALUE.get() + IntakeConstants.INTAKE_UP_VALUE.get() + 30)
+            / 2.0;
+    return Commands.sequence(
+            intakePivot.setIntakeAngle(() -> Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get())),
+            Commands.waitSeconds(2.5),
+            intakeRoller.spinIntake(),
+            Commands.waitSeconds(2.0),
+            intakeRoller.stopIntake(),
+            Commands.waitSeconds(0.5),
+            intakePivot.setIntakeAngle(() -> Degrees.of(partialAngle)),
+            Commands.waitSeconds(2.5),
+            Commands.runOnce(
+                () -> {
+                  shooter.setFlywheelVoltage(Volts.of(4));
+                  shooter.setFeederVoltage(Volts.of(4));
+                },
+                shooter),
+            Commands.waitSeconds(2.0),
+            hopper.spinFullIndexer(),
+            Commands.waitSeconds(2.0),
+            Commands.runOnce(
+                () -> {
+                  shooter.setFlywheelVoltage(Volts.of(0));
+                  shooter.setFeederVoltage(Volts.of(0));
+                },
+                shooter),
+            hopper.stopFullIndexer())
+        .andThen(Commands.runOnce(() -> lighting.setTestResult(true)));
+  }
+
   /** Returns the test-mode command. Called once per {@code testInit()}. */
   public Command getTestCommand() {
     lighting.setTestResult(null);
-    String mode = testModeChooser.get();
-    TestModeRunner runner = new TestModeRunner();
-    if ("Ball Path".equals(mode)) {
-      return runner
-          .buildBallPathSequence(shooter, hopper, intakeRoller, intakePivot)
-          .andThen(Commands.runOnce(() -> lighting.setTestResult(true)));
-    }
-    return runner.buildTestSequence(
-        drive,
-        shooter,
-        hopper,
-        intakeRoller,
-        intakePivot,
-        "Baseline".equals(mode),
-        lighting::setTestResult);
+    Command cmd = testModeChooser.getSelected();
+    return cmd != null ? cmd : Commands.none();
   }
 
   public Drive getDriveSubsystem() {

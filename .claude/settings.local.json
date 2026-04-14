@@ -47,7 +47,18 @@
       "Bash(wsl apt-get install -y sshpass)",
       "Bash(wsl uname -a)",
       "Bash(wsl cat /etc/os-release)",
-      "WebFetch(domain:rylero.github.io)"
+      "WebFetch(domain:rylero.github.io)",
+      "Bash(curl -s https://raw.githubusercontent.com/rylero/TestMode/main/README.md)",
+      "Bash(curl -s \"https://raw.githubusercontent.com/rylero/TestMode/main/src/main/java/com/testmode/frc/TestModeBuilder.java\")",
+      "Bash(cat vendordeps/*.json)",
+      "Read(//c/Users/ryan/.gradle/**)",
+      "Bash(jar tf /c/Users/ryan/.gradle/caches/modules-2/files-2.1/com.testmode.frc/TestMode-java/1.0.0/209f41a7bb3ac9514026c56402418fcfdab98f2b/TestMode-java-1.0.0.jar)",
+      "Bash(grep -v \"/$\")",
+      "Bash(javap -p /c/Users/ryan/.gradle/caches/modules-2/files-2.1/com.testmode.frc/TestMode-java/1.0.0/209f41a7bb3ac9514026c56402418fcfdab98f2b/TestMode-java-1.0.0.jar com/testmode/frc/TestModeBuilder.class)",
+      "Bash(javap -classpath /c/Users/ryan/.gradle/caches/modules-2/files-2.1/com.testmode.frc/TestMode-java/1.0.0/209f41a7bb3ac9514026c56402418fcfdab98f2b/TestMode-java-1.0.0.jar com.testmode.frc.TestModeBuilder)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\ryan\\2026-Robot\\src\\main\\java\\frc\\robot\\testmode"
     ]
   }
 }
