@@ -388,6 +388,31 @@ public class RobotContainer {
   private void configureTestMode() {
     TestModeBuilder builder =
         new TestModeBuilder()
+            // Connection checks
+            .withCondition("gyro_connected", drive::isGyroConnected)
+            .withCondition("fl_drive_connected", () -> drive.isModuleDriveConnected(0))
+            .withCondition("fl_turn_connected", () -> drive.isModuleTurnConnected(0))
+            .withCondition("fl_encoder_connected", () -> drive.isModuleTurnEncoderConnected(0))
+            .withCondition("fr_drive_connected", () -> drive.isModuleDriveConnected(1))
+            .withCondition("fr_turn_connected", () -> drive.isModuleTurnConnected(1))
+            .withCondition("fr_encoder_connected", () -> drive.isModuleTurnEncoderConnected(1))
+            .withCondition("bl_drive_connected", () -> drive.isModuleDriveConnected(2))
+            .withCondition("bl_turn_connected", () -> drive.isModuleTurnConnected(2))
+            .withCondition("bl_encoder_connected", () -> drive.isModuleTurnEncoderConnected(2))
+            .withCondition("br_drive_connected", () -> drive.isModuleDriveConnected(3))
+            .withCondition("br_turn_connected", () -> drive.isModuleTurnConnected(3))
+            .withCondition("br_encoder_connected", () -> drive.isModuleTurnEncoderConnected(3))
+            .withCondition("camera0_connected", () -> vision.isCameraConnected(0))
+            .withCondition("camera1_connected", () -> vision.isCameraConnected(1))
+            .withCondition("shooter_motor_connected", () -> shooter.inputs.flywheelTalonConnected)
+            .withCondition("feeder_motor_connected", () -> shooter.inputs.feederTalonConnected)
+            .withCondition("indexer_connected", () -> hopper.inputs.indexerTalonConnected)
+            .withCondition("top_indexer_connected", () -> hopper.inputs.topIndexerTalonConnected)
+            .withCondition("intake_roller_connected", () -> intakeRoller.inputs.intakeTalonConnected)
+            .withCondition(
+                "intake_roller_follower_connected",
+                () -> intakeRoller.inputs.intakeFollowerTalonConnected)
+            .withCondition("intake_pivot_connected", () -> intakePivot.inputs.intakeArmTalonConnected)
             // All 4 drive motors in parallel, measured separately
             .withMultiFlywheelStep(
                 new TestStepConfig("drive"),
@@ -406,14 +431,14 @@ public class RobotContainer {
                 () -> (drive.getModuleSteerVelocityRadPerSec(3)))
             // Flywheel
             .withFlywheelStep(
-              new TestStepConfig("flywheel"),
-              v -> shooter.setFlywheelVoltage(Volts.of(v)),
-              () -> shooter.inputs.flywheelVelocity.in(RotationsPerSecond))
+                new TestStepConfig("flywheel"),
+                v -> shooter.setFlywheelVoltage(Volts.of(v)),
+                () -> shooter.inputs.flywheelVelocity.in(RotationsPerSecond))
             // Feeder
             .withFlywheelStep(
-              new TestStepConfig("feeder"),
-              v -> shooter.setFlywheelVoltage(Volts.of(v)),
-              () -> shooter.inputs.feederVelocity.in(RotationsPerSecond))
+                new TestStepConfig("feeder"),
+                v -> shooter.setFlywheelVoltage(Volts.of(v)),
+                () -> shooter.inputs.feederVelocity.in(RotationsPerSecond))
             // Indexer + top indexer in parallel, measured separately
             .withMultiFlywheelStep(
                 new TestStepConfig("hopper"),
@@ -425,18 +450,18 @@ public class RobotContainer {
                 () -> (hopper.inputs.topIndexerVelocity.in(RotationsPerSecond)))
             // Intake Roller
             .withFlywheelStep(
-              new TestStepConfig("intake_roller"),
-              v -> intakeRoller.io.setIntakeVoltage(Volts.of(v)),
-              () -> intakeRoller.inputs.intakeVelocity.in(RotationsPerSecond))
+                new TestStepConfig("intake_roller"),
+                v -> intakeRoller.io.setIntakeVoltage(Volts.of(v)),
+                () -> intakeRoller.inputs.intakeVelocity.in(RotationsPerSecond))
             // Intake Arm Position
             .withPositionalStep(
-              new TestStepConfig("intake_arm")
-                .withPositionTolerance(2)
-                .withTargetPosition(IntakeConstants.INTAKE_DOWN_VALUE.get()),
-              v -> intakePivot.io.setIntakeArmVoltage(Volts.of(v)),
-              () -> intakePivot.inputs.intakeArmVelocity.in(RotationsPerSecond),
-              p -> intakePivot.setAngle(Degrees.of(p)),
-              () -> intakePivot.inputs.intakeArmPosition.in(Degrees))
+                new TestStepConfig("intake_arm")
+                    .withPositionTolerance(2)
+                    .withTargetPosition(IntakeConstants.INTAKE_DOWN_VALUE.get()),
+                v -> intakePivot.io.setIntakeArmVoltage(Volts.of(v)),
+                () -> intakePivot.inputs.intakeArmVelocity.in(RotationsPerSecond),
+                p -> intakePivot.setAngle(Degrees.of(p)),
+                () -> intakePivot.inputs.intakeArmPosition.in(Degrees))
             .withTestResultConsumer(new TestModeReport())
             .withOverallResultConsumer(lighting::setTestResult);
 

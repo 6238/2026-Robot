@@ -97,6 +97,10 @@ public class Vision extends SubsystemBase {
     return inputs[cameraIndex].latestTargetObservation.tx();
   }
 
+  public boolean isCameraConnected(int cameraIndex) {
+    return inputs[cameraIndex].connected;
+  }
+
   @Override
   public void periodic() {
     for (int i = 0; i < io.length; i++) {

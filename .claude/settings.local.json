@@ -55,7 +55,10 @@
       "Bash(jar tf /c/Users/ryan/.gradle/caches/modules-2/files-2.1/com.testmode.frc/TestMode-java/1.0.0/209f41a7bb3ac9514026c56402418fcfdab98f2b/TestMode-java-1.0.0.jar)",
       "Bash(grep -v \"/$\")",
       "Bash(javap -p /c/Users/ryan/.gradle/caches/modules-2/files-2.1/com.testmode.frc/TestMode-java/1.0.0/209f41a7bb3ac9514026c56402418fcfdab98f2b/TestMode-java-1.0.0.jar com/testmode/frc/TestModeBuilder.class)",
-      "Bash(javap -classpath /c/Users/ryan/.gradle/caches/modules-2/files-2.1/com.testmode.frc/TestMode-java/1.0.0/209f41a7bb3ac9514026c56402418fcfdab98f2b/TestMode-java-1.0.0.jar com.testmode.frc.TestModeBuilder)"
+      "Bash(javap -classpath /c/Users/ryan/.gradle/caches/modules-2/files-2.1/com.testmode.frc/TestMode-java/1.0.0/209f41a7bb3ac9514026c56402418fcfdab98f2b/TestMode-java-1.0.0.jar com.testmode.frc.TestModeBuilder)",
+      "Read(//c/Users/ryan/**)",
+      "Bash(jar tf \"c:/Users/ryan/.gradle/caches/modules-2/files-2.1/com.testmode.frc/TestMode-java/1.0.0/cd3b654cb4cadf28b7d644afe485a2d720a9453b/TestMode-java-1.0.0-sources.jar\")",
+      "Read(//tmp/testmode/com/testmode/frc/**)"
     ],
     "additionalDirectories": [
       "c:\\Users\\ryan\\2026-Robot\\src\\main\\java\\frc\\robot\\testmode"

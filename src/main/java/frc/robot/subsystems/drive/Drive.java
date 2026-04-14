@@ -488,6 +488,22 @@ public class Drive extends SubsystemBase {
         visionRobotPoseMeters, timestampSeconds, visionMeasurementStdDevs);
   }
 
+  public boolean isGyroConnected() {
+    return gyroInputs.connected;
+  }
+
+  public boolean isModuleDriveConnected(int index) {
+    return modules[index].isDriveConnected();
+  }
+
+  public boolean isModuleTurnConnected(int index) {
+    return modules[index].isTurnConnected();
+  }
+
+  public boolean isModuleTurnEncoderConnected(int index) {
+    return modules[index].isTurnEncoderConnected();
+  }
+
   /** Returns the maximum linear speed in meters per sec. */
   public double getMaxLinearSpeedMetersPerSec() {
     return RobotIdentity.getTunerConstants().kSpeedAt12Volts.in(MetersPerSecond);

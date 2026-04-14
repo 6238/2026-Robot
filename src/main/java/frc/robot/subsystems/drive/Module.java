@@ -200,4 +200,16 @@ public class Module {
   public double getTurnSupplyCurrentAmps() {
     return inputs.turnSupplyCurrentAmps;
   }
+
+  public boolean isDriveConnected() {
+    return inputs.driveConnected;
+  }
+
+  public boolean isTurnConnected() {
+    return inputs.turnConnected;
+  }
+
+  public boolean isTurnEncoderConnected() {
+    return inputs.turnEncoderConnected;
+  }
 }
