@@ -9,7 +9,9 @@ public class DriveConstants {
    * module reorientation lag (~100ms → ~31ms for 90° turn). */
   public static final AngularVelocity MAX_MODULE_ANGULAR_VELOCITY = RadiansPerSecond.of(50);
 
-  /** When true, skips the SwerveSetpointGenerator and sends ChassisSpeeds directly to modules.
-   * Eliminates setpoint lag entirely; use for testing. Auto path always uses the generator. */
+  /** When true, skips the SwerveSetpointGenerator and sends ChassisSpeeds directly to modules
+   * via kinematics. Eliminates setpoint lag entirely at the cost of kinematic constraint
+   * enforcement. Affects ALL drive paths including auto. For testing only; leave false
+   * for competition. */
   public static boolean BYPASS_SETPOINT_GENERATOR = false;
 }

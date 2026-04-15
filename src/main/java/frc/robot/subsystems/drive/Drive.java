@@ -352,6 +352,8 @@ public class Drive extends SubsystemBase {
       Logger.recordOutput("Drive/BypassSetpointGenerator", DriveConstants.BYPASS_SETPOINT_GENERATOR);
     }
 
+    // Copy each state so that Module.runSetpoint's optimize() mutation doesn't corrupt
+    // setpointStates, which would cause 180° flip oscillation on the next cycle.
     double[] torqueCurrents = feedforwards.torqueCurrentsAmps();
     for (int i = 0; i < 4; i++) {
       modules[i].runSetpoint(
