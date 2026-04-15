@@ -50,6 +50,22 @@ public class DriveCommands {
   public static final double WHEEL_RADIUS_MAX_VELOCITY = 0.25; // Rad/Sec
   public static final double WHEEL_RADIUS_RAMP_RATE = 0.05; // Rad/Sec^2
 
+  // Betaflight "Actual" rate model parameters.
+  // output(x) = (CENTER_SENS * x + (MAX_RATE - CENTER_SENS) * x^EXPO) / MAX_RATE
+  // where x ∈ [0,1] is post-deadband stick magnitude and output ∈ [0,1].
+  public static final double CURVE_CENTER_SENS = 0.3;
+  public static final double CURVE_MAX_RATE = 1.0;
+  public static final double CURVE_EXPO = 3.0;
+
+  /**
+   * Applies the Betaflight Actual rate curve to a post-deadband stick value in [0, 1]. Returns a
+   * value in [0, 1].
+   */
+  public static double applyCurve(double x) {
+    return (CURVE_CENTER_SENS * x + (CURVE_MAX_RATE - CURVE_CENTER_SENS) * Math.pow(x, CURVE_EXPO))
+        / CURVE_MAX_RATE;
+  }
+
   private DriveCommands() {}
 
   private static Translation2d getLinearVelocityFromJoysticks(double x, double y) {
@@ -57,8 +73,8 @@ public class DriveCommands {
     double linearMagnitude = MathUtil.applyDeadband(Math.hypot(x, y), DEADBAND);
     Rotation2d linearDirection = new Rotation2d(Math.atan2(y, x));
 
-    // Square magnitude for more precise control
-    linearMagnitude = linearMagnitude * linearMagnitude;
+    // Betaflight Actual rate curve for precise center control
+    linearMagnitude = applyCurve(linearMagnitude);
 
     // Return new linear velocity
     return new Pose2d(new Translation2d(), linearDirection)
@@ -83,8 +99,8 @@ public class DriveCommands {
           // Apply rotation deadband
           double omega = MathUtil.applyDeadband(omegaSupplier.getAsDouble(), DEADBAND);
 
-          // Square rotation value for more precise control
-          omega = Math.copySign(omega * omega, omega);
+          // Betaflight Actual rate curve for precise center control
+          omega = Math.copySign(applyCurve(Math.abs(omega)), omega);
 
           // Convert to field relative speeds & send command
           ChassisSpeeds speeds =
@@ -122,8 +138,8 @@ public class DriveCommands {
           // 2. Apply rotation deadband
           double omega = MathUtil.applyDeadband(omegaSupplier.getAsDouble(), DEADBAND);
 
-          // 3. Square rotation value for more precise control
-          omega = Math.copySign(omega * omega, omega);
+          // 3. Betaflight Actual rate curve for precise center control
+          omega = Math.copySign(applyCurve(Math.abs(omega)), omega);
 
           // 4. Construct ChassisSpeeds directly
           // In WPILib, the constructor new ChassisSpeeds(vx, vy, omega) is robot-relative by
