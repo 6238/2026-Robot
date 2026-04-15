@@ -332,19 +332,26 @@ public class Drive extends SubsystemBase {
   }
 
   public void runVelocity(ChassisSpeeds speeds, DriveFeedforwards feedforwards) {
-    // Calculate module setpoints
-    previousSetpoint = setpointGenerator.generateSetpoint(previousSetpoint, speeds, 0.02);
-    SwerveModuleState[] setpointStates = previousSetpoint.moduleStates();
+    SwerveModuleState[] setpointStates;
 
-    // Log unoptimized setpoints and setpoint speeds
-    if (!Constants.MINIMAL_LOGGING) {
-      Logger.recordOutput("SwerveStates/Setpoints", setpointStates);
-      Logger.recordOutput("SwerveChassisSpeeds/Setpoints", previousSetpoint.robotRelativeSpeeds());
+    if (DriveConstants.BYPASS_SETPOINT_GENERATOR) {
+      setpointStates = kinematics.toSwerveModuleStates(speeds);
+      SwerveDriveKinematics.desaturateWheelSpeeds(setpointStates, getMaxLinearSpeedMetersPerSec());
+    } else {
+      previousSetpoint = setpointGenerator.generateSetpoint(previousSetpoint, speeds, 0.02);
+      setpointStates = previousSetpoint.moduleStates();
     }
 
-    // Send setpoints to modules with PathPlanner torque-current feedforwards.
-    // Copy each state so that Module.runSetpoint's optimize() mutation doesn't corrupt
-    // previousSetpoint's internal state array, which would cause 180-degree flip oscillation.
+    if (!Constants.MINIMAL_LOGGING) {
+      Logger.recordOutput("SwerveStates/Setpoints", setpointStates);
+      Logger.recordOutput(
+          "SwerveChassisSpeeds/Setpoints",
+          DriveConstants.BYPASS_SETPOINT_GENERATOR
+              ? speeds
+              : previousSetpoint.robotRelativeSpeeds());
+      Logger.recordOutput("Drive/BypassSetpointGenerator", DriveConstants.BYPASS_SETPOINT_GENERATOR);
+    }
+
     double[] torqueCurrents = feedforwards.torqueCurrentsAmps();
     for (int i = 0; i < 4; i++) {
       modules[i].runSetpoint(
@@ -352,7 +359,6 @@ public class Drive extends SubsystemBase {
           torqueCurrents[i]);
     }
 
-    // Log optimized setpoints (runSetpoint mutates each state)
     if (!Constants.MINIMAL_LOGGING)
       Logger.recordOutput("SwerveStates/SetpointsOptimized", setpointStates);
   }
