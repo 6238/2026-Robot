@@ -46,7 +46,17 @@
       "Bash(wsl sudo apt-get install -y sshpass)",
       "Bash(wsl apt-get install -y sshpass)",
       "Bash(wsl uname -a)",
-      "Bash(wsl cat /etc/os-release)"
+      "Bash(wsl cat /etc/os-release)",
+      "Read(//c/Users/ryan/.claude/plugins/cache/superpowers-marketplace/superpowers/5.0.7/skills/subagent-driven-development/**)",
+      "Bash(./gradlew compileJava -x test --continue)",
+      "Bash(java -version)",
+      "Bash(./gradlew --version)",
+      "Bash(./gradlew test --tests \"commands.DriveCommandsCurveTest\")"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\ryan\\2026-Robot\\docs\\superpowers\\specs",
+      "c:\\Users\\ryan\\2026-Robot\\docs\\superpowers\\plans",
+      "c:\\Users\\ryan\\.claude\\projects\\c--Users-ryan-2026-Robot\\memory"
     ]
   }
 }

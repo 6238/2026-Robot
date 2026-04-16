@@ -365,7 +365,8 @@ public class Drive extends SubsystemBase {
           DriveConstants.BYPASS_SETPOINT_GENERATOR
               ? speeds
               : previousSetpoint.robotRelativeSpeeds());
-      Logger.recordOutput("Drive/BypassSetpointGenerator", DriveConstants.BYPASS_SETPOINT_GENERATOR);
+      Logger.recordOutput(
+          "Drive/BypassSetpointGenerator", DriveConstants.BYPASS_SETPOINT_GENERATOR);
     }
 
     // Copy each state so that Module.runSetpoint's optimize() mutation doesn't corrupt

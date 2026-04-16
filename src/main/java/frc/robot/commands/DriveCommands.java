@@ -53,8 +53,8 @@ public class DriveCommands {
   // Betaflight "Actual" rate model parameters.
   // output(x) = (CENTER_SENS * x + (MAX_RATE - CENTER_SENS) * x^EXPO) / MAX_RATE
   // where x ∈ [0,1] is post-deadband stick magnitude and output ∈ [0,1].
-  public static final double CURVE_CENTER_SENS = 0.3;
-  public static final double CURVE_MAX_RATE = 1.0;
+  public static final double CURVE_CENTER_SENS = 1.2;
+  public static final double CURVE_MAX_RATE = 0.8;
   public static final double CURVE_EXPO = 3.0;
 
   /**
