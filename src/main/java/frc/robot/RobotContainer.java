@@ -94,6 +94,7 @@ public class RobotContainer {
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
+  private boolean defenseModeActive = false;
 
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
@@ -370,10 +371,19 @@ public class RobotContainer {
                 () -> superstructure.setWantedSuperState(Superstructure.WantedState.IDLE),
                 superstructure));
 
+    // Y button: toggle defense mode (raises drive current, lowers other subsystem current)
     controller
         .y()
-        .whileTrue(AutomaticCommands.passIntakeCommand(drive, superstructure))
-        .onFalse(superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.IDLE));
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  defenseModeActive = !defenseModeActive;
+                  drive.setDefenseMode(defenseModeActive);
+                  shooter.setDefenseMode(defenseModeActive);
+                  hopper.setDefenseMode(defenseModeActive);
+                  intakeRoller.setDefenseMode(defenseModeActive);
+                  intakePivot.setDefenseMode(defenseModeActive);
+                }));
   }
 
   /**
@@ -521,5 +531,14 @@ public class RobotContainer {
 
   public void teleopInit() {
     superstructure.setWantedSuperState(WantedState.INTAKING);
+    // Reset defense mode at the start of each teleop period
+    if (defenseModeActive) {
+      defenseModeActive = false;
+      drive.setDefenseMode(false);
+      shooter.setDefenseMode(false);
+      hopper.setDefenseMode(false);
+      intakeRoller.setDefenseMode(false);
+      intakePivot.setDefenseMode(false);
+    }
   }
 }
