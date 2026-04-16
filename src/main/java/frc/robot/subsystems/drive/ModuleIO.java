@@ -63,4 +63,12 @@ public interface ModuleIO {
 
   /** Run the turn motor to the specified rotation. */
   public default void setTurnPosition(Rotation2d rotation) {}
+
+  /**
+   * Reconfigures drive motor current limits at runtime. No-op by default (sim/test).
+   *
+   * @param supplyAmps supply current limit in amps
+   * @param statorAmps stator current limit in amps
+   */
+  public default void setDriveCurrentLimits(double supplyAmps, double statorAmps) {}
 }

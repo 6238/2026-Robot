@@ -211,4 +211,9 @@ public class Module {
   public double getTurnSupplyCurrentAmps() {
     return inputs.turnSupplyCurrentAmps;
   }
+
+  /** Delegates to {@link ModuleIO#setDriveCurrentLimits} for runtime current limit changes. */
+  public void setDriveCurrentLimits(double supplyAmps, double statorAmps) {
+    io.setDriveCurrentLimits(supplyAmps, statorAmps);
+  }
 }

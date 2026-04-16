@@ -173,6 +173,7 @@ public class Drive extends SubsystemBase {
 
   private final SwerveSetpointGenerator setpointGenerator;
   private SwerveSetpoint previousSetpoint;
+  private boolean defenseModeActive = false;
   private SwerveDriveSimulation sim;
   private final Field2d m_field = new Field2d();
 
@@ -687,4 +688,24 @@ public class Drive extends SubsystemBase {
           .withBeelineRadius(Centimeters.of(10));
 
   public static final Autopilot kAutopilot = new Autopilot(kProfile);
+
+  /**
+   * Toggles defense mode. When active, drive motor current limits are raised for pushing power;
+   * other subsystems lower their limits via their own setDefenseMode() calls.
+   */
+  public void setDefenseMode(boolean active) {
+    if (active == defenseModeActive) return;
+    defenseModeActive = active;
+    for (var module : modules) {
+      // Normal:  supply 55 A / stator 102 A (kSlipCurrent)
+      // Defense: supply 80 A / stator 120 A
+      module.setDriveCurrentLimits(active ? 80.0 : 55.0, active ? 120.0 : 102.0);
+    }
+    Logger.recordOutput("Drive/DefenseMode", defenseModeActive);
+  }
+
+  /** Returns whether defense mode is currently active. */
+  public boolean isDefenseModeActive() {
+    return defenseModeActive;
+  }
 }
