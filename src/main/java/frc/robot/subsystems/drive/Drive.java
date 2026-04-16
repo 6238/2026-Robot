@@ -257,19 +257,28 @@ public class Drive extends SubsystemBase {
 
   @Override
   public void periodic() {
+    double periodicStartSec = edu.wpi.first.wpilibj.Timer.getFPGATimestamp();
+
     // Refresh all CAN signals in one batch before acquiring the lock.
     // This replaces N sequential blocking waitForAll calls with a single one.
     if (allSignals.length > 0) {
       BaseStatusSignal.refreshAll(allSignals);
     }
 
-    odometryLock.lock(); // Prevents odometry updates while reading data
+    // Under lock: hardware reads only. Logger.processInputs is intentionally outside
+    // the lock — it reads from already-captured structs and doesn't need protection.
+    odometryLock.lock();
     gyroIO.updateInputs(gyroInputs);
-    Logger.processInputs("Drive/Gyro", gyroInputs);
     for (var module : modules) {
-      module.periodic();
+      module.updateHardwareInputs();
     }
     odometryLock.unlock();
+
+    // Outside lock: AK serialization + alert/odometry updates
+    Logger.processInputs("Drive/Gyro", gyroInputs);
+    for (var module : modules) {
+      module.logAndProcessInputs();
+    }
 
     // Stop moving when disabled
     if (DriverStation.isDisabled()) {
@@ -320,6 +329,12 @@ public class Drive extends SubsystemBase {
 
     // Do this in either robot periodic or subsystem periodic
     m_field.setRobotPose(getPose());
+
+    if (!Constants.MINIMAL_LOGGING) {
+      Logger.recordOutput(
+          "Drive/PeriodicTimeMs",
+          (edu.wpi.first.wpilibj.Timer.getFPGATimestamp() - periodicStartSec) * 1000.0);
+    }
   }
 
   /**

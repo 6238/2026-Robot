@@ -66,12 +66,17 @@ public class Module {
             AlertType.kError);
   }
 
-  public void periodic() {
+  /** Called under odometryLock — reads hardware into inputs struct. No logging. */
+  public void updateHardwareInputs() {
     io.updateInputs(inputs);
+  }
+
+  /** Called outside odometryLock — serializes inputs to AK log and updates alerts. */
+  public void logAndProcessInputs() {
     Logger.processInputs(logKey, inputs);
 
     // Calculate positions for odometry — mutate pool in-place, no per-cycle allocation
-    int sampleCount = inputs.odometryTimestamps.length; // All signals are sampled together
+    int sampleCount = inputs.odometryTimestamps.length;
     for (int i = 0; i < sampleCount; i++) {
       odometryPositions[i].distanceMeters =
           inputs.odometryDrivePositionsRad[i] * constants.WheelRadius;
@@ -82,6 +87,12 @@ public class Module {
     driveDisconnectedAlert.set(!inputs.driveConnected);
     turnDisconnectedAlert.set(!inputs.turnConnected);
     turnEncoderDisconnectedAlert.set(!inputs.turnEncoderConnected);
+  }
+
+  /** Convenience delegate — preserves existing call sites in tests. */
+  public void periodic() {
+    updateHardwareInputs();
+    logAndProcessInputs();
   }
 
   /** Runs the module with the specified setpoint state. Mutates the state to optimize it. */
