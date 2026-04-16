@@ -219,19 +219,15 @@ Toggles runtime current limits via TalonFX reconfiguration:
 
 Resets to OFF at every `teleopInit()`.
 
-### AutoPilot / Alignment (B & X Buttons)
-
-Uses the [AutoPilot library](https://github.com/therekrab/autopilot) (`com.github.therekrab:autopilot:1.5.0`) for smooth, constraint-aware pathfinding to named targets.
+### Alignment (B & X Buttons)
 
 **B Button — context-aware snap:**
 - Near alliance wall → wall tower traversal
-- Near horizontal midline → hub back wall approach
 - In trench area → trench traversal (heading locked to 0°/180°)
-- Otherwise → pathfind to nearest valid target
 
 **X Button — localization lineup:**
 - Near walls → bump crossing at mirrored bump positions
-- In trench → back intake into wall to reset pose estimate
+- In trench → back intake into wall to shoot immediately after trench crossing
 
 All targets are field-mirrored for red/blue alliance.
 
