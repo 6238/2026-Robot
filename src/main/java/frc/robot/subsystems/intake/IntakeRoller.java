@@ -145,4 +145,8 @@ public class IntakeRoller extends SubsystemBase {
           io.setIntakeVelocity(desiredIntakeVelocity);
         });
   }
+
+  public void setDefenseMode(boolean active) {
+    io.setDefenseMode(active);
+  }
 }

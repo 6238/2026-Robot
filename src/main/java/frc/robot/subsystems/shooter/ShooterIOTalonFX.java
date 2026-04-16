@@ -5,6 +5,7 @@ import static edu.wpi.first.units.Units.Volts;
 import static frc.robot.util.PhoenixUtil.tryUntilOk;
 
 import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
@@ -179,6 +180,28 @@ public class ShooterIOTalonFX implements ShooterIO {
 
   public void setFeederVoltage(Voltage voltage) {
     feederTalon.setVoltage(voltage.in(Volts));
+  }
+
+  @Override
+  public void setDefenseMode(boolean active) {
+    var flywheelLimits =
+        new CurrentLimitsConfigs()
+            .withSupplyCurrentLimitEnable(true)
+            .withSupplyCurrentLimit(active ? 30.0 : 60.0)
+            .withSupplyCurrentLowerLimit(active ? 30.0 : 40.0)
+            .withStatorCurrentLimit(active ? 80.0 : 130.0)
+            .withStatorCurrentLimitEnable(true);
+    flywheelTalon.getConfigurator().apply(flywheelLimits);
+    flywheel2Talon.getConfigurator().apply(flywheelLimits);
+
+    var feederLimits =
+        new CurrentLimitsConfigs()
+            .withSupplyCurrentLimitEnable(true)
+            .withSupplyCurrentLimit(active ? 25.0 : 50.0)
+            .withSupplyCurrentLowerLimit(active ? 25.0 : 40.0)
+            .withStatorCurrentLimit(active ? 40.0 : 80.0)
+            .withStatorCurrentLimitEnable(true);
+    feederTalon.getConfigurator().apply(feederLimits);
   }
 
   public void setFeederSpeed(AngularVelocity speed) {

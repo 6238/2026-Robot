@@ -139,4 +139,8 @@ public class Hopper extends SubsystemBase {
     targetTopIndexerVelocity = speed;
     io.setTopIndexerSpeed(speed);
   }
+
+  public void setDefenseMode(boolean active) {
+    io.setDefenseMode(active);
+  }
 }

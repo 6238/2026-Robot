@@ -5,6 +5,7 @@ import static edu.wpi.first.units.Units.Volts;
 import static frc.robot.util.PhoenixUtil.tryUntilOk;
 
 import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
@@ -169,6 +170,18 @@ public class HopperIOTalonFX implements HopperIO {
       } else {
         topIndexerTalon.setControl(topIndexerVelocityRequest.withVelocity(speed));
       }
+    }
+  }
+
+  @Override
+  public void setDefenseMode(boolean active) {
+    var limits =
+        new CurrentLimitsConfigs()
+            .withStatorCurrentLimit(active ? 20.0 : 40.0)
+            .withStatorCurrentLimitEnable(true);
+    indexerTalon.getConfigurator().apply(limits);
+    if (HopperConstants.USE_TOP_INDEXER) {
+      topIndexerTalon.getConfigurator().apply(limits);
     }
   }
 

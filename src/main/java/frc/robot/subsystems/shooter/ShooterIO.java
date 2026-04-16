@@ -32,4 +32,7 @@ public interface ShooterIO {
   public default void setFeederSpeed(AngularVelocity speed) {}
 
   public default void updateInputs(ShooterIOInputs inputs) {}
+
+  /** Reconfigures flywheel and feeder current limits. No-op in sim/test. */
+  public default void setDefenseMode(boolean active) {}
 }

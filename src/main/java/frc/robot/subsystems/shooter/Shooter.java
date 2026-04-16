@@ -153,4 +153,8 @@ public class Shooter extends SubsystemBase {
   public AngularVelocity getCurrentFlywheelSpeed() {
     return inputs.flywheelVelocity;
   }
+
+  public void setDefenseMode(boolean active) {
+    io.setDefenseMode(active);
+  }
 }

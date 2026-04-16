@@ -23,4 +23,7 @@ public interface IntakeRollerIO {
   public default void setIntakeVoltage(Voltage voltage) {}
 
   public default void setIntakeVelocity(AngularVelocity speed) {}
+
+  /** Reconfigures roller current limits. No-op in sim/test. */
+  public default void setDefenseMode(boolean active) {}
 }

@@ -4,6 +4,7 @@ import static edu.wpi.first.units.Units.*;
 import static frc.robot.util.PhoenixUtil.tryUntilOk;
 
 import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityVoltage;
@@ -108,6 +109,19 @@ public class IntakeRollerIOTalonFX implements IntakeRollerIO {
     }
 
     if (!Constants.MINIMAL_LOGGING) Logger.recordOutput("swapped leader follower", !notSwapped);
+  }
+
+  @Override
+  public void setDefenseMode(boolean active) {
+    var limits =
+        new CurrentLimitsConfigs()
+            .withSupplyCurrentLimitEnable(true)
+            .withSupplyCurrentLimit(active ? 15.0 : 25.0)
+            .withSupplyCurrentLowerLimit(active ? 15.0 : 25.0)
+            .withStatorCurrentLimit(active ? 35.0 : 70.0)
+            .withStatorCurrentLimitEnable(true);
+    intakeTalon.getConfigurator().apply(limits);
+    intakeFollowerTalon.getConfigurator().apply(limits);
   }
 
   @Override

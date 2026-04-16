@@ -156,4 +156,8 @@ public class IntakePivot extends SubsystemBase {
             })
         .ignoringDisable(true);
   }
+
+  public void setDefenseMode(boolean active) {
+    io.setDefenseMode(active);
+  }
 }

@@ -33,4 +33,7 @@ public interface HopperIO {
 
   public default void setTopIndexerVoltage(Voltage voltage) {}
   ;
+
+  /** Reconfigures indexer current limits. No-op in sim/test. */
+  public default void setDefenseMode(boolean active) {}
 }

@@ -4,6 +4,7 @@ import static edu.wpi.first.units.Units.*;
 import static frc.robot.util.PhoenixUtil.tryUntilOk;
 
 import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.ParentDevice;
@@ -116,5 +117,17 @@ public class IntakePivotIOTalonFX implements IntakePivotIO {
   @Override
   public void setBrakeMode(boolean brake) {
     intakeArmTalon.setNeutralMode(brake ? NeutralModeValue.Brake : NeutralModeValue.Coast);
+  }
+
+  @Override
+  public void setDefenseMode(boolean active) {
+    var limits =
+        new CurrentLimitsConfigs()
+            .withSupplyCurrentLimitEnable(true)
+            .withSupplyCurrentLimit(active ? 15.0 : 30.0)
+            .withSupplyCurrentLowerLimit(active ? 15.0 : 20.0)
+            .withStatorCurrentLimit(active ? 20.0 : 40.0)
+            .withStatorCurrentLimitEnable(true);
+    intakeArmTalon.getConfigurator().apply(limits);
   }
 }

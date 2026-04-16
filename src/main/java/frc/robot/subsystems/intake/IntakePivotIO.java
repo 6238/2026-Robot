@@ -28,4 +28,7 @@ public interface IntakePivotIO {
   public default void resetArmAngle() {}
 
   public default void setBrakeMode(boolean brake) {}
+
+  /** Reconfigures pivot arm current limits. No-op in sim/test. */
+  public default void setDefenseMode(boolean active) {}
 }
