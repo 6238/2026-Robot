@@ -117,7 +117,7 @@ public class Drive extends SubsystemBase {
   private static final SwerveModuleState[] EMPTY_MODULE_STATES = new SwerveModuleState[] {};
 
   // PathPlanner config constants
-  private static final double ROBOT_MASS_KG = Pounds.of(105).in(Kilograms);
+  private static final double ROBOT_MASS_KG = Pounds.of(113).in(Kilograms);
   private static final double ROBOT_MOI = 4.35;
   private static final double WHEEL_COF = 1.35;
   private static final RobotConfig PP_CONFIG =
@@ -139,6 +139,7 @@ public class Drive extends SubsystemBase {
   private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
   private final Module[] modules = new Module[4]; // FL, FR, BL, BR
   private final SysIdRoutine sysId;
+  private final SysIdRoutine sysIdSteer;
   private final Alert gyroDisconnectedAlert =
       new Alert("Disconnected gyro, using kinematics as fallback.", AlertType.kError);
 
@@ -174,6 +175,7 @@ public class Drive extends SubsystemBase {
   private final SwerveSetpointGenerator setpointGenerator;
   private SwerveSetpoint previousSetpoint;
   private boolean defenseModeActive = false;
+  private boolean stopWithXRequested = false;
   private SwerveDriveSimulation sim;
   private final Field2d m_field = new Field2d();
 
@@ -246,7 +248,34 @@ public class Drive extends SubsystemBase {
                 null,
                 (state) -> Logger.recordOutput("Drive/SysIdState", state.toString())),
             new SysIdRoutine.Mechanism(
-                (voltage) -> runCharacterization(voltage.in(Volts)), null, this));
+                (voltage) -> runCharacterization(voltage.in(Volts)),
+                (log) -> {
+                  for (int i = 0; i < 4; i++) {
+                    log.motor("drive-" + i)
+                        .voltage(Volts.of(modules[i].getDriveAppliedVolts()))
+                        .angularPosition(Radians.of(modules[i].getDrivePositionRad()))
+                        .angularVelocity(RadiansPerSecond.of(modules[i].getDriveVelocityRadPerSec()));
+                  }
+                },
+                this));
+    sysIdSteer =
+        new SysIdRoutine(
+            new SysIdRoutine.Config(
+                null,
+                null,
+                null,
+                (state) -> Logger.recordOutput("Drive/SysIdSteerState", state.toString())),
+            new SysIdRoutine.Mechanism(
+                (voltage) -> runSteerCharacterization(voltage.in(Volts)),
+                (log) -> {
+                  for (int i = 0; i < 4; i++) {
+                    log.motor("steer-" + i)
+                        .voltage(Volts.of(modules[i].getTurnAppliedVolts()))
+                        .angularPosition(Radians.of(modules[i].getAngle().getRadians()))
+                        .angularVelocity(RadiansPerSecond.of(modules[i].getSteerVelocityRadPerSec()));
+                  }
+                },
+                this));
 
     setpointGenerator =
         new SwerveSetpointGenerator(
@@ -350,12 +379,32 @@ public class Drive extends SubsystemBase {
   public void runVelocity(ChassisSpeeds speeds, DriveFeedforwards feedforwards) {
     SwerveModuleState[] setpointStates;
 
-    if (DriveConstants.BYPASS_SETPOINT_GENERATOR) {
-      setpointStates = kinematics.toSwerveModuleStates(speeds);
-      SwerveDriveKinematics.desaturateWheelSpeeds(setpointStates, getMaxLinearSpeedMetersPerSec());
+    boolean isZeroSpeeds =
+        speeds.vxMetersPerSecond == 0.0
+            && speeds.vyMetersPerSecond == 0.0
+            && speeds.omegaRadiansPerSecond == 0.0;
+
+    if (stopWithXRequested && isZeroSpeeds) {
+      // Apply X formation directly, bypassing setpoint generator
+      Rotation2d[] headings = new Rotation2d[4];
+      setpointStates = new SwerveModuleState[4];
+      for (int i = 0; i < 4; i++) {
+        headings[i] = getModuleTranslations()[i].getAngle();
+        setpointStates[i] = new SwerveModuleState(0.0, headings[i]);
+      }
+      kinematics.resetHeadings(headings);
+      previousSetpoint =
+          new SwerveSetpoint(new ChassisSpeeds(), setpointStates, DriveFeedforwards.zeros(4));
     } else {
-      previousSetpoint = setpointGenerator.generateSetpoint(previousSetpoint, speeds, 0.02);
-      setpointStates = previousSetpoint.moduleStates();
+      if (!isZeroSpeeds) stopWithXRequested = false;
+      if (DriveConstants.BYPASS_SETPOINT_GENERATOR) {
+        setpointStates = kinematics.toSwerveModuleStates(speeds);
+        SwerveDriveKinematics.desaturateWheelSpeeds(
+            setpointStates, getMaxLinearSpeedMetersPerSec());
+      } else {
+        previousSetpoint = setpointGenerator.generateSetpoint(previousSetpoint, speeds, 0.02);
+        setpointStates = previousSetpoint.moduleStates();
+      }
     }
 
     if (!Constants.MINIMAL_LOGGING) {
@@ -399,12 +448,9 @@ public class Drive extends SubsystemBase {
    * return to their normal orientations the next time a nonzero velocity is requested.
    */
   public void stopWithX() {
-    Rotation2d[] headings = new Rotation2d[4];
-    for (int i = 0; i < 4; i++) {
-      headings[i] = getModuleTranslations()[i].getAngle();
-    }
-    kinematics.resetHeadings(headings);
+    stopWithXRequested = true;
     stop();
+    Logger.recordOutput("Drive/StopWithX", true);
   }
 
   /** Returns a command to run a quasistatic test in the specified direction. */
@@ -417,6 +463,27 @@ public class Drive extends SubsystemBase {
   /** Returns a command to run a dynamic test in the specified direction. */
   public Command sysIdDynamic(SysIdRoutine.Direction direction) {
     return run(() -> runCharacterization(0.0)).withTimeout(1.0).andThen(sysId.dynamic(direction));
+  }
+
+  /** Runs all steer motors open-loop for SysId characterization. */
+  private void runSteerCharacterization(double output) {
+    for (var module : modules) {
+      module.runSteerCharacterization(output);
+    }
+  }
+
+  /** Returns a command to run a steer quasistatic SysId test in the specified direction. */
+  public Command sysIdSteerQuasistatic(SysIdRoutine.Direction direction) {
+    return run(() -> runSteerCharacterization(0.0))
+        .withTimeout(1.0)
+        .andThen(sysIdSteer.quasistatic(direction));
+  }
+
+  /** Returns a command to run a steer dynamic SysId test in the specified direction. */
+  public Command sysIdSteerDynamic(SysIdRoutine.Direction direction) {
+    return run(() -> runSteerCharacterization(0.0))
+        .withTimeout(1.0)
+        .andThen(sysIdSteer.dynamic(direction));
   }
 
   /** Returns the module states (turn angles and drive velocities) for all of the modules. */

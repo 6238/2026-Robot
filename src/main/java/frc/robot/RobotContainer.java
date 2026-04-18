@@ -227,6 +227,18 @@ public class RobotContainer {
           "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
       tempChooser.addOption(
           "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+      tempChooser.addOption(
+          "Steer SysId (Quasistatic Forward)",
+          drive.sysIdSteerQuasistatic(SysIdRoutine.Direction.kForward));
+      tempChooser.addOption(
+          "Steer SysId (Quasistatic Reverse)",
+          drive.sysIdSteerQuasistatic(SysIdRoutine.Direction.kReverse));
+      tempChooser.addOption(
+          "Steer SysId (Dynamic Forward)",
+          drive.sysIdSteerDynamic(SysIdRoutine.Direction.kForward));
+      tempChooser.addOption(
+          "Steer SysId (Dynamic Reverse)",
+          drive.sysIdSteerDynamic(SysIdRoutine.Direction.kReverse));
     } catch (Exception e) {
       e.printStackTrace();
       Alert alert = new Alert("auto failed to load", AlertType.kError);
@@ -250,10 +262,11 @@ public class RobotContainer {
    * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
    */
   private void configureButtonBindings() {
-    // Drive Command
+    // Drive Command — trench Y-align always on; hold B to disable
     drive.setDefaultCommand(
-        DriveCommands.joystickDrive(
+        AutomaticCommands.trenchAwareJoystickDrive(
             drive,
+            intakePivot,
             () -> -controller.getLeftX(),
             () -> controller.getLeftY(),
             () -> -controller.getRightX()));
@@ -354,7 +367,15 @@ public class RobotContainer {
     //     .onFalse(superstructure.setWantedSuperStateCommand(() ->
     // Superstructure.WantedState.IDLE));
 
-    controller.b().whileTrue(AutomaticCommands.automaticCommand(drive, () -> false));
+    // B button: disable trench align — full joystick control while held
+    controller
+        .b()
+        .whileTrue(
+            DriveCommands.joystickDrive(
+                drive,
+                () -> -controller.getLeftX(),
+                () -> controller.getLeftY(),
+                () -> -controller.getRightX()));
     controller.x().whileTrue(AutomaticCommands.neutralToAllianceCommand(drive, () -> false));
 
     // D-Pad: targeted automations

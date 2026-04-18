@@ -126,6 +126,12 @@ public class Module {
     io.setTurnPosition(new Rotation2d());
   }
 
+  /** Runs the steer motor open-loop for SysId characterization. Stops drive explicitly. */
+  public void runSteerCharacterization(double output) {
+    io.setDriveOpenLoop(0.0);
+    io.setTurnOpenLoop(output);
+  }
+
   // public void runCharacterization(double output) {
   //   io.setDriveOpenLoop(0.0);
   //   io.setTurnOpenLoop(output);
@@ -187,6 +193,21 @@ public class Module {
   /** Returns the module velocity in rotations/sec (Phoenix native units). */
   public double getFFCharacterizationVelocity() {
     return Units.radiansToRotations(inputs.driveVelocityRadPerSec);
+  }
+
+  /** Returns the drive motor applied voltage. Used by SysId log consumer. */
+  public double getDriveAppliedVolts() {
+    return inputs.driveAppliedVolts;
+  }
+
+  /** Returns the drive motor position in radians. Used by SysId log consumer. */
+  public double getDrivePositionRad() {
+    return inputs.drivePositionRad;
+  }
+
+  /** Returns the turn motor applied voltage. Used by SysId log consumer. */
+  public double getTurnAppliedVolts() {
+    return inputs.turnAppliedVolts;
   }
 
   /** Returns the drive motor velocity in rad/s. Used by test mode. */
