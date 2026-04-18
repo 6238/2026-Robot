@@ -149,8 +149,8 @@ public class ModuleIOTalonFX implements ModuleIO {
     turnConfig.MotionMagic.MotionMagicCruiseVelocity = 100.0 / constants.SteerMotorGearRatio;
     turnConfig.MotionMagic.MotionMagicAcceleration =
         turnConfig.MotionMagic.MotionMagicCruiseVelocity / 0.100;
-    turnConfig.MotionMagic.MotionMagicExpo_kV = 8.04;
-    turnConfig.MotionMagic.MotionMagicExpo_kA = 1.13;
+    turnConfig.MotionMagic.MotionMagicExpo_kV = 1.28;
+    turnConfig.MotionMagic.MotionMagicExpo_kA = 0.18;
     turnConfig.ClosedLoopGeneral.ContinuousWrap = true;
     turnConfig.MotorOutput.Inverted =
         constants.SteerMotorInverted
