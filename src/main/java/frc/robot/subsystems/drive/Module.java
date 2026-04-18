@@ -112,7 +112,7 @@ public class Module {
 
     // Apply setpoints. When stopped, use open-loop 0 instead of velocity PID at 0 to avoid
     // active stall current fighting brake mode.
-    if (state.speedMetersPerSecond == 0.0) {
+    if (Math.abs(state.speedMetersPerSecond) < 0.01) {
       io.setDriveOpenLoop(0.0);
     } else {
       io.setDriveVelocity(state.speedMetersPerSecond / constants.WheelRadius, torqueCurrentFF);
