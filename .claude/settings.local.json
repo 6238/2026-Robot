@@ -59,7 +59,8 @@
       "Bash(./gradlew clean *)",
       "Bash(git add *)",
       "Bash(git commit *)",
-      "Bash(./gradlew --stacktrace classes)"
+      "Bash(./gradlew --stacktrace classes)",
+      "Bash(./gradlew test *)"
     ],
     "additionalDirectories": [
       "c:\\Users\\ryan\\2026-Robot\\docs\\superpowers\\specs",
