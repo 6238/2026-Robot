@@ -6,6 +6,7 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -71,6 +72,9 @@ public class Superstructure extends SubsystemBase {
   private static final double POST_SHOT_HOLD_SECONDS = 0.5;
   private boolean crawlUpScheduled = false;
   private boolean firstSpinup = true;
+  // Consecutive loops where both flywheel and hub are within entry tolerance; must reach 2 before
+  // transitioning SPINNING_UP -> SHOOTING/PASSING (prevents heading-overshoot false-positives).
+  private int hubInToleranceLoops = 0;
 
   // Pivot oscillation state (during shooting/passing)
   private double oscTimer = 0.0;
@@ -162,6 +166,7 @@ public class Superstructure extends SubsystemBase {
             && currentSuperState != CurrentState.SPINNING_UP) {
           currentSuperState = CurrentState.SPINNING_UP;
           firstSpinup = true;
+          hubInToleranceLoops = 0;
         }
         break;
       case PASSING:
@@ -169,6 +174,7 @@ public class Superstructure extends SubsystemBase {
             && currentSuperState != CurrentState.SPINNING_UP) {
           currentSuperState = CurrentState.SPINNING_UP;
           firstSpinup = true;
+          hubInToleranceLoops = 0;
         }
         break;
       case SHOOT_INTAKE:
@@ -176,6 +182,7 @@ public class Superstructure extends SubsystemBase {
             && currentSuperState != CurrentState.SPINNING_UP) {
           currentSuperState = CurrentState.SPINNING_UP;
           firstSpinup = true;
+          hubInToleranceLoops = 0;
         }
         break;
       case PASS_INTAKE:
@@ -183,6 +190,7 @@ public class Superstructure extends SubsystemBase {
             && currentSuperState != CurrentState.SPINNING_UP) {
           currentSuperState = CurrentState.SPINNING_UP;
           firstSpinup = true;
+          hubInToleranceLoops = 0;
         }
         break;
       case PIT_SHOOT:
@@ -215,14 +223,16 @@ public class Superstructure extends SubsystemBase {
           shooter.setFlywheelRPM(shotSetpoint.flywheelSpeed);
           break;
         }
-        shooter.setFlywheelVoltage(Volts.of(0));
-        if (ShooterConstants.SPINUP_WHEN_HUB_ACTIVE && hubSpinupActive.getAsBoolean()) {
+        boolean shouldPreSpin =
+            (ShooterConstants.SPINUP_WHEN_IDLE && DriverStation.isEnabled())
+                || (ShooterConstants.SPINUP_WHEN_HUB_ACTIVE && hubSpinupActive.getAsBoolean());
+        if (shouldPreSpin) {
           shooter.setFlywheelRPM(
               RotationsPerSecond.of(ShooterConstants.SPINUP_FLYWHEEL_SPEED.get()));
           wasHubSpinupActive = true;
-        } else if (wasHubSpinupActive) {
+        } else {
+          if (wasHubSpinupActive) wasHubSpinupActive = false;
           shooter.setFlywheelVoltage(Volts.of(0));
-          wasHubSpinupActive = false;
         }
         break;
       case INTAKING:
@@ -246,10 +256,16 @@ public class Superstructure extends SubsystemBase {
         intake.setAngle(Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get()));
         if (wantedSuperState == WantedState.SHOOT_INTAKE
             || wantedSuperState == WantedState.PASS_INTAKE) intakeRoller.spin();
-        hopper.setIndexerSpeed(RotationsPerSecond.of(firstSpinup ? -14 : 0));
-        hopper.setTopIndexerSpeed(RotationsPerSecond.of(firstSpinup ? -14 : 0));
+        hopper.setIndexerSpeed(RotationsPerSecond.of(firstSpinup ? -5 : 0));
+        hopper.setTopIndexerSpeed(RotationsPerSecond.of(firstSpinup ? -5 : 0));
         shooter.setFlywheelRPM(shotSetpoint.flywheelSpeed);
-        if (!readyToShoot()) break;
+        if (shooter.flywheelUpToSpeed(ShooterConstants.FLYWHEEL_SPINUP_TRANSITION_TOLERANCE)
+            && checkHubTolerance()) {
+          hubInToleranceLoops++;
+        } else {
+          hubInToleranceLoops = 0;
+        }
+        if (hubInToleranceLoops < 2) break;
         if (wantedSuperState == WantedState.SHOOTING
             || wantedSuperState == WantedState.SHOOT_INTAKE) {
           currentSuperState = CurrentState.SHOOTING;
@@ -271,6 +287,10 @@ public class Superstructure extends SubsystemBase {
         hopper.setIndexerSpeed(RotationsPerSecond.of(HopperConstants.INDEXER_SPEED.get()));
         hopper.setTopIndexerSpeed(RotationsPerSecond.of(HopperConstants.TOP_INDEXER_SPEED.get()));
         applyFeedingLogic();
+        if (getHubRotationError() > ShooterConstants.HUB_PASSING_DROPBACK_TOLERANCE.in(Degrees)) {
+          currentSuperState = CurrentState.SPINNING_UP;
+          hubInToleranceLoops = 0;
+        }
         break;
       case PIT_SHOOTING:
         shooter.setFlywheelRPM(shotSetpoint.flywheelSpeed);
@@ -294,8 +314,9 @@ public class Superstructure extends SubsystemBase {
         boolean shotFired = applyFeedingLogic();
         if (shotFired) noShotTimer.restart();
 
-        if (!checkHubTolerance()) {
+        if (getHubRotationError() > ShooterConstants.HUB_DROPBACK_TOLERANCE.in(Degrees)) {
           currentSuperState = CurrentState.SPINNING_UP;
+          hubInToleranceLoops = 0;
         }
 
         // If no ball has been shot in 1.0 s and cooldown has passed, drop intake and restart
@@ -520,11 +541,12 @@ public class Superstructure extends SubsystemBase {
         < ShooterConstants.MIN_SHOT_DISTANCE_METERS;
   }
 
+  private double getHubRotationError() {
+    return Math.abs(drive.getRotation().minus(shotSetpoint.robotPose.getRotation()).getDegrees());
+  }
+
   public boolean checkHubTolerance() {
-    double rotationError =
-        Math.abs(drive.getRotation().minus(shotSetpoint.robotPose.getRotation()).getDegrees());
-    boolean hubRotationWithinTolerance = rotationError < getDynamicHubToleranceDegrees();
-    return hubRotationWithinTolerance;
+    return getHubRotationError() < getDynamicHubToleranceDegrees();
   }
 
   public boolean readyToShoot() {
