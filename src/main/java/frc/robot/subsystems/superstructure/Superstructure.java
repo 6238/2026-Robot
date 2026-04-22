@@ -30,11 +30,11 @@ import org.littletonrobotics.junction.Logger;
 
 public class Superstructure extends SubsystemBase {
 
-  public Drive drive;
-  public Shooter shooter;
-  public Hopper hopper;
-  public IntakePivot intake;
-  public IntakeRoller intakeRoller;
+  private Drive drive;
+  private Shooter shooter;
+  private Hopper hopper;
+  private IntakePivot intake;
+  private IntakeRoller intakeRoller;
 
   public SwerveDriveSimulation swerveDriveSimulation;
 
@@ -272,6 +272,13 @@ public class Superstructure extends SubsystemBase {
         break;
       case PASSING:
         intakeRoller.spin();
+        shooter.setFlywheelRPM(shotSetpoint.flywheelSpeed);
+        shooter.setFeederSpeed(shotSetpoint.feederSpeed);
+        hopper.setIndexerSpeed(RotationsPerSecond.of(HopperConstants.INDEXER_SPEED.get()));
+        hopper.setTopIndexerSpeed(RotationsPerSecond.of(HopperConstants.TOP_INDEXER_SPEED.get()));
+        applyFeedingLogic();
+        break;
+      case PIT_SHOOTING:
         shooter.setFlywheelRPM(shotSetpoint.flywheelSpeed);
         shooter.setFeederSpeed(shotSetpoint.feederSpeed);
         hopper.setIndexerSpeed(RotationsPerSecond.of(HopperConstants.INDEXER_SPEED.get()));
