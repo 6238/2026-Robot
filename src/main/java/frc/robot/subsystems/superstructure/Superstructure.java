@@ -253,7 +253,7 @@ public class Superstructure extends SubsystemBase {
         }
         break;
       case SPINNING_UP:
-        intake.setAngle(Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get()));
+        intake.setAngle(Degrees.of(IntakeConstants.SPINNING_UP_INTAKE_ANGLE.get()));
         if (wantedSuperState == WantedState.SHOOT_INTAKE
             || wantedSuperState == WantedState.PASS_INTAKE) intakeRoller.spin();
         hopper.setIndexerSpeed(RotationsPerSecond.of(firstSpinup ? -5 : 0));
@@ -459,8 +459,7 @@ public class Superstructure extends SubsystemBase {
     double timeSinceShot = shooter.getTimeSinceLastBeamBreakSec();
     boolean flowActive = timeSinceShot < ShooterConstants.FLOW_WINDOW_SECONDS.get();
     boolean hopperJammed =
-        hopper.inputs.indexerSupplyCurrent.in(Amps)
-            > ShooterConstants.FUSED_JAM_CURRENT_AMPS.get();
+        hopper.inputs.indexerSupplyCurrent.in(Amps) > ShooterConstants.FUSED_JAM_CURRENT_AMPS.get();
 
     if (flowActive && !hopperJammed) {
       applyPivotOscillate();

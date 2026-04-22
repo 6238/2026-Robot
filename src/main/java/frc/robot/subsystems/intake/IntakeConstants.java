@@ -33,6 +33,8 @@ public class IntakeConstants {
       new LoggedNetworkNumber("INTAKE_DOWN_ANGLE", -2.5);
   public static final LoggedNetworkNumber INTAKE_UP_VALUE =
       new LoggedNetworkNumber("INTAKE_UP_ANGLE", 85.0);
+  public static final LoggedNetworkNumber SPINNING_UP_INTAKE_ANGLE =
+      new LoggedNetworkNumber("INTAKE_SPINNING_UP_ANGLE", 30.0);
   public static final LoggedNetworkPIDFeedforwardGains INTAKE_ARM_GAINS =
       new LoggedNetworkPIDFeedforwardGains(48, 1, 5, 0.17, 7.8, 0, 0.3, "Intake_ARM");
   public static final MotionMagicConfigs INTAKE_ARM_MOTION_MAGIC_CONFIGS =

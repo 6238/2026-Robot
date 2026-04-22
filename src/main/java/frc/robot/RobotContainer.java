@@ -206,7 +206,7 @@ public class RobotContainer {
     }
 
     intakeRoller.setPivotAngleSupplier(() -> intakePivot.inputs.intakeArmPosition.in(Degrees));
-    superstructure.hubSpinupActive = () -> shouldSpinupFlywheel(DriverStation.getMatchTime());
+    // superstructure.hubSpinupActive = () -> shouldSpinupFlywheel(DriverStation.getMatchTime());
     lighting.superState = () -> superstructure.currentSuperState;
 
     // Set up auto routinesw
@@ -340,11 +340,7 @@ public class RobotContainer {
                 intakeRoller.stopIntake(),
                 Commands.runOnce(() -> hopper.setTopIndexerSpeed(RotationsPerSecond.of(0))),
                 Commands.runOnce(() -> hopper.setIndexerSpeed(RotationsPerSecond.of(0)))));
-    controller
-        .leftBumper()
-        .onTrue(
-            superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.INTAKING))
-        .onFalse(superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.IDLE));
+    controller.leftBumper().toggleOnTrue(superstructure.wantIntaking());
 
     // Intake Flip Position
     controller
