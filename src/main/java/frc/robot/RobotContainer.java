@@ -342,6 +342,23 @@ public class RobotContainer {
                 Commands.runOnce(() -> hopper.setIndexerSpeed(RotationsPerSecond.of(0)))));
     controller.leftBumper().toggleOnTrue(superstructure.wantIntaking());
 
+    // Reverse shooter + feeder
+    controller
+        .y()
+        .whileTrue(
+            Commands.startEnd(
+                () -> {
+                  shooter.setFlywheelVoltage(
+                      Volts.of(-ShooterConstants.FEEDER_REVERSE_VOLTAGE.get()));
+                  shooter.setFeederVoltage(
+                      Volts.of(-ShooterConstants.FEEDER_REVERSE_VOLTAGE.get()));
+                },
+                () -> {
+                  shooter.setFlywheelVoltage(Volts.of(0));
+                  shooter.setFeederVoltage(Volts.of(0));
+                },
+                shooter));
+
     // Intake Flip Position
     controller
         .a()
@@ -381,9 +398,11 @@ public class RobotContainer {
                 () -> superstructure.setWantedSuperState(Superstructure.WantedState.IDLE),
                 superstructure));
 
+
+                
     // Y button: toggle defense mode (raises drive current, lowers other subsystem current)
     controller
-        .y()
+        .povRight()
         .onTrue(
             Commands.runOnce(
                 () -> {
