@@ -276,47 +276,7 @@ public class Superstructure extends SubsystemBase {
         shooter.setFeederSpeed(shotSetpoint.feederSpeed);
         hopper.setIndexerSpeed(RotationsPerSecond.of(HopperConstants.INDEXER_SPEED.get()));
         hopper.setTopIndexerSpeed(RotationsPerSecond.of(HopperConstants.TOP_INDEXER_SPEED.get()));
-
-        if (readyToShoot() && !crawlUpScheduled) {
-          crawlUpScheduled = true;
-          oscTimer = 0.0;
-          push254Phase = Push254Phase.PUSHING;
-          push254JamDebouncer.calculate(false);
-        }
-
-        boolean beamBreakPassing = shooter.isShooting();
-        boolean beamBreakRisingEdgePassing = beamBreakPassing && !prevBeamBreak;
-        if (beamBreakRisingEdgePassing) {
-          intakeWaitingForNextBall = !intakeWaitingForNextBall;
-          if (intakeWaitingForNextBall) {
-            intakeDownTimer.restart();
-            push254Phase = Push254Phase.PUSHING;
-            push254JamDebouncer.calculate(false);
-          }
-        }
-        prevBeamBreak = beamBreakPassing;
-
-        if (intakeWaitingForNextBall && intakeDownTimer.hasElapsed(0.25)) {
-          intakeWaitingForNextBall = false;
-          push254Phase = Push254Phase.PUSHING;
-          push254JamDebouncer.calculate(false);
-        }
-
-        if (crawlUpScheduled
-            && wantedSuperState != WantedState.SHOOT_INTAKE
-            && wantedSuperState != WantedState.PASS_INTAKE) {
-          if (intakeWaitingForNextBall) {
-            intake.setAngle(Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get()));
-          } else {
-            if (ShooterConstants.INDEXING_MODE == ShooterConstants.IndexingMode.PUSH_254) {
-              apply254Push();
-            } else {
-              applyPivotOscillate();
-            }
-          }
-        }
-
-        simulateShot();
+        applyFeedingLogic();
         break;
       case SHOOTING:
         intakeRoller.spin();
@@ -330,70 +290,8 @@ public class Superstructure extends SubsystemBase {
         hopper.setIndexerSpeed(
             RotationsPerSecond.of(tooCloseShooting ? 0 : HopperConstants.INDEXER_SPEED.get()));
 
-        // Top-indexer jam recovery: run forward, reverse 0.2s if jammed (velocity drops to 0)
-        // if (topIndexerJamming) {
-        //   hopper.setTopIndexerSpeed(
-        //       RotationsPerSecond.of(-HopperConstants.TOP_INDEXER_SPEED.get()));
-        //   if (topIndexerJamTimer.hasElapsed(0.1875)) {
-        //     topIndexerJamming = false;
-        //     topIndexerJamTimer.restart();
-        //   }
-        // } else {
-        //
-        // hopper.setTopIndexerSpeed(RotationsPerSecond.of(HopperConstants.TOP_INDEXER_SPEED.get()));
-        //   boolean jammed =
-        //       hopper.inputs.topIndexerVelocity.isNear(
-        //           RotationsPerSecond.of(0), RotationsPerSecond.of(2));
-        //   if (jammed) {
-        //     topIndexerJamming = true;
-        //     topIndexerJamTimer.restart();
-        //   }
-        // }
-        // Logger.recordOutput("Hopper/TopIndexerJamming", topIndexerJamming);
-
-        if (readyToShoot() && !crawlUpScheduled) {
-          crawlUpScheduled = true;
-          oscTimer = 0.0;
-          push254Phase = Push254Phase.PUSHING;
-          push254JamDebouncer.calculate(false);
-        }
-        boolean beamBreak = shooter.isShooting();
-        boolean beamBreakRisingEdge = beamBreak && !prevBeamBreak;
-        if (beamBreakRisingEdge) {
-          intakeWaitingForNextBall = !intakeWaitingForNextBall;
-          if (intakeWaitingForNextBall) {
-            intakeDownTimer.restart();
-            push254Phase = Push254Phase.PUSHING;
-            push254JamDebouncer.calculate(false);
-          }
-        }
-        prevBeamBreak = beamBreak;
-
-        if (intakeWaitingForNextBall && intakeDownTimer.hasElapsed(0.25)) {
-          intakeWaitingForNextBall = false;
-          push254Phase = Push254Phase.PUSHING;
-          push254JamDebouncer.calculate(false);
-        }
-
-        if (crawlUpScheduled
-            && wantedSuperState != WantedState.SHOOT_INTAKE
-            && wantedSuperState != WantedState.PASS_INTAKE) {
-          if (intakeWaitingForNextBall) {
-            intake.setAngle(Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get()));
-            if (!Constants.MINIMAL_LOGGING)
-              Logger.recordOutput("Superstructure/IntakeLoweredForBall", true);
-          } else {
-            if (ShooterConstants.INDEXING_MODE == ShooterConstants.IndexingMode.PUSH_254) {
-              apply254Push();
-            } else {
-              applyPivotOscillate();
-            }
-            if (!Constants.MINIMAL_LOGGING)
-              Logger.recordOutput("Superstructure/IntakeLoweredForBall", false);
-          }
-        }
-
-        if (beamBreakRisingEdge) noShotTimer.restart();
+        boolean shotFired = applyFeedingLogic();
+        if (shotFired) noShotTimer.restart();
 
         if (!checkHubTolerance()) {
           currentSuperState = CurrentState.SPINNING_UP;
@@ -411,12 +309,58 @@ public class Superstructure extends SubsystemBase {
           intake.io.setIntakeArmVoltage(Volts.of(0));
           intake.setAngle(Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get()));
         }
-
-        simulateShot();
         break;
       default:
         break;
     }
+  }
+
+  private boolean applyFeedingLogic() {
+    if (shooter.flywheelUpToSpeed() && !crawlUpScheduled) {
+      crawlUpScheduled = true;
+      oscTimer = 0.0;
+      push254Phase = Push254Phase.PUSHING;
+      push254JamDebouncer.calculate(false);
+    }
+
+    boolean beamBreak = shooter.isShooting();
+    boolean beamBreakRisingEdge = beamBreak && !prevBeamBreak;
+    if (beamBreakRisingEdge) {
+      intakeWaitingForNextBall = !intakeWaitingForNextBall;
+      if (intakeWaitingForNextBall) {
+        intakeDownTimer.restart();
+        push254Phase = Push254Phase.PUSHING;
+        push254JamDebouncer.calculate(false);
+      }
+    }
+    prevBeamBreak = beamBreak;
+
+    if (intakeWaitingForNextBall && intakeDownTimer.hasElapsed(0.25)) {
+      intakeWaitingForNextBall = false;
+      push254Phase = Push254Phase.PUSHING;
+      push254JamDebouncer.calculate(false);
+    }
+
+    if (crawlUpScheduled
+        && wantedSuperState != WantedState.SHOOT_INTAKE
+        && wantedSuperState != WantedState.PASS_INTAKE) {
+      if (intakeWaitingForNextBall) {
+        intake.setAngle(Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get()));
+        if (!Constants.MINIMAL_LOGGING)
+          Logger.recordOutput("Superstructure/IntakeLoweredForBall", true);
+      } else {
+        if (ShooterConstants.INDEXING_MODE == ShooterConstants.IndexingMode.PUSH_254) {
+          apply254Push();
+        } else {
+          applyPivotOscillate();
+        }
+        if (!Constants.MINIMAL_LOGGING)
+          Logger.recordOutput("Superstructure/IntakeLoweredForBall", false);
+      }
+    }
+
+    simulateShot();
+    return beamBreakRisingEdge;
   }
 
   private void applyPivotOscillate() {
