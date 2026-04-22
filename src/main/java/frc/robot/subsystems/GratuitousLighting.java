@@ -27,8 +27,6 @@ public class GratuitousLighting extends SubsystemBase {
   // (ledCount - size) / frameRate = (68 - 10) / 100.0
   private static final double SHOOTING_ANIM_CYCLE_S = (68 - 10) / 50.0;
 
-  private double shootingAnimStart = -1;
-
   public void setTestResult(Boolean passed) {
     testResult = passed;
   }
@@ -111,7 +109,6 @@ public class GratuitousLighting extends SubsystemBase {
       candle.setControl(intakingAnimation);
       candle2.setControl(intakingAnimation);
     } else {
-      shootingAnimStart = -1;
       candle.setControl(idleAnimation);
       candle2.setControl(idleAnimation);
     }
