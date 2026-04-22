@@ -260,8 +260,7 @@ public class Superstructure extends SubsystemBase {
         hopper.setTopIndexerSpeed(RotationsPerSecond.of(firstSpinup ? -5 : 0));
         shooter.setFlywheelRPM(shotSetpoint.flywheelSpeed);
         boolean isPassing =
-            wantedSuperState == WantedState.PASSING
-                || wantedSuperState == WantedState.PASS_INTAKE;
+            wantedSuperState == WantedState.PASSING || wantedSuperState == WantedState.PASS_INTAKE;
         boolean flywheelReady =
             isPassing
                 ? shooter.getCurrentFlywheelSpeed().in(RotationsPerSecond)
@@ -354,32 +353,42 @@ public class Superstructure extends SubsystemBase {
 
     boolean beamBreak = shooter.isShooting();
     boolean beamBreakRisingEdge = beamBreak && !prevBeamBreak;
-    if (beamBreakRisingEdge) {
-      intakeWaitingForNextBall = !intakeWaitingForNextBall;
-      if (intakeWaitingForNextBall) {
-        intakeDownTimer.restart();
+
+    boolean isFlowMode =
+        ShooterConstants.INDEXING_MODE == ShooterConstants.IndexingMode.BEAM_HOPPER
+            || ShooterConstants.INDEXING_MODE == ShooterConstants.IndexingMode.FUSED_HOPPER;
+
+    if (!isFlowMode) {
+      if (beamBreakRisingEdge) {
+        intakeWaitingForNextBall = !intakeWaitingForNextBall;
+        if (intakeWaitingForNextBall) {
+          intakeDownTimer.restart();
+          push254Phase = Push254Phase.PUSHING;
+          push254JamDebouncer.calculate(false);
+        }
+      }
+      if (intakeWaitingForNextBall && intakeDownTimer.hasElapsed(0.25)) {
+        intakeWaitingForNextBall = false;
         push254Phase = Push254Phase.PUSHING;
         push254JamDebouncer.calculate(false);
       }
     }
     prevBeamBreak = beamBreak;
 
-    if (intakeWaitingForNextBall && intakeDownTimer.hasElapsed(0.25)) {
-      intakeWaitingForNextBall = false;
-      push254Phase = Push254Phase.PUSHING;
-      push254JamDebouncer.calculate(false);
-    }
-
     if (crawlUpScheduled
         && wantedSuperState != WantedState.SHOOT_INTAKE
         && wantedSuperState != WantedState.PASS_INTAKE) {
-      if (intakeWaitingForNextBall) {
+      if (!isFlowMode && intakeWaitingForNextBall) {
         intake.setAngle(Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get()));
         if (!Constants.MINIMAL_LOGGING)
           Logger.recordOutput("Superstructure/IntakeLoweredForBall", true);
       } else {
         if (ShooterConstants.INDEXING_MODE == ShooterConstants.IndexingMode.PUSH_254) {
           apply254Push();
+        } else if (ShooterConstants.INDEXING_MODE == ShooterConstants.IndexingMode.BEAM_HOPPER) {
+          applyBeamHopperFeeding();
+        } else if (ShooterConstants.INDEXING_MODE == ShooterConstants.IndexingMode.FUSED_HOPPER) {
+          applyFusedHopperFeeding();
         } else {
           applyPivotOscillate();
         }
@@ -428,6 +437,26 @@ public class Superstructure extends SubsystemBase {
       Logger.recordOutput("Superstructure/OscillationCenter", center);
       Logger.recordOutput("Superstructure/OscillationSetpoint", setpoint);
     }
+  }
+
+  private void applyBeamHopperFeeding() {
+    double timeSinceShot = shooter.getTimeSinceLastBeamBreakSec();
+    boolean flowActive = timeSinceShot < ShooterConstants.FLOW_WINDOW_SECONDS.get();
+
+    if (flowActive) {
+      applyPivotOscillate();
+    } else {
+      intake.setAngle(Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get()));
+    }
+
+    if (!Constants.MINIMAL_LOGGING) {
+      Logger.recordOutput("Superstructure/FlowActive", flowActive);
+      Logger.recordOutput("Superstructure/TimeSinceLastShot", timeSinceShot);
+    }
+  }
+
+  private void applyFusedHopperFeeding() {
+    applyBeamHopperFeeding();
   }
 
   private void apply254Push() {
