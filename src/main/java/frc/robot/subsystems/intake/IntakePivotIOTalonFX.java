@@ -90,7 +90,11 @@ public class IntakePivotIOTalonFX implements IntakePivotIO {
             intakeArmSupplyCurrent,
             intakeArmStatorCurrent,
             intakeArmVoltage);
-    statusSignalCollector.setUpdateFrequencyForAll(50);
+    intakeArmPosition.setUpdateFrequency(50);
+    intakeArmVelocity.setUpdateFrequency(50);
+    intakeArmSupplyCurrent.setUpdateFrequency(20);
+    intakeArmStatorCurrent.setUpdateFrequency(20);
+    intakeArmVoltage.setUpdateFrequency(20);
     ParentDevice.optimizeBusUtilizationForAll(intakeArmTalon);
   }
 
@@ -144,6 +148,6 @@ public class IntakePivotIOTalonFX implements IntakePivotIO {
             .withSupplyCurrentLowerLimit(active ? 15.0 : 20.0)
             .withStatorCurrentLimit(active ? 20.0 : 40.0)
             .withStatorCurrentLimitEnable(true);
-    intakeArmTalon.getConfigurator().apply(limits);
+    intakeArmTalon.getConfigurator().apply(limits, 0.0);
   }
 }
