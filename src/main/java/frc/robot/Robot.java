@@ -13,10 +13,13 @@
 
 package frc.robot;
 
+import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants.DriveMotorArrangement;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants.SteerMotorArrangement;
 import com.pathplanner.lib.commands.PathfindingCommand;
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -41,6 +44,11 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 public class Robot extends LoggedRobot {
   private Command autonomousCommand;
   private RobotContainer robotContainer;
+  private final Alert lowBatteryAlert =
+      new Alert("Battery voltage low (<11V) — check before match", AlertType.kWarning);
+  private final Alert canivoreAlert =
+      new Alert("CANivore bus error — check CAN wiring and termination", AlertType.kError);
+  private final CANBus canivoreBus = new CANBus("canivore");
 
   public Robot() {
     // Record metadata
@@ -115,7 +123,7 @@ public class Robot extends LoggedRobot {
 
     // Warm up PathPlanner pathfinding to JIT-compile hot paths before match start,
     // eliminating the one-time spike when the first real pathfind result arrives.
-    PathfindingCommand.warmupCommand().schedule();
+    PathfindingCommand.warmupCommand().ignoringDisable(true).schedule();
   }
 
   /** This function is called periodically during all modes. */
@@ -170,6 +178,8 @@ public class Robot extends LoggedRobot {
     Logger.recordOutput("Match/ShiftTimeRemaining", String.format("%.1f", shiftTimeRemaining));
 
     Logger.recordOutput("ACTIVE", RobotContainer.isHubActive(matchTime));
+    lowBatteryAlert.set(RobotController.getBatteryVoltage() < 11.0);
+    canivoreAlert.set(!canivoreBus.getStatus().Status.isOK());
   }
 
   /** This function is called once when the robot is disabled. */

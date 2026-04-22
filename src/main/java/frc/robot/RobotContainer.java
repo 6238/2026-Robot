@@ -294,33 +294,31 @@ public class RobotContainer {
         .rightTrigger()
         .whileTrue(
             Commands.parallel(
-                    DriveCommands.joystickDriveAtAngle(
-                        drive,
-                        () -> -controller.getLeftY(),
-                        () -> -controller.getLeftX(),
-                        () -> superstructure.getShotSetpoint().robotPose.getRotation()),
-                    superstructure.setWantedSuperStateCommand(
-                        () ->
-                            Constants.SHOULD_PASS.apply(drive.getPose().getX())
-                                ? Superstructure.WantedState.PASS_INTAKE
-                                : Superstructure.WantedState.SHOOT_INTAKE))
-                .until(() -> controller.leftBumper().getAsBoolean()))
+                DriveCommands.joystickDriveAtAngle(
+                    drive,
+                    () -> -controller.getLeftY(),
+                    () -> -controller.getLeftX(),
+                    () -> superstructure.getShotSetpoint().robotPose.getRotation()),
+                superstructure.setWantedSuperStateCommand(
+                    () ->
+                        Constants.SHOULD_PASS.apply(drive.getPose().getX())
+                            ? Superstructure.WantedState.PASS_INTAKE
+                            : Superstructure.WantedState.SHOOT_INTAKE)))
         .onFalse(superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.IDLE));
     controller
         .rightBumper()
         .whileTrue(
             Commands.parallel(
-                    DriveCommands.joystickDriveAtAngle(
-                        drive,
-                        () -> -controller.getLeftY(),
-                        () -> -controller.getLeftX(),
-                        () -> superstructure.getShotSetpoint().robotPose.getRotation()),
-                    superstructure.setWantedSuperStateCommand(
-                        () ->
-                            Constants.SHOULD_PASS.apply(drive.getPose().getX())
-                                ? Superstructure.WantedState.PASSING
-                                : Superstructure.WantedState.SHOOTING))
-                .until(() -> controller.leftBumper().getAsBoolean()))
+                DriveCommands.joystickDriveAtAngle(
+                    drive,
+                    () -> -controller.getLeftY(),
+                    () -> -controller.getLeftX(),
+                    () -> superstructure.getShotSetpoint().robotPose.getRotation()),
+                superstructure.setWantedSuperStateCommand(
+                    () ->
+                        Constants.SHOULD_PASS.apply(drive.getPose().getX())
+                            ? Superstructure.WantedState.PASSING
+                            : Superstructure.WantedState.SHOOTING)))
         .onFalse(superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.IDLE));
 
     // Intake and Reverse Intake
@@ -342,7 +340,11 @@ public class RobotContainer {
                 intakeRoller.stopIntake(),
                 Commands.runOnce(() -> hopper.setTopIndexerSpeed(RotationsPerSecond.of(0))),
                 Commands.runOnce(() -> hopper.setIndexerSpeed(RotationsPerSecond.of(0)))));
-    controller.leftBumper().toggleOnTrue(superstructure.wantIntaking());
+    controller
+        .leftBumper()
+        .onTrue(superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.INTAKING))
+        .onFalse(
+            superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.IDLE));
 
     // Intake Flip Position
     controller
