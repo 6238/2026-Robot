@@ -272,12 +272,6 @@ public class RobotContainer {
             () -> -controller.getLeftX(),
             () -> -controller.getRightX()));
 
-    controller
-        .povRight()
-        .onTrue(
-            shooter.setFlywheelRPM(
-                () -> RotationsPerSecond.of(ShooterConstants.SPINUP_FLYWHEEL_SPEED.get())));
-
     // Reset Drive Rotation
     controller
         .start()
@@ -398,8 +392,6 @@ public class RobotContainer {
                 () -> superstructure.setWantedSuperState(Superstructure.WantedState.IDLE),
                 superstructure));
 
-
-                
     // Y button: toggle defense mode (raises drive current, lowers other subsystem current)
     controller
         .povRight()
