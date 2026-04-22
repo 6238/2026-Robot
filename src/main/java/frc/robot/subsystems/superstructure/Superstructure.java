@@ -253,9 +253,13 @@ public class Superstructure extends SubsystemBase {
         }
         break;
       case SPINNING_UP:
-        intake.setAngle(Degrees.of(IntakeConstants.SPINNING_UP_INTAKE_ANGLE.get()));
         if (wantedSuperState == WantedState.SHOOT_INTAKE
-            || wantedSuperState == WantedState.PASS_INTAKE) intakeRoller.spin();
+            || wantedSuperState == WantedState.PASS_INTAKE) {
+          intake.setAngle(Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get()));
+          intakeRoller.spin();
+        } else {
+          intake.setAngle(Degrees.of(IntakeConstants.SPINNING_UP_INTAKE_ANGLE.get()));
+        }
         hopper.setIndexerSpeed(RotationsPerSecond.of(firstSpinup ? -5 : 0));
         hopper.setTopIndexerSpeed(RotationsPerSecond.of(firstSpinup ? -5 : 0));
         shooter.setFlywheelRPM(shotSetpoint.flywheelSpeed);
