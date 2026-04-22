@@ -102,7 +102,8 @@ public class GratuitousLighting extends SubsystemBase {
     CurrentState state = superState.get();
     if (state == CurrentState.SHOOTING
         || state == CurrentState.SPINNING_UP
-        || state == CurrentState.PASSING) {
+        || state == CurrentState.PASSING
+        || state == CurrentState.PIT_SHOOTING) {
       candle.setControl(shootingAnimation);
       candle2.setControl(shootingAnimation);
     } else if (state == CurrentState.INTAKING) {

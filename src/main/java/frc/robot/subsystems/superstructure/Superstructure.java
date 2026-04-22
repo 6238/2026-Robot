@@ -45,7 +45,7 @@ public class Superstructure extends SubsystemBase {
     PASSING,
     SHOOT_INTAKE,
     PASS_INTAKE,
-    MANUAL_SHOOTING
+    PIT_SHOOT
   }
 
   public enum CurrentState {
@@ -53,7 +53,8 @@ public class Superstructure extends SubsystemBase {
     INTAKING,
     SPINNING_UP,
     SHOOTING,
-    PASSING
+    PASSING,
+    PIT_SHOOTING
   }
 
   public WantedState wantedSuperState = WantedState.IDLE;
@@ -189,11 +190,10 @@ public class Superstructure extends SubsystemBase {
           firstSpinup = true;
         }
         break;
-      case MANUAL_SHOOTING:
-        if (currentSuperState != CurrentState.SHOOTING) {
-          currentSuperState = CurrentState.SHOOTING;
-          firstSpinup = false;
-          noShotTimer.restart();
+      case PIT_SHOOT:
+        if (currentSuperState != CurrentState.PIT_SHOOTING) {
+          currentSuperState = CurrentState.PIT_SHOOTING;
+          firstSpinup = true;
           crawlUpScheduled = false;
           oscTimer = 0.0;
         }

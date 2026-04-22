@@ -395,8 +395,7 @@ public class RobotContainer {
         .povLeft()
         .whileTrue(
             Commands.startEnd(
-                () ->
-                    superstructure.setWantedSuperState(Superstructure.WantedState.MANUAL_SHOOTING),
+                () -> superstructure.setWantedSuperState(Superstructure.WantedState.PIT_SHOOT),
                 () -> superstructure.setWantedSuperState(Superstructure.WantedState.IDLE),
                 superstructure));
 
