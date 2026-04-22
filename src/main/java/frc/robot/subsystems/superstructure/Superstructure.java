@@ -647,6 +647,11 @@ public class Superstructure extends SubsystemBase {
                   : Constants.RIGHT_TARGET_PASS_POSE2D.get(),
               drive.getPose(),
               drive.getChassisSpeeds());
+    } else if (wantedSuperState == WantedState.PIT_SHOOT) {
+      shotSetpoint = new ShotSetpoint();
+      shotSetpoint.flywheelSpeed =
+          RotationsPerSecond.of(ShooterConstants.SPINUP_FLYWHEEL_SPEED.get());
+      shotSetpoint.feederSpeed = RotationsPerSecond.of(ShooterConstants.FEEDER_SPEED.get());
     }
 
     handleWantedState();
