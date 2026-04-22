@@ -23,7 +23,7 @@ public class ShooterConstants {
   public static final int FLYWHEEL_MOTOR_ID = 39;
   public static final int FLYWHEEL2_MOTOR_ID = 48;
   public static final int FEEDER_MOTOR_ID = 40;
-  public static final int BEAM_BREAK_DIO_PORT = 0; // TODO: set correct roboRIO DIO port
+  public static final int BEAM_BREAK_DIO_PORT = 0;
   // Set true if sensor reads HIGH when beam is broken (NPN/sourcing output)
   public static final boolean BEAM_BREAK_INVERTED = false;
 
@@ -110,7 +110,7 @@ public class ShooterConstants {
   public static final AngularVelocity BIG_FLYWHEEL_TOLERANCE_BEFORE_SHOT =
       RotationsPerSecond.of(0.8);
   public static final Distance HUB_POSITION_TOLERANCE = Meters.of(0.04);
-  public static final Angle HUB_ROTATION_TOLERANCE = Degrees.of(3);
+  public static final Angle HUB_ROTATION_TOLERANCE = Degrees.of(5);
   public static final Angle HUB_ROTATION_TOLERANCE_TIGHT = Degrees.of(3);
   public static final double MIN_SHOT_DISTANCE_METERS = 2.2;
   public static final double HUB_NEAR_DISTANCE_METERS = 3.0;
