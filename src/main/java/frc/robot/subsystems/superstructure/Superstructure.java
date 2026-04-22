@@ -574,11 +574,16 @@ public class Superstructure extends SubsystemBase {
       Logger.recordOutput("Superstructure/HubRotationSetpoint", hubInTolerance);
       Logger.recordOutput("Superstructure/HubRotationTarget", shotSetpoint.robotPose);
       Logger.recordOutput("Superstructure/HubRotationCurrent", drive.getPose());
-      Logger.recordOutput("Superstructure/HubRotationToleranceDeg", getDynamicHubToleranceDegrees());
+      Logger.recordOutput(
+          "Superstructure/HubRotationToleranceDeg", getDynamicHubToleranceDegrees());
       Logger.recordOutput(
           "Superstructure/HubRotationError",
           Math.abs(
-              drive.getPose().getRotation().minus(shotSetpoint.robotPose.getRotation()).getDegrees()));
+              drive
+                  .getPose()
+                  .getRotation()
+                  .minus(shotSetpoint.robotPose.getRotation())
+                  .getDegrees()));
     }
   }
 

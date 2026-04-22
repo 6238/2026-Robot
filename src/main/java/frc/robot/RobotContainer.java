@@ -342,9 +342,9 @@ public class RobotContainer {
                 Commands.runOnce(() -> hopper.setIndexerSpeed(RotationsPerSecond.of(0)))));
     controller
         .leftBumper()
-        .onTrue(superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.INTAKING))
-        .onFalse(
-            superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.IDLE));
+        .onTrue(
+            superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.INTAKING))
+        .onFalse(superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.IDLE));
 
     // Intake Flip Position
     controller
