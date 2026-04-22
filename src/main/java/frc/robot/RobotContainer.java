@@ -336,7 +336,7 @@ public class RobotContainer {
                 Commands.runOnce(() -> hopper.setIndexerSpeed(RotationsPerSecond.of(0)))));
     controller.leftBumper().toggleOnTrue(superstructure.wantIntaking());
 
-    // Reverse shooter + feeder
+    // Reverse shooter + feeder + hopper
     controller
         .y()
         .whileTrue(
@@ -346,12 +346,19 @@ public class RobotContainer {
                       Volts.of(-ShooterConstants.FEEDER_REVERSE_VOLTAGE.get()));
                   shooter.setFeederVoltage(
                       Volts.of(-ShooterConstants.FEEDER_REVERSE_VOLTAGE.get()));
+                  hopper.setIndexerSpeed(
+                      RotationsPerSecond.of(-HopperConstants.INDEXER_SPEED.get()));
+                  hopper.setTopIndexerSpeed(
+                      RotationsPerSecond.of(-HopperConstants.TOP_INDEXER_SPEED.get()));
                 },
                 () -> {
                   shooter.setFlywheelVoltage(Volts.of(0));
                   shooter.setFeederVoltage(Volts.of(0));
+                  hopper.setIndexerSpeed(RotationsPerSecond.of(0));
+                  hopper.setTopIndexerSpeed(RotationsPerSecond.of(0));
                 },
-                shooter));
+                shooter,
+                hopper));
 
     // Intake Flip Position
     controller
