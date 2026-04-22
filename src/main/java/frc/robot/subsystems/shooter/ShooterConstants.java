@@ -13,9 +13,21 @@ import frc.robot.util.LoggedNetworkPIDFeedforwardGains;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 public class ShooterConstants {
+  public enum IndexingMode {
+    OSCILLATE,
+    PUSH_254
+  }
+
+  public static final IndexingMode INDEXING_MODE = IndexingMode.OSCILLATE;
+
   public static final int FLYWHEEL_MOTOR_ID = 39;
   public static final int FLYWHEEL2_MOTOR_ID = 48;
   public static final int FEEDER_MOTOR_ID = 40;
+  public static final int BEAM_BREAK_DIO_PORT = 0; // TODO: set correct roboRIO DIO port
+  // Set true if sensor reads HIGH when beam is broken (NPN/sourcing output)
+  public static final boolean BEAM_BREAK_INVERTED = false;
+
+  public static final double SHOOTING_WINDOW_SECONDS = 0.3;
 
   public static final InvertedValue FLYWHEEL_INVERTED = InvertedValue.Clockwise_Positive;
   public static final InvertedValue FEEDER_INVERTED = InvertedValue.CounterClockwise_Positive;
@@ -90,7 +102,7 @@ public class ShooterConstants {
   public static final double FLYWHEEL_RECOVERY_THRESHOLD_RPS = 3.5;
   // Acceleration (RPS/s) injected during flywheel speed recovery
   // Set just above measured physical max (~110 RPS/s from 0→55 RPS in 0.5s)
-  public static final double FLYWHEEL_RECOVERY_ACCELERATION_RPS2 = 200.0;
+  public static final double FLYWHEEL_RECOVERY_ACCELERATION_RPS2 = 400.0;
   public static final AngularVelocity FLYWHEEL_TOLERANCE_BEFORE_SHOT = RotationsPerSecond.of(0.5);
   public static final AngularVelocity FEEDER_TOLERANCE_BEFORE_SHOT = RotationsPerSecond.of(2.0);
   public static final LoggedNetworkNumber FEEDER_REVERSE_VOLTAGE =
@@ -98,8 +110,8 @@ public class ShooterConstants {
   public static final AngularVelocity BIG_FLYWHEEL_TOLERANCE_BEFORE_SHOT =
       RotationsPerSecond.of(0.8);
   public static final Distance HUB_POSITION_TOLERANCE = Meters.of(0.04);
-  public static final Angle HUB_ROTATION_TOLERANCE = Degrees.of(1.25);
-  public static final Angle HUB_ROTATION_TOLERANCE_TIGHT = Degrees.of(1.25);
+  public static final Angle HUB_ROTATION_TOLERANCE = Degrees.of(3);
+  public static final Angle HUB_ROTATION_TOLERANCE_TIGHT = Degrees.of(3);
   public static final double MIN_SHOT_DISTANCE_METERS = 2.2;
   public static final double HUB_NEAR_DISTANCE_METERS = 3.0;
   public static final double HUB_HIGH_ROBOT_SPEED_MPS = 2.5;
@@ -114,6 +126,8 @@ public class ShooterConstants {
 
   // distance (m) → flywheel speed (RPS)
   public static final ExtrapolatingDoubleTreeMap FLYWHEEL_MAP;
+  // distance (m) → feeder speed (RPS)
+  public static final ExtrapolatingDoubleTreeMap FEEDER_MAP;
   // distance (m) → lead time (s)
   public static final ExtrapolatingDoubleTreeMap LEAD_TIME_MAP;
   // distance (m) → passing flywheel speed (RPS)
@@ -123,10 +137,18 @@ public class ShooterConstants {
 
   static {
     FLYWHEEL_MAP = new ExtrapolatingDoubleTreeMap();
-    FLYWHEEL_MAP.put(2.32, 43.9);
-    FLYWHEEL_MAP.put(2.53, 45.0);
-    FLYWHEEL_MAP.put(3.52, 52.5);
-    FLYWHEEL_MAP.put(4.14, 55.9);
+    FLYWHEEL_MAP.put(2.32, 43.4);
+    FLYWHEEL_MAP.put(2.53, 44.6);
+    FLYWHEEL_MAP.put(3.52, 52.1);
+    FLYWHEEL_MAP.put(4.14, 55.5);
+
+    // Feeder map mirrors flywheel map as a starting point — tune to share velocity load.
+    // Both changing together halves the per-motor dip on ball contact.
+    FEEDER_MAP = new ExtrapolatingDoubleTreeMap();
+    FEEDER_MAP.put(2.32, 43.5);
+    FEEDER_MAP.put(2.53, 44.5);
+    FEEDER_MAP.put(3.52, 52.0);
+    FEEDER_MAP.put(4.14, 55.4);
 
     // Physics-based: t_lead = d / (rps × BALL_SPEED_PER_FLYWHEEL_RPS × cos(hood))
     LEAD_TIME_MAP = new ExtrapolatingDoubleTreeMap();

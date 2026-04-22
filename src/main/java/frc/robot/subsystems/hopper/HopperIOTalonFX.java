@@ -153,13 +153,6 @@ public class HopperIOTalonFX implements HopperIO {
     } else {
       indexerTalon.setControl(indexerVelocityRequest.withVelocity(speed));
     }
-    if (HopperConstants.USE_TOP_INDEXER) {
-      if (speed.isNear(RotationsPerSecond.of(0), RotationsPerSecond.of(2))) {
-        topIndexerTalon.stopMotor();
-      } else {
-        topIndexerTalon.setControl(topIndexerVelocityRequest.withVelocity(speed));
-      }
-    }
   }
 
   @Override

@@ -41,6 +41,7 @@ public class ShotPlanner {
 
     double predictedDistanceM = robotTranslation.getDistance(virtualTarget);
     double flywheelSpeed = ShooterConstants.FLYWHEEL_MAP.get(predictedDistanceM);
+    double feederSpeed = ShooterConstants.FEEDER_MAP.get(predictedDistanceM);
 
     if (!Constants.MINIMAL_LOGGING) {
       Logger.recordOutput(
@@ -54,6 +55,7 @@ public class ShotPlanner {
 
     return new ShotSetpoint(
         RotationsPerSecond.of(flywheelSpeed),
+        RotationsPerSecond.of(feederSpeed),
         ShooterConstants.FIXED_HOOD_ANGLE_DEGREES,
         lookAtHubPose2d,
         driveChassisSpeeds,
@@ -90,6 +92,7 @@ public class ShotPlanner {
     double predictedDistanceM = robotTranslation.getDistance(virtualTarget);
     double flywheelSpeed =
         Math.min(ShooterConstants.PASSING_FLYWHEEL_MAP.get(predictedDistanceM), 80.0);
+    double feederSpeed = ShooterConstants.FEEDER_MAP.get(predictedDistanceM);
 
     if (!Constants.MINIMAL_LOGGING) {
       Logger.recordOutput(
@@ -103,6 +106,7 @@ public class ShotPlanner {
 
     return new ShotSetpoint(
         RotationsPerSecond.of(flywheelSpeed),
+        RotationsPerSecond.of(feederSpeed),
         ShooterConstants.FIXED_HOOD_ANGLE_DEGREES,
         lookAtHubPose2d,
         driveChassisSpeeds,
@@ -157,8 +161,16 @@ public class ShotPlanner {
       Logger.recordOutput("ShotPlanner/polyChassisHeadingDeg", chassisHeadingDeg);
     }
 
+    double feederSpeed =
+        ShooterConstants.FEEDER_MAP.get(drivePose.getTranslation().getDistance(hubTranslation2d));
+
     return new ShotSetpoint(
-        flywheelRps, hoodAngle, robotPose, driveChassisSpeeds, hubTranslation2d);
+        flywheelRps,
+        RotationsPerSecond.of(feederSpeed),
+        hoodAngle,
+        robotPose,
+        driveChassisSpeeds,
+        hubTranslation2d);
   }
 
   private static final int POLY_DIM = 15;
@@ -259,6 +271,7 @@ public class ShotPlanner {
 
   public static class ShotSetpoint {
     public AngularVelocity flywheelSpeed;
+    public AngularVelocity feederSpeed;
     public Angle hoodAngle;
     public Pose2d robotPose;
     public Translation2d target;
@@ -266,11 +279,13 @@ public class ShotPlanner {
 
     public ShotSetpoint(
         AngularVelocity flywheelSpeed,
+        AngularVelocity feederSpeed,
         Angle hoodAngle,
         Pose2d robotPose,
         ChassisSpeeds robotSpeeds,
         Translation2d target) {
       this.flywheelSpeed = flywheelSpeed;
+      this.feederSpeed = feederSpeed;
       this.hoodAngle = hoodAngle;
       this.robotPose = robotPose;
       this.robotSpeeds = robotSpeeds;
@@ -279,6 +294,7 @@ public class ShotPlanner {
 
     public ShotSetpoint() {
       this.flywheelSpeed = RotationsPerSecond.of(0);
+      this.feederSpeed = RotationsPerSecond.of(0);
       this.hoodAngle = Degrees.of(0);
       this.robotPose = new Pose2d();
       this.robotSpeeds = new ChassisSpeeds();

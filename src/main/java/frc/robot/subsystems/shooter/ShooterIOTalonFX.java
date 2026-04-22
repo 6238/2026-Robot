@@ -22,6 +22,7 @@ import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.robot.Constants;
 import frc.robot.util.AlertUtils;
 import frc.robot.util.BetterStatusSignalCollection;
+import frc.robot.util.ThreadedBeamBreak;
 
 public class ShooterIOTalonFX implements ShooterIO {
   // Alerts
@@ -35,6 +36,10 @@ public class ShooterIOTalonFX implements ShooterIO {
   private TalonFX flywheelTalon;
   private TalonFX flywheel2Talon;
   private TalonFX feederTalon;
+
+  private final ThreadedBeamBreak beamBreak =
+      new ThreadedBeamBreak(
+          ShooterConstants.BEAM_BREAK_DIO_PORT, ShooterConstants.BEAM_BREAK_INVERTED);
 
   // Status Signal Management
   public BetterStatusSignalCollection statusSignalCollector;
@@ -134,6 +139,7 @@ public class ShooterIOTalonFX implements ShooterIO {
             feederAppliedVoltage);
     statusSignalCollector.setUpdateFrequencyForAll(50);
     ParentDevice.optimizeBusUtilizationForAll(flywheelTalon, flywheel2Talon, feederTalon);
+    beamBreak.start();
   }
 
   public void updateInputs(ShooterIOInputs inputs) {
@@ -150,6 +156,7 @@ public class ShooterIOTalonFX implements ShooterIO {
     // Are motors connected?
     inputs.flywheelTalonConnected = flywheelVelocity.getStatus().isOK();
     inputs.feederTalonConnected = feederVelocity.getStatus().isOK();
+    inputs.beamBreakTriggered = beamBreak.getTriggeredSinceLastCheck();
 
     // Update Inputs
     inputs.flywheelVelocity = flywheelVelocity.getValue();

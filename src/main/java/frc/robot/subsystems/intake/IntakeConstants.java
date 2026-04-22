@@ -23,16 +23,16 @@ public class IntakeConstants {
   public static final LoggedNetworkPIDFeedforwardGains INTAKE_GAINS =
       new LoggedNetworkPIDFeedforwardGains(0.01, 0, 0.00, 0.12, 0.17, 0, 0.2, "intake");
 
-  public static final double IntakeCanCoderOffset = 0.202;
+  public static final double IntakeCanCoderOffset = 0;
 
   public static final double INTAKE_ARM_GEARING = 35 * 2;
   public static final InvertedValue INTAKE_ARM_MOTOR_DIRECTION =
       InvertedValue.CounterClockwise_Positive;
   public static final Angle INTAKE_START_VALUE = Degrees.of(100.0);
   public static final LoggedNetworkNumber INTAKE_DOWN_VALUE =
-      new LoggedNetworkNumber("INTAKE_DOWN_ANGLE", -10);
+      new LoggedNetworkNumber("INTAKE_DOWN_ANGLE", -2.5);
   public static final LoggedNetworkNumber INTAKE_UP_VALUE =
-      new LoggedNetworkNumber("INTAKE_UP_ANGLE", 60.0);
+      new LoggedNetworkNumber("INTAKE_UP_ANGLE", 85.0);
   public static final LoggedNetworkPIDFeedforwardGains INTAKE_ARM_GAINS =
       new LoggedNetworkPIDFeedforwardGains(48, 1, 5, 0.17, 7.8, 0, 0.3, "Intake_ARM");
   public static final MotionMagicConfigs INTAKE_ARM_MOTION_MAGIC_CONFIGS =
@@ -73,13 +73,14 @@ public class IntakeConstants {
   // Center sweeps from (INTAKE_DOWN_VALUE + OSCILLATE_CENTER_OFFSET) to
   // (INTAKE_UP_VALUE - OSCILLATE_CENTER_OFFSET) at OSCILLATE_SWEEP_RATE_DPS degrees/sec,
   // then the setpoint sinusoids around that center.
-  public static final double OSCILLATE_CENTER_OFFSET_DEGREES = 20.0;
+  public static final LoggedNetworkNumber OSCILLATE_CENTER_OFFSET_DEGREES =
+      new LoggedNetworkNumber("Intake/OscillateCenterOffset", 30.0);
   public static final LoggedNetworkNumber OSCILLATE_AMPLITUDE_DEGREES =
       new LoggedNetworkNumber("Intake/OscillateAmplitude", 10.0);
   public static final LoggedNetworkNumber OSCILLATE_FREQUENCY_HZ =
       new LoggedNetworkNumber("Intake/OscillateFrequency", 4.0);
   public static final LoggedNetworkNumber OSCILLATE_SWEEP_RATE_DPS =
-      new LoggedNetworkNumber("Intake/OscillateSweepRate", 15.0);
+      new LoggedNetworkNumber("Intake/OscillateSweepRate", 10.0);
   // Fraction of each oscillation period spent above center (0.5 = symmetric, >0.5 = more time up)
   public static final LoggedNetworkNumber OSCILLATE_DUTY_CYCLE =
       new LoggedNetworkNumber("Intake/OscillateDutyCycle", 0.7);
@@ -87,4 +88,10 @@ public class IntakeConstants {
   // Roller recovery acceleration
   public static final double ROLLER_RECOVERY_THRESHOLD_RPS = 50.0;
   public static final double ROLLER_RECOVERY_ACCELERATION_RPS2 = 150.0;
+
+  // 254-style push indexing
+  public static final double PUSH_254_TARGET_OFFSET_DEGREES = 40.0;
+  public static final double PUSH_254_JAM_VELOCITY_THRESHOLD_RPS = 0.05;
+  public static final double PUSH_254_OSCILLATE_DURATION_SECONDS = 0.5;
+  public static final double PUSH_254_RETRACT_DURATION_SECONDS = 0.5;
 }

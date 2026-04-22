@@ -42,6 +42,7 @@ import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.hopper.Hopper;
+import frc.robot.subsystems.hopper.HopperConstants;
 import frc.robot.subsystems.hopper.HopperIO;
 import frc.robot.subsystems.hopper.HopperIOSim;
 import frc.robot.subsystems.hopper.HopperIOTalonFX;
@@ -267,8 +268,8 @@ public class RobotContainer {
         AutomaticCommands.trenchAwareJoystickDrive(
             drive,
             intakePivot,
+            () -> -controller.getLeftY(),
             () -> -controller.getLeftX(),
-            () -> controller.getLeftY(),
             () -> -controller.getRightX()));
 
     controller
@@ -325,8 +326,22 @@ public class RobotContainer {
     // Intake and Reverse Intake
     controller
         .leftTrigger()
-        .onTrue(intakeRoller.reverseIntake())
-        .onFalse(intakeRoller.stopIntake());
+        .onTrue(
+            Commands.parallel(
+                intakeRoller.reverseIntake(),
+                Commands.runOnce(
+                    () ->
+                        hopper.setTopIndexerSpeed(
+                            RotationsPerSecond.of(HopperConstants.TOP_INDEXER_SPEED.get()))),
+                Commands.runOnce(
+                    () ->
+                        hopper.setIndexerSpeed(
+                            RotationsPerSecond.of(HopperConstants.INDEXER_SPEED.get())))))
+        .onFalse(
+            Commands.parallel(
+                intakeRoller.stopIntake(),
+                Commands.runOnce(() -> hopper.setTopIndexerSpeed(RotationsPerSecond.of(0))),
+                Commands.runOnce(() -> hopper.setIndexerSpeed(RotationsPerSecond.of(0)))));
     controller.leftBumper().toggleOnTrue(superstructure.wantIntaking());
 
     // Intake Flip Position
@@ -367,15 +382,8 @@ public class RobotContainer {
     //     .onFalse(superstructure.setWantedSuperStateCommand(() ->
     // Superstructure.WantedState.IDLE));
 
-    // B button: disable trench align — full joystick control while held
-    controller
-        .b()
-        .whileTrue(
-            DriveCommands.joystickDrive(
-                drive,
-                () -> -controller.getLeftX(),
-                () -> controller.getLeftY(),
-                () -> -controller.getRightX()));
+    // B button: pathfind to trench start, press intake into outer wall, then drive back at 1.0 m/s
+    controller.b().whileTrue(AutomaticCommands.automaticCommand(drive, () -> false));
     controller.x().whileTrue(AutomaticCommands.neutralToAllianceCommand(drive, () -> false));
 
     // D-Pad: targeted automations

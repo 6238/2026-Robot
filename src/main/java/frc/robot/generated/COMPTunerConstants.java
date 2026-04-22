@@ -17,15 +17,15 @@ public class COMPTunerConstants {
 
   // The steer motor uses any SwerveModule.SteerRequestType control request with the
   // output type specified by SwerveModuleConstants.SteerMotorClosedLoopOutput
-  private static final Slot0Configs steerGains =
-      new Slot0Configs()
-          .withKP(40)
-          .withKI(0)
-          .withKD(2)
-          .withKS(1.06)
-          .withKV(1.28)
-          .withKA(0.18)
-          .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign);
+  //   private static final Slot0Configs steerGains =
+  //       new Slot0Configs()
+  //           .withKP(60)
+  //           .withKI(0)
+  //           .withKD(2)
+  //           .withKS(0.1)
+  //           .withKV(1.55)
+  //           .withKA(1.1)
+  //           .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign);
   // When using closed-loop control, the drive motor uses the control
   // output type specified by SwerveModuleConstants.DriveMotorClosedLoopOutput
   private static final Slot0Configs driveGains =
@@ -33,9 +33,31 @@ public class COMPTunerConstants {
           .withKP(0.22)
           .withKI(0)
           .withKD(0)
-          .withKS(0.1349)
-          .withKV(0.73735)
-          .withKA(0.16338);
+          .withKS(0.139)
+          .withKV(0.76373)
+          .withKA(0.65);
+
+  // The steer motor uses any SwerveModule.SteerRequestType control request with the
+  // output type specified by SwerveModuleConstants.SteerMotorClosedLoopOutput
+  private static final Slot0Configs steerGains =
+      new Slot0Configs()
+          .withKP(40)
+          .withKI(0)
+          .withKD(0.2)
+          .withKS(0.139)
+          .withKV(0.766)
+          .withKA(0.65)
+          .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign);
+  //   // When using closed-loop control, the drive motor uses the control
+  //   // output type specified by SwerveModuleConstants.DriveMotorClosedLoopOutput
+  //   private static final Slot0Configs driveGains =
+  //       new Slot0Configs()
+  //           .withKP(0.22)
+  //           .withKI(0)
+  //           .withKD(0)
+  //           .withKS(0.1349)
+  //           .withKV(0.73735)
+  //           .withKA(0.16338);
 
   // The closed-loop output type to use for the steer motors;
   // This affects the PID/FF gains for the steer motors

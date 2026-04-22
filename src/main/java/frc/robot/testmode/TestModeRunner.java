@@ -197,7 +197,11 @@ public class TestModeRunner {
                   Logger.recordOutput("TestMode/ActiveStep", "BALL_PATH_INDEXER");
                   System.out.println("[BallPath] Step 6: Indexer");
                 }),
-            hopper.spinFullIndexer(),
+            Commands.runOnce(
+                () -> {
+                  hopper.setTopIndexerSpeed(RotationsPerSecond.of(40));
+                  hopper.setIndexerSpeed(RotationsPerSecond.of(40));
+                }),
             Commands.waitSeconds(SHORT_STEP_DURATION_S),
 
             // Stop everything

@@ -16,6 +16,7 @@ public interface IntakePivotIO {
     public Angle intakeArmPosition = Degrees.of(0.0);
     public AngularVelocity intakeArmVelocity = RotationsPerSecond.of(0.0);
     public Current intakeArmSupplyCurrent = Amps.of(0.0);
+    public Current intakeArmStatorCurrent = Amps.of(0.0);
     public Voltage intakeArmAppliedVoltage = Volts.of(0.0);
   }
 

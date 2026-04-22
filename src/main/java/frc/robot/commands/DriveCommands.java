@@ -68,7 +68,7 @@ public class DriveCommands {
 
   private DriveCommands() {}
 
-  private static Translation2d getLinearVelocityFromJoysticks(double x, double y) {
+  public static Translation2d getLinearVelocityFromJoysticks(double x, double y) {
     // Apply deadband
     double linearMagnitude = MathUtil.applyDeadband(Math.hypot(x, y), DEADBAND);
     Rotation2d linearDirection = new Rotation2d(Math.atan2(y, x));
@@ -117,6 +117,54 @@ public class DriveCommands {
                   isFlipped
                       ? drive.getRotation().plus(new Rotation2d(Math.PI))
                       : drive.getRotation()));
+        },
+        drive);
+  }
+
+  /**
+   * Field-relative drive where joystick X and omega are driver-controlled, but field Y velocity is
+   * overridden by an external supplier (e.g. a PID controller). The fieldYMps supplier must return
+   * a velocity in m/s in absolute field coordinates — it is NOT processed through the deadband,
+   * rate curve, or alliance flip.
+   */
+  public static Command joystickDriveWithPIDFieldY(
+      Drive drive,
+      DoubleSupplier xSupplier,
+      DoubleSupplier omegaSupplier,
+      DoubleSupplier fieldYMps) {
+    return Commands.run(
+        () -> {
+          // X from joystick only (Y zeroed — PID controls field Y)
+          Translation2d linearVelocity =
+              getLinearVelocityFromJoysticks(xSupplier.getAsDouble(), 0.0);
+
+          double omega = MathUtil.applyDeadband(omegaSupplier.getAsDouble(), DEADBAND);
+          omega = Math.copySign(applyCurve(Math.abs(omega)), omega);
+
+          boolean isFlipped =
+              DriverStation.getAlliance().isPresent()
+                  && DriverStation.getAlliance().get() == Alliance.Red;
+
+          // Robot-relative speeds from joystick X + omega (with alliance flip for driver feel)
+          ChassisSpeeds robotRelative =
+              ChassisSpeeds.fromFieldRelativeSpeeds(
+                  new ChassisSpeeds(
+                      linearVelocity.getX() * drive.getMaxLinearSpeedMetersPerSec(),
+                      0.0,
+                      omega * drive.getMaxAngularSpeedRadPerSec()),
+                  isFlipped
+                      ? drive.getRotation().plus(new Rotation2d(Math.PI))
+                      : drive.getRotation());
+
+          // Inject PID field-Y directly into robot frame (no alliance flip):
+          // fromFieldRelativeSpeeds with field_vx=0, field_vy=pidY gives:
+          //   robot_vx += pidY * sin(heading), robot_vy += pidY * cos(heading)
+          double h = drive.getRotation().getRadians();
+          double pidY = fieldYMps.getAsDouble();
+          robotRelative.vxMetersPerSecond += pidY * Math.sin(h);
+          robotRelative.vyMetersPerSecond += pidY * Math.cos(h);
+
+          drive.runVelocity(robotRelative);
         },
         drive);
   }
@@ -177,6 +225,7 @@ public class DriveCommands {
     angleController.enableContinuousInput(-Math.PI, Math.PI);
 
     // Construct command
+    boolean[] xLockActive = {false};
     return Commands.run(
             () -> {
               // Get linear velocity
@@ -188,11 +237,15 @@ public class DriveCommands {
                   angleController.calculate(
                       drive.getRotation().getRadians(), rotationSupplier.get().getRadians());
 
-              // X-lock when stationary and already aimed to resist defense
-              if (linearVelocity.getNorm() == 0.0
-                  && Math.abs(
-                          drive.getRotation().getDegrees() - rotationSupplier.get().getDegrees())
-                      < 0.75) {
+              // X-lock with hysteresis: engage at <0.75°, disengage at >2° or when moving
+              double rotationErrorDeg =
+                  Math.abs(drive.getRotation().getDegrees() - rotationSupplier.get().getDegrees());
+              if (linearVelocity.getNorm() == 0.0 && rotationErrorDeg < 1.00) {
+                xLockActive[0] = true;
+              } else if (linearVelocity.getNorm() != 0.0 || rotationErrorDeg > 2.75) {
+                xLockActive[0] = false;
+              }
+              if (xLockActive[0]) {
                 drive.stopWithX();
                 return;
               }

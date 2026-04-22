@@ -5,11 +5,8 @@ import static edu.wpi.first.units.Units.RadiansPerSecond;
 import edu.wpi.first.units.measure.AngularVelocity;
 
 public class DriveConstants {
-  /**
-   * Max steer angular velocity passed to SwerveSetpointGenerator. Raised from 30 to reduce module
-   * reorientation lag (~100ms → ~31ms for 90° turn).
-   */
-  public static final AngularVelocity MAX_MODULE_ANGULAR_VELOCITY = RadiansPerSecond.of(50);
+  /** Calculated from Log */
+  public static final AngularVelocity MAX_MODULE_ANGULAR_VELOCITY = RadiansPerSecond.of(15);
 
   /**
    * When true, skips the SwerveSetpointGenerator and sends ChassisSpeeds directly to modules via

@@ -51,7 +51,15 @@
       "Bash(./gradlew compileJava -x test --continue)",
       "Bash(java -version)",
       "Bash(./gradlew --version)",
-      "Bash(./gradlew test --tests \"commands.DriveCommandsCurveTest\")"
+      "Bash(./gradlew test --tests \"commands.DriveCommandsCurveTest\")",
+      "Bash(MSYS_NO_PATHCONV=1 ClaudeScope load *)",
+      "Bash(MSYS_NO_PATHCONV=1 ClaudeScope info --session d5cc92f63417b495f5d000ef5ba272ea)",
+      "Bash(MSYS_NO_PATHCONV=1 ClaudeScope find-bool *)",
+      "Bash(MSYS_NO_PATHCONV=1 ClaudeScope disconnect *)",
+      "Bash(./gradlew clean *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(./gradlew --stacktrace classes)"
     ],
     "additionalDirectories": [
       "c:\\Users\\ryan\\2026-Robot\\docs\\superpowers\\specs",

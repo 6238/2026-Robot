@@ -117,9 +117,9 @@ public class Drive extends SubsystemBase {
   private static final SwerveModuleState[] EMPTY_MODULE_STATES = new SwerveModuleState[] {};
 
   // PathPlanner config constants
-  private static final double ROBOT_MASS_KG = Pounds.of(113).in(Kilograms);
+  private static final double ROBOT_MASS_KG = Pounds.of(135).in(Kilograms);
   private static final double ROBOT_MOI = 4.35;
-  private static final double WHEEL_COF = 1.35;
+  private static final double WHEEL_COF = 1.45;
   private static final RobotConfig PP_CONFIG =
       new RobotConfig(
           ROBOT_MASS_KG,
@@ -254,7 +254,8 @@ public class Drive extends SubsystemBase {
                     log.motor("drive-" + i)
                         .voltage(Volts.of(modules[i].getDriveAppliedVolts()))
                         .angularPosition(Radians.of(modules[i].getDrivePositionRad()))
-                        .angularVelocity(RadiansPerSecond.of(modules[i].getDriveVelocityRadPerSec()));
+                        .angularVelocity(
+                            RadiansPerSecond.of(modules[i].getDriveVelocityRadPerSec()));
                   }
                 },
                 this));
@@ -272,7 +273,8 @@ public class Drive extends SubsystemBase {
                     log.motor("steer-" + i)
                         .voltage(Volts.of(modules[i].getTurnAppliedVolts()))
                         .angularPosition(Radians.of(modules[i].getAngle().getRadians()))
-                        .angularVelocity(RadiansPerSecond.of(modules[i].getSteerVelocityRadPerSec()));
+                        .angularVelocity(
+                            RadiansPerSecond.of(modules[i].getSteerVelocityRadPerSec()));
                   }
                 },
                 this));
@@ -295,6 +297,8 @@ public class Drive extends SubsystemBase {
       BaseStatusSignal.refreshAll(allSignals);
     }
 
+    double a = edu.wpi.first.wpilibj.Timer.getFPGATimestamp();
+
     // Under lock: hardware reads only. Logger.processInputs is intentionally outside
     // the lock — it reads from already-captured structs and doesn't need protection.
     odometryLock.lock();
@@ -304,11 +308,15 @@ public class Drive extends SubsystemBase {
     }
     odometryLock.unlock();
 
+    double b = edu.wpi.first.wpilibj.Timer.getFPGATimestamp();
+
     // Outside lock: AK serialization + alert/odometry updates
     Logger.processInputs("Drive/Gyro", gyroInputs);
     for (var module : modules) {
       module.logAndProcessInputs();
     }
+
+    double c = edu.wpi.first.wpilibj.Timer.getFPGATimestamp();
 
     // Stop moving when disabled
     if (DriverStation.isDisabled()) {
@@ -364,6 +372,12 @@ public class Drive extends SubsystemBase {
       Logger.recordOutput(
           "Drive/PeriodicTimeMs",
           (edu.wpi.first.wpilibj.Timer.getFPGATimestamp() - periodicStartSec) * 1000.0);
+
+      Logger.recordOutput("Drive/RefreshTimeMs", (a - periodicStartSec) * 1000.0);
+
+      Logger.recordOutput("Drive/OdometryLockMs", (b - a) * 1000.0);
+
+      Logger.recordOutput("Drive/InputsMs", (c - b) * 1000.0);
     }
   }
 

@@ -12,6 +12,7 @@ public interface ShooterIO {
   public static class ShooterIOInputs {
     public boolean flywheelTalonConnected = false;
     public boolean feederTalonConnected = false;
+    public boolean beamBreakTriggered = false;
 
     public AngularVelocity flywheelVelocity = RotationsPerSecond.of(0);
     public Current flywheelSupplyCurrent = Amps.of(0);

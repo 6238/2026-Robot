@@ -177,6 +177,36 @@ task(eventDeploy) {
 }
 createVersionFile.dependsOn(eventDeploy)
 
+// Validate PathPlanner JSON files before deploy
+task validatePathplannerJson {
+    description = 'Validates all PathPlanner .path and .json files are valid JSON'
+    group = 'verification'
+    doLast {
+        def pathplannerDir = file('src/main/deploy/pathplanner')
+        def slurper = new groovy.json.JsonSlurper()
+        def errors = []
+        def checked = 0
+        pathplannerDir.eachFileRecurse { f ->
+            if (f.isFile() && (f.name.endsWith('.path') || f.name.endsWith('.json'))) {
+                checked++
+                try {
+                    slurper.parse(f)
+                } catch (Exception e) {
+                    errors << "  ${f.name}: ${e.message}"
+                }
+            }
+        }
+        if (errors) {
+            throw new GradleException("Invalid PathPlanner files:\n${errors.join('\n')}")
+        }
+        println "PathPlanner JSON validation passed (${checked} files)"
+    }
+}
+
+tasks.matching { it.name == 'deploy' || it.name.contains('Deploy') }.configureEach {
+    dependsOn validatePathplannerJson
+}
+
 // Spotless formatting
 project.compileJava.dependsOn(spotlessApply)
 spotless {

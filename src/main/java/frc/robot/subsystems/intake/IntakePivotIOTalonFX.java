@@ -4,14 +4,17 @@ import static edu.wpi.first.units.Units.*;
 import static frc.robot.util.PhoenixUtil.tryUntilOk;
 
 import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.SensorDirectionValue;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
@@ -34,7 +37,9 @@ public class IntakePivotIOTalonFX implements IntakePivotIO {
   public StatusSignal<Angle> intakeArmPosition;
   public StatusSignal<AngularVelocity> intakeArmVelocity;
   public StatusSignal<Current> intakeArmSupplyCurrent;
+  public StatusSignal<Current> intakeArmStatorCurrent;
   public StatusSignal<Voltage> intakeArmVoltage;
+  private CANcoder cancoder;
 
   public MotionMagicVoltage motionMagicVoltageArm = new MotionMagicVoltage(0).withSlot(0);
 
@@ -42,24 +47,24 @@ public class IntakePivotIOTalonFX implements IntakePivotIO {
     this.intakeArmTalon =
         new TalonFX(IntakeConstants.INTAKE_ARM_MOTOR_ID, IntakeConstants.PIVOT_CAN_BUS);
 
+    this.cancoder = new CANcoder(56, IntakeConstants.PIVOT_CAN_BUS);
+
     TalonFXConfiguration intakeArmConfig = new TalonFXConfiguration();
-    // intakeArmConfig.Feedback.RotorToSensorRatio = IntakeConstants.INTAKE_ARM_GEARING;
+    intakeArmConfig.Feedback.RotorToSensorRatio = -IntakeConstants.INTAKE_ARM_GEARING;
     intakeArmConfig.MotorOutput.Inverted = IntakeConstants.INTAKE_ARM_MOTOR_DIRECTION;
     intakeArmConfig.Slot0 = IntakeConstants.INTAKE_ARM_GAINS.toSlot0Configs();
     intakeArmConfig.MotionMagic = IntakeConstants.INTAKE_ARM_MOTION_MAGIC_CONFIGS;
     intakeArmConfig.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
     intakeArmConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
     intakeArmConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-    intakeArmConfig.CurrentLimits.StatorCurrentLimit = 40;
+    intakeArmConfig.CurrentLimits.StatorCurrentLimit = 60;
     intakeArmConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
     intakeArmConfig.CurrentLimits.SupplyCurrentLimit = 30;
-    intakeArmConfig.CurrentLimits.SupplyCurrentLowerLimit = 20;
+    intakeArmConfig.CurrentLimits.SupplyCurrentLowerLimit = 25;
     intakeArmConfig.CurrentLimits.SupplyCurrentLowerTime = 0.5;
 
     intakeArmConfig.Feedback.FeedbackRemoteSensorID = IntakeConstants.INTAKE_CANCODER_ID;
-    intakeArmConfig.Feedback.FeedbackRotorOffset = IntakeConstants.IntakeCanCoderOffset;
     intakeArmConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RemoteCANcoder;
-    intakeArmConfig.Feedback.SensorToMechanismRatio = -1;
 
     AlertUtils.processCriticalAlert(
         intakeArmConfigAlert,
@@ -67,14 +72,24 @@ public class IntakePivotIOTalonFX implements IntakePivotIO {
             Constants.MAX_PHEONIX_RETRIES,
             () -> intakeArmTalon.getConfigurator().apply(intakeArmConfig)));
 
+    CANcoderConfiguration cc_cfg = new CANcoderConfiguration();
+    cc_cfg.MagnetSensor.SensorDirection = SensorDirectionValue.Clockwise_Positive;
+    cc_cfg.MagnetSensor.MagnetOffset = -0.025;
+    cancoder.getConfigurator().apply(cc_cfg);
+
     intakeArmPosition = intakeArmTalon.getPosition();
     intakeArmVelocity = intakeArmTalon.getVelocity();
     intakeArmSupplyCurrent = intakeArmTalon.getSupplyCurrent();
+    intakeArmStatorCurrent = intakeArmTalon.getStatorCurrent();
     intakeArmVoltage = intakeArmTalon.getMotorVoltage();
 
     statusSignalCollector =
         new BetterStatusSignalCollection(
-            intakeArmPosition, intakeArmVelocity, intakeArmSupplyCurrent, intakeArmVoltage);
+            intakeArmPosition,
+            intakeArmVelocity,
+            intakeArmSupplyCurrent,
+            intakeArmStatorCurrent,
+            intakeArmVoltage);
     statusSignalCollector.setUpdateFrequencyForAll(50);
     ParentDevice.optimizeBusUtilizationForAll(intakeArmTalon);
   }
@@ -96,6 +111,7 @@ public class IntakePivotIOTalonFX implements IntakePivotIO {
     inputs.intakeArmPosition = intakeArmPosition.getValue();
     inputs.intakeArmVelocity = intakeArmVelocity.getValue();
     inputs.intakeArmSupplyCurrent = intakeArmSupplyCurrent.getValue();
+    inputs.intakeArmStatorCurrent = intakeArmStatorCurrent.getValue();
     inputs.intakeArmAppliedVoltage = intakeArmVoltage.getValue();
   }
 

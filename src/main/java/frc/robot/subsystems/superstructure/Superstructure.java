@@ -74,6 +74,24 @@ public class Superstructure extends SubsystemBase {
   // Pivot oscillation state (during shooting/passing)
   private double oscTimer = 0.0;
 
+  // Beam-break intake sequencing: go down after each shot, wait for next ball to resume oscillating
+  private boolean intakeWaitingForNextBall = false;
+  private boolean prevBeamBreak = false;
+  private final Timer intakeDownTimer = new Timer();
+
+  // 254 push indexing sub-state
+  private enum Push254Phase {
+    PUSHING,
+    OSCILLATING,
+    RETRACTING
+  }
+
+  private Push254Phase push254Phase = Push254Phase.PUSHING;
+  private final Timer push254Timer = new Timer();
+  private final edu.wpi.first.math.filter.Debouncer push254JamDebouncer =
+      new edu.wpi.first.math.filter.Debouncer(
+          0.1, edu.wpi.first.math.filter.Debouncer.DebounceType.kRising);
+
   /**
    * Called in simulateShot() to consume one fuel piece before launching a projectile. Set by
    * RobotContainer in SIM mode to {@code fuelIntake::obtainGamePieceFromIntake}. Returns true if a
@@ -130,6 +148,8 @@ public class Superstructure extends SubsystemBase {
           if (wasShootingOrPassing) postShotHoldTimer.restart();
           currentSuperState = CurrentState.IDLE;
           crawlUpScheduled = false;
+          intakeWaitingForNextBall = false;
+          prevBeamBreak = false;
           hopper.setIndexerSpeed(RotationsPerSecond.of(0));
           hopper.setTopIndexerSpeed(RotationsPerSecond.of(0));
           shooter.setFeederVoltage(Volts.of(0));
@@ -251,27 +271,62 @@ public class Superstructure extends SubsystemBase {
         } else if (wantedSuperState == WantedState.PASSING
             || wantedSuperState == WantedState.PASS_INTAKE) {
           currentSuperState = CurrentState.PASSING;
+          crawlUpScheduled = false;
+          oscTimer = 0.0;
         }
         break;
       case PASSING:
         intakeRoller.spin();
         shooter.setFlywheelRPM(shotSetpoint.flywheelSpeed);
-        shooter.setFeederSpeed(RotationsPerSecond.of(ShooterConstants.FEEDER_SPEED.get()));
+        shooter.setFeederSpeed(shotSetpoint.feederSpeed);
         hopper.setIndexerSpeed(RotationsPerSecond.of(HopperConstants.INDEXER_SPEED.get()));
         hopper.setTopIndexerSpeed(RotationsPerSecond.of(HopperConstants.TOP_INDEXER_SPEED.get()));
+
         if (readyToShoot() && !crawlUpScheduled) {
           crawlUpScheduled = true;
           oscTimer = 0.0;
+          push254Phase = Push254Phase.PUSHING;
+          push254JamDebouncer.calculate(false);
         }
+
+        boolean beamBreakPassing = shooter.isShooting();
+        boolean beamBreakRisingEdgePassing = beamBreakPassing && !prevBeamBreak;
+        if (beamBreakRisingEdgePassing) {
+          intakeWaitingForNextBall = !intakeWaitingForNextBall;
+          if (intakeWaitingForNextBall) {
+            intakeDownTimer.restart();
+            push254Phase = Push254Phase.PUSHING;
+            push254JamDebouncer.calculate(false);
+          }
+        }
+        prevBeamBreak = beamBreakPassing;
+
+        if (intakeWaitingForNextBall && intakeDownTimer.hasElapsed(0.25)) {
+          intakeWaitingForNextBall = false;
+          push254Phase = Push254Phase.PUSHING;
+          push254JamDebouncer.calculate(false);
+        }
+
         if (crawlUpScheduled
             && wantedSuperState != WantedState.SHOOT_INTAKE
-            && wantedSuperState != WantedState.PASS_INTAKE) applyPivotOscillate();
+            && wantedSuperState != WantedState.PASS_INTAKE) {
+          if (intakeWaitingForNextBall) {
+            intake.setAngle(Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get()));
+          } else {
+            if (ShooterConstants.INDEXING_MODE == ShooterConstants.IndexingMode.PUSH_254) {
+              apply254Push();
+            } else {
+              applyPivotOscillate();
+            }
+          }
+        }
+
         simulateShot();
         break;
       case SHOOTING:
         intakeRoller.spin();
         shooter.setFlywheelRPM(shotSetpoint.flywheelSpeed);
-        shooter.setFeederSpeed(RotationsPerSecond.of(ShooterConstants.FEEDER_SPEED.get()));
+        shooter.setFeederSpeed(shotSetpoint.feederSpeed);
         boolean tooCloseShooting = isTooCloseToHub();
         if (!Constants.MINIMAL_LOGGING)
           Logger.recordOutput("Superstructure/TooCloseToShoot", tooCloseShooting);
@@ -304,13 +359,46 @@ public class Superstructure extends SubsystemBase {
         if (readyToShoot() && !crawlUpScheduled) {
           crawlUpScheduled = true;
           oscTimer = 0.0;
+          push254Phase = Push254Phase.PUSHING;
+          push254JamDebouncer.calculate(false);
         }
+        boolean beamBreak = shooter.isShooting();
+        boolean beamBreakRisingEdge = beamBreak && !prevBeamBreak;
+        if (beamBreakRisingEdge) {
+          intakeWaitingForNextBall = !intakeWaitingForNextBall;
+          if (intakeWaitingForNextBall) {
+            intakeDownTimer.restart();
+            push254Phase = Push254Phase.PUSHING;
+            push254JamDebouncer.calculate(false);
+          }
+        }
+        prevBeamBreak = beamBreak;
+
+        if (intakeWaitingForNextBall && intakeDownTimer.hasElapsed(0.25)) {
+          intakeWaitingForNextBall = false;
+          push254Phase = Push254Phase.PUSHING;
+          push254JamDebouncer.calculate(false);
+        }
+
         if (crawlUpScheduled
             && wantedSuperState != WantedState.SHOOT_INTAKE
-            && wantedSuperState != WantedState.PASS_INTAKE) applyPivotOscillate();
+            && wantedSuperState != WantedState.PASS_INTAKE) {
+          if (intakeWaitingForNextBall) {
+            intake.setAngle(Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get()));
+            if (!Constants.MINIMAL_LOGGING)
+              Logger.recordOutput("Superstructure/IntakeLoweredForBall", true);
+          } else {
+            if (ShooterConstants.INDEXING_MODE == ShooterConstants.IndexingMode.PUSH_254) {
+              apply254Push();
+            } else {
+              applyPivotOscillate();
+            }
+            if (!Constants.MINIMAL_LOGGING)
+              Logger.recordOutput("Superstructure/IntakeLoweredForBall", false);
+          }
+        }
 
-        // Reset no-shot timer whenever a ball exits (voltage spikes down: bang-through → PID/FF)
-        if (shooter.ballExitedFlywheel()) noShotTimer.restart();
+        if (beamBreakRisingEdge) noShotTimer.restart();
 
         if (!checkHubTolerance()) {
           currentSuperState = CurrentState.SPINNING_UP;
@@ -322,6 +410,8 @@ public class Superstructure extends SubsystemBase {
           noShotCooldownTimer.restart();
           crawlUpScheduled = false;
           oscTimer = 0.0;
+          push254Phase = Push254Phase.PUSHING;
+          push254JamDebouncer.calculate(false);
           if (!Constants.MINIMAL_LOGGING) Logger.recordOutput("Superstructure/NoShotTrigger", true);
           intake.io.setIntakeArmVoltage(Volts.of(0));
           intake.setAngle(Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get()));
@@ -337,10 +427,10 @@ public class Superstructure extends SubsystemBase {
   private void applyPivotOscillate() {
     oscTimer += 0.02;
 
-    double downAngle = IntakeConstants.INTAKE_DOWN_VALUE.get() + 20;
-    double upAngle = IntakeConstants.INTAKE_UP_VALUE.get();
-    double centerMin = downAngle + IntakeConstants.OSCILLATE_CENTER_OFFSET_DEGREES;
-    double centerMax = upAngle - IntakeConstants.OSCILLATE_CENTER_OFFSET_DEGREES;
+    double downAngle = IntakeConstants.INTAKE_DOWN_VALUE.get() + 15;
+    double upAngle = IntakeConstants.INTAKE_UP_VALUE.get() - 10;
+    double centerMin = downAngle + IntakeConstants.OSCILLATE_CENTER_OFFSET_DEGREES.get();
+    double centerMax = upAngle - IntakeConstants.OSCILLATE_CENTER_OFFSET_DEGREES.get();
 
     // Center sweeps from centerMin up to centerMax at the configured rate, then holds
     double center =
@@ -369,6 +459,51 @@ public class Superstructure extends SubsystemBase {
     if (!Constants.MINIMAL_LOGGING) {
       Logger.recordOutput("Superstructure/OscillationCenter", center);
       Logger.recordOutput("Superstructure/OscillationSetpoint", setpoint);
+    }
+  }
+
+  private void apply254Push() {
+    double ceilingDeg =
+        IntakeConstants.INTAKE_UP_VALUE.get() - IntakeConstants.PUSH_254_TARGET_OFFSET_DEGREES;
+    double positionDeg = intake.inputs.intakeArmPosition.in(Degrees);
+
+    switch (push254Phase) {
+      case PUSHING:
+        intake.setAngle(Degrees.of(ceilingDeg));
+        boolean nearTarget = positionDeg >= ceilingDeg - 2.0;
+        if (nearTarget) {
+          push254JamDebouncer.calculate(false);
+        } else {
+          boolean jammed =
+              push254JamDebouncer.calculate(
+                  Math.abs(intake.inputs.intakeArmVelocity.in(RotationsPerSecond))
+                      < IntakeConstants.PUSH_254_JAM_VELOCITY_THRESHOLD_RPS);
+          if (jammed) {
+            push254Phase = Push254Phase.OSCILLATING;
+            push254Timer.restart();
+            oscTimer = 0.0;
+          }
+        }
+        break;
+      case OSCILLATING:
+        applyPivotOscillate();
+        if (push254Timer.hasElapsed(IntakeConstants.PUSH_254_OSCILLATE_DURATION_SECONDS)) {
+          push254Phase = Push254Phase.RETRACTING;
+          push254Timer.restart();
+        }
+        break;
+      case RETRACTING:
+        intake.setAngle(Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get()));
+        if (push254Timer.hasElapsed(IntakeConstants.PUSH_254_RETRACT_DURATION_SECONDS)) {
+          push254Phase = Push254Phase.PUSHING;
+          push254JamDebouncer.calculate(false);
+        }
+        break;
+    }
+
+    if (!Constants.MINIMAL_LOGGING) {
+      Logger.recordOutput("Superstructure/Push254Phase", push254Phase.toString());
+      Logger.recordOutput("Superstructure/Push254CeilingDeg", ceilingDeg);
     }
   }
 

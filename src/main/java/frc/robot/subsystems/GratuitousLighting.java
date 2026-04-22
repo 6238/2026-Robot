@@ -42,7 +42,7 @@ public class GratuitousLighting extends SubsystemBase {
       new SolidColor(0, 68).withColor(new RGBWColor(50, 0, 0));
 
   private static final SolidColor intakingAnimation =
-      new SolidColor(0, 68).withColor(new RGBWColor(150, 150, 0));
+      new SolidColor(0, 68).withColor(new RGBWColor(100, 100, 0));
 
   private static final LarsonAnimation shootingAnimation =
       new LarsonAnimation(8, 68)

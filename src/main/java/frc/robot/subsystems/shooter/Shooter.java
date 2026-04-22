@@ -7,6 +7,7 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
@@ -26,6 +27,9 @@ public class Shooter extends SubsystemBase {
 
   /** Latches true for exactly one loop when velocity first dips ≥4 % below target. */
   private boolean ballShotDetected = false;
+
+  /** FPGA timestamp of the last beam break trigger. Negative means never triggered. */
+  private double lastBeamBreakTimestampSec = -1.0;
 
   public Alert shooterMotorConnectedAlert =
       new Alert("Critical", "Shooter Flywheel Motor Disconnected", AlertType.kError);
@@ -74,9 +78,15 @@ public class Shooter extends SubsystemBase {
       ballShotDetected = false;
     }
 
+    if (inputs.beamBreakTriggered) {
+      lastBeamBreakTimestampSec = Timer.getFPGATimestamp();
+    }
+
     if (!Constants.MINIMAL_LOGGING) {
       Logger.recordOutput("Shooter/velocityBelowThreshold", !prevAboveThreshold);
       Logger.recordOutput("Shooter/ballExitedFlywheel", ballExitedFlywheel());
+      Logger.recordOutput("Shooter/beamBreakTriggered", inputs.beamBreakTriggered);
+      Logger.recordOutput("Shooter/isShooting", isShooting());
     }
     Logger.recordOutput("Shooter/targetVelocity", targetFlywheelVelocity.in(RadiansPerSecond));
     Logger.recordOutput("Shooter/targetFeederVelocity", targetFeederVelocity.in(RadiansPerSecond));
@@ -92,6 +102,13 @@ public class Shooter extends SubsystemBase {
    */
   public boolean ballExitedFlywheel() {
     return ballShotDetected;
+  }
+
+  /** Returns true if the beam break has been triggered within the last 0.4 s. */
+  public boolean isShooting() {
+    return lastBeamBreakTimestampSec >= 0
+        && (Timer.getFPGATimestamp() - lastBeamBreakTimestampSec)
+            < ShooterConstants.SHOOTING_WINDOW_SECONDS;
   }
 
   public Command setFlywheelRPM(Supplier<AngularVelocity> speed) {
