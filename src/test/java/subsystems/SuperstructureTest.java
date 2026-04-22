@@ -85,9 +85,9 @@ public class SuperstructureTest {
 
   @Test
   void shooting_wantedState_setsCurrentStateSpinningUp_whenNotAlreadyShooting() {
-    // Start from IDLE
     superstructure.currentSuperState = CurrentState.IDLE;
-    superstructure.setWantedSuperState(WantedState.SHOOTING);
+    superstructure.wantedSuperState = WantedState.SHOOTING;
+    superstructure.handleWantedState();
     assertEquals(CurrentState.SPINNING_UP, superstructure.currentSuperState);
   }
 
@@ -102,7 +102,8 @@ public class SuperstructureTest {
   @Test
   void passing_wantedState_setsCurrentStateSpinningUp_whenNotAlreadyPassing() {
     superstructure.currentSuperState = CurrentState.IDLE;
-    superstructure.setWantedSuperState(WantedState.PASSING);
+    superstructure.wantedSuperState = WantedState.PASSING;
+    superstructure.handleWantedState();
     assertEquals(CurrentState.SPINNING_UP, superstructure.currentSuperState);
   }
 

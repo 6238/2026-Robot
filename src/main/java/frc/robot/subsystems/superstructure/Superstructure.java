@@ -127,15 +127,10 @@ public class Superstructure extends SubsystemBase {
 
   public void setWantedSuperState(WantedState wantedSuperState) {
     this.wantedSuperState = wantedSuperState;
-    handleWantedState();
   }
 
   public Command setWantedSuperStateCommand(Supplier<WantedState> wantedSuperState) {
-    return runOnce(
-        () -> {
-          this.wantedSuperState = wantedSuperState.get();
-          handleWantedState();
-        });
+    return runOnce(() -> this.wantedSuperState = wantedSuperState.get());
   }
 
   public void handleWantedState() {
