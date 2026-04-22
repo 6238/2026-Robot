@@ -356,6 +356,38 @@ class ShooterTest {
     assertEquals(0.0, shooter.getCurrentFlywheelSpeed().in(RotationsPerSecond), DELTA);
   }
 
+  // ── getTimeSinceLastBeamBreakSec ──────────────────────────────────────────
+
+  @Test
+  void getTimeSinceLastBeamBreakSec_returnsMaxValueBeforeAnyBeamBreak() {
+    assertEquals(Double.MAX_VALUE, shooter.getTimeSinceLastBeamBreakSec());
+  }
+
+  @Test
+  void getTimeSinceLastBeamBreakSec_returnsNonNegativeAfterBeamBreakFires() {
+    doAnswer(
+            inv -> {
+              ShooterIOInputs inputs = inv.getArgument(0);
+              inputs.flywheelTalonConnected = true;
+              inputs.feederTalonConnected = true;
+              inputs.beamBreakTriggered = true;
+              return null;
+            })
+        .when(mockShooterIO)
+        .updateInputs(any(ShooterIOInputs.class));
+    shooter.periodic();
+
+    double elapsed = shooter.getTimeSinceLastBeamBreakSec();
+    assertTrue(elapsed >= 0.0, "elapsed should be non-negative after beam break");
+    assertTrue(elapsed < 1.0, "elapsed should be very small immediately after beam break");
+  }
+
+  @Test
+  void getTimeSinceLastBeamBreakSec_stillMaxValueWhenBeamBreakNotTriggered() {
+    shooter.periodic();
+    assertEquals(Double.MAX_VALUE, shooter.getTimeSinceLastBeamBreakSec());
+  }
+
   // ── periodic ─────────────────────────────────────────────────────────────
 
   @Test

@@ -104,6 +104,12 @@ public class Shooter extends SubsystemBase {
     return ballShotDetected;
   }
 
+  /** Seconds since the beam break last fired; {@link Double#MAX_VALUE} if never triggered. */
+  public double getTimeSinceLastBeamBreakSec() {
+    if (lastBeamBreakTimestampSec < 0) return Double.MAX_VALUE;
+    return Timer.getFPGATimestamp() - lastBeamBreakTimestampSec;
+  }
+
   /** Returns true if the beam break has been triggered within the last 0.4 s. */
   public boolean isShooting() {
     return lastBeamBreakTimestampSec >= 0

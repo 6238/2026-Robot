@@ -87,7 +87,7 @@ public class AutomaticCommands {
   static final double TRENCH_MAX_Y_SPEED_MPS = 2.5;
 
   // Activation zone buffer around the trench X boundaries
-  static final double TRENCH_X_BUFFER = 0.6;
+  static final double TRENCH_X_BUFFER = 0.3;
   // Y activation: middle 50% of trench width (25th–75th percentile of 0→TRENCH_INNER_Y)
   static final double TRENCH_Y_ACTIVATE_MIN = TRENCH_INNER_Y * 0.25;
   static final double TRENCH_Y_ACTIVATE_MAX = TRENCH_INNER_Y * 0.75;

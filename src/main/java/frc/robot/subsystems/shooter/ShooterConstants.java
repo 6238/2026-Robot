@@ -15,10 +15,18 @@ import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 public class ShooterConstants {
   public enum IndexingMode {
     OSCILLATE,
-    PUSH_254
+    PUSH_254,
+    BEAM_HOPPER,
+    FUSED_HOPPER
   }
 
   public static final IndexingMode INDEXING_MODE = IndexingMode.OSCILLATE;
+
+  public static final LoggedNetworkNumber FLOW_WINDOW_SECONDS =
+      new LoggedNetworkNumber("Shooter/FlowWindowSeconds", 0.4);
+
+  public static final LoggedNetworkNumber FUSED_JAM_CURRENT_AMPS =
+      new LoggedNetworkNumber("Shooter/FusedJamCurrentAmps", 8.0);
 
   public static final int FLYWHEEL_MOTOR_ID = 39;
   public static final int FLYWHEEL2_MOTOR_ID = 48;
