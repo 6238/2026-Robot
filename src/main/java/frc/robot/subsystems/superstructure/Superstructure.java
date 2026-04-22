@@ -456,7 +456,23 @@ public class Superstructure extends SubsystemBase {
   }
 
   private void applyFusedHopperFeeding() {
-    applyBeamHopperFeeding();
+    double timeSinceShot = shooter.getTimeSinceLastBeamBreakSec();
+    boolean flowActive = timeSinceShot < ShooterConstants.FLOW_WINDOW_SECONDS.get();
+    boolean hopperJammed =
+        hopper.inputs.indexerSupplyCurrent.in(Amps)
+            > ShooterConstants.FUSED_JAM_CURRENT_AMPS.get();
+
+    if (flowActive && !hopperJammed) {
+      applyPivotOscillate();
+    } else {
+      intake.setAngle(Degrees.of(IntakeConstants.INTAKE_DOWN_VALUE.get()));
+    }
+
+    if (!Constants.MINIMAL_LOGGING) {
+      Logger.recordOutput("Superstructure/FlowActive", flowActive);
+      Logger.recordOutput("Superstructure/TimeSinceLastShot", timeSinceShot);
+      Logger.recordOutput("Superstructure/HopperJammed", hopperJammed);
+    }
   }
 
   private void apply254Push() {
