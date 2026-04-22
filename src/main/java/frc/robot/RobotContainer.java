@@ -370,27 +370,11 @@ public class RobotContainer {
             Math.hypot(controller.getLeftX(), controller.getLeftY()) > OVERRIDE_DEADBAND
                 || Math.abs(controller.getRightX()) > OVERRIDE_DEADBAND;
 
-    // B button: continuous ball intake — follow the detected ball cluster path while intaking,
-    // replanning automatically as new detections arrive. Driver stick movement cancels.
-    // controller
-    //     .b()
-    //     .whileTrue(
-    //         Commands.parallel(
-    //                 objectDetection.continuousBallIntakeCommand(drive),
-    //                 superstructure.wantIntaking())
-    //             .until(driverOverride))
-    //     .onFalse(superstructure.setWantedSuperStateCommand(() ->
-    // Superstructure.WantedState.IDLE));
-
     // B button: pathfind to trench start, press intake into outer wall, then drive back at 1.0 m/s
     controller.b().whileTrue(AutomaticCommands.automaticCommand(drive, () -> false));
     controller.x().whileTrue(AutomaticCommands.neutralToAllianceCommand(drive, () -> false));
 
     // D-Pad: targeted automations
-    // controller.povUp().whileTrue(AutomaticCommands.hubBackWallCommand(drive, driverOverride));
-    // controller.povDown().whileTrue(AutomaticCommands.wallShootSetupCommand(drive,
-    // driverOverride));
-    // controller.povLeft().whileTrue(AutomaticCommands.underTowerCommand(drive, driverOverride));
     controller
         .povLeft()
         .whileTrue(
