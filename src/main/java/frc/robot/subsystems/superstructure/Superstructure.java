@@ -496,26 +496,8 @@ public class Superstructure extends SubsystemBase {
   }
 
   public boolean isPrettyMuchCloseToTargetButNotQuite() {
-    boolean shooterSpeedSetpoint =
-        shooter.flywheelUpToSpeed(ShooterConstants.BIG_FLYWHEEL_TOLERANCE_BEFORE_SHOT);
-    boolean hubSetpoint = checkHubTolerance();
-
-    if (!Constants.MINIMAL_LOGGING) {
-      Logger.recordOutput("Superstructure/ShooterSpeedSetpoint", shooterSpeedSetpoint);
-      Logger.recordOutput("Superstructure/HubRotationSetpoint", hubSetpoint);
-      Logger.recordOutput("Superstructure/HubRotationTarget", shotSetpoint.robotPose.getRotation());
-      Logger.recordOutput("Superstructure/HubRotationCurrent", drive.getPose().getRotation());
-      Logger.recordOutput(
-          "Superstructure/HubRotationError",
-          Math.abs(
-              drive
-                  .getPose()
-                  .getRotation()
-                  .minus(shotSetpoint.robotPose.getRotation())
-                  .getDegrees()));
-    }
-
-    return shooterSpeedSetpoint && hubSetpoint;
+    return shooter.flywheelUpToSpeed(ShooterConstants.BIG_FLYWHEEL_TOLERANCE_BEFORE_SHOT)
+        && checkHubTolerance();
   }
 
   private double getDynamicHubToleranceDegrees() {
@@ -546,27 +528,7 @@ public class Superstructure extends SubsystemBase {
   }
 
   public boolean readyToShoot() {
-    boolean shooterSpeedSetpoint = shooter.flywheelUpToSpeed(); // && shooter.feederUpToSpeed();
-    boolean hubSetpoint = checkHubTolerance();
-
-    if (!Constants.MINIMAL_LOGGING) {
-      Logger.recordOutput("Superstructure/ShooterSpeedSetpoint", shooterSpeedSetpoint);
-      Logger.recordOutput("Superstructure/HubRotationSetpoint", hubSetpoint);
-      Logger.recordOutput("Superstructure/HubRotationTarget", shotSetpoint.robotPose);
-      Logger.recordOutput("Superstructure/HubRotationCurrent", drive.getPose());
-      Logger.recordOutput(
-          "Superstructure/HubRotationToleranceDeg", getDynamicHubToleranceDegrees());
-      Logger.recordOutput(
-          "Superstructure/HubRotationError",
-          Math.abs(
-              drive
-                  .getPose()
-                  .getRotation()
-                  .minus(shotSetpoint.robotPose.getRotation())
-                  .getDegrees()));
-    }
-
-    return shooterSpeedSetpoint && hubSetpoint;
+    return shooter.flywheelUpToSpeed() && checkHubTolerance();
   }
 
   public Command wantIntaking() {
@@ -604,6 +566,20 @@ public class Superstructure extends SubsystemBase {
 
     Logger.recordOutput("Superstructure/CurrentSuperState", currentSuperState);
     Logger.recordOutput("Superstructure/WantedSuperState", wantedSuperState);
+
+    if (!Constants.MINIMAL_LOGGING) {
+      boolean shooterAtSpeed = shooter.flywheelUpToSpeed();
+      boolean hubInTolerance = checkHubTolerance();
+      Logger.recordOutput("Superstructure/ShooterSpeedSetpoint", shooterAtSpeed);
+      Logger.recordOutput("Superstructure/HubRotationSetpoint", hubInTolerance);
+      Logger.recordOutput("Superstructure/HubRotationTarget", shotSetpoint.robotPose);
+      Logger.recordOutput("Superstructure/HubRotationCurrent", drive.getPose());
+      Logger.recordOutput("Superstructure/HubRotationToleranceDeg", getDynamicHubToleranceDegrees());
+      Logger.recordOutput(
+          "Superstructure/HubRotationError",
+          Math.abs(
+              drive.getPose().getRotation().minus(shotSetpoint.robotPose.getRotation()).getDegrees()));
+    }
   }
 
   @Override
