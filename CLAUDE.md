@@ -78,3 +78,7 @@ Tests live in `src/test/java/subsystems/` (JUnit 5 + Mockito 5). The pattern:
 2. Add a default `doAnswer` in `@BeforeEach` that sets all `*Connected` flags to `true` — prevents `Alert.set(true)` NPE and `criticalErrorRumbleFunction` NPE
 3. Call `command.initialize()` to execute `runOnce`/`runEnd` commands without the CommandScheduler
 4. Add `HAL.initialize(500, 0)` in `@BeforeAll` if the test exercises timing (debouncers via `SimHooks`) or `Alert.set(true)`
+
+### IMPORTANT
+Use claude scope for acessing logs
+This can be done with the skill /scope
