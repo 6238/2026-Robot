@@ -155,6 +155,11 @@ public class Drive extends SubsystemBase {
   private SwerveDrivePoseEstimator poseEstimator =
       new SwerveDrivePoseEstimator(kinematics, rawGyroRotation, lastModulePositions, new Pose2d());
 
+  // Pre-allocated return arrays for getModuleStates() / getModulePositions() — avoids per-call heap
+  // allocation on every 20ms loop tick.
+  private final SwerveModuleState[] moduleStateCache = new SwerveModuleState[4];
+  private final SwerveModulePosition[] modulePositionCache = new SwerveModulePosition[4];
+
   // Pre-allocated odometry arrays — reused every cycle to avoid per-sample allocation.
   // Elements are initialized in the constructor and mutated in place each cycle.
   private final SwerveModulePosition[] odometryModulePositions =
@@ -297,8 +302,6 @@ public class Drive extends SubsystemBase {
       BaseStatusSignal.refreshAll(allSignals);
     }
 
-    double a = edu.wpi.first.wpilibj.Timer.getFPGATimestamp();
-
     // Under lock: hardware reads only. Logger.processInputs is intentionally outside
     // the lock — it reads from already-captured structs and doesn't need protection.
     odometryLock.lock();
@@ -308,15 +311,11 @@ public class Drive extends SubsystemBase {
     }
     odometryLock.unlock();
 
-    double b = edu.wpi.first.wpilibj.Timer.getFPGATimestamp();
-
     // Outside lock: AK serialization + alert/odometry updates
     Logger.processInputs("Drive/Gyro", gyroInputs);
     for (var module : modules) {
       module.logAndProcessInputs();
     }
-
-    double c = edu.wpi.first.wpilibj.Timer.getFPGATimestamp();
 
     // Stop moving when disabled
     if (DriverStation.isDisabled()) {
@@ -372,12 +371,6 @@ public class Drive extends SubsystemBase {
       Logger.recordOutput(
           "Drive/PeriodicTimeMs",
           (edu.wpi.first.wpilibj.Timer.getFPGATimestamp() - periodicStartSec) * 1000.0);
-
-      Logger.recordOutput("Drive/RefreshTimeMs", (a - periodicStartSec) * 1000.0);
-
-      Logger.recordOutput("Drive/OdometryLockMs", (b - a) * 1000.0);
-
-      Logger.recordOutput("Drive/InputsMs", (c - b) * 1000.0);
     }
   }
 
@@ -503,20 +496,18 @@ public class Drive extends SubsystemBase {
   /** Returns the module states (turn angles and drive velocities) for all of the modules. */
   @AutoLogOutput(key = "SwerveStates/Measured")
   private SwerveModuleState[] getModuleStates() {
-    SwerveModuleState[] states = new SwerveModuleState[4];
     for (int i = 0; i < 4; i++) {
-      states[i] = modules[i].getState();
+      moduleStateCache[i] = modules[i].getState();
     }
-    return states;
+    return moduleStateCache;
   }
 
   /** Returns the module positions (turn angles and drive positions) for all of the modules. */
   private SwerveModulePosition[] getModulePositions() {
-    SwerveModulePosition[] states = new SwerveModulePosition[4];
     for (int i = 0; i < 4; i++) {
-      states[i] = modules[i].getPosition();
+      modulePositionCache[i] = modules[i].getPosition();
     }
-    return states;
+    return modulePositionCache;
   }
 
   /** Returns the measured chassis speeds of the robot. */

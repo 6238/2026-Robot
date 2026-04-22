@@ -117,7 +117,14 @@ public class HopperIOTalonFX implements HopperIO {
           new BetterStatusSignalCollection(indexerVelocity, indexerSupplyCurrent, indexerVoltage);
       ParentDevice.optimizeBusUtilizationForAll(indexerTalon);
     }
-    statusSignalCollector.setUpdateFrequencyForAll(50);
+    indexerVelocity.setUpdateFrequency(50);
+    indexerSupplyCurrent.setUpdateFrequency(20);
+    indexerVoltage.setUpdateFrequency(20);
+    if (HopperConstants.USE_TOP_INDEXER) {
+      topIndexerVelocity.setUpdateFrequency(50);
+      topIndexerSupplyCurrent.setUpdateFrequency(20);
+      topIndexerVoltage.setUpdateFrequency(20);
+    }
   }
 
   @Override
@@ -148,7 +155,7 @@ public class HopperIOTalonFX implements HopperIO {
 
   @Override
   public void setIndexerSpeed(AngularVelocity speed) {
-    if (speed.isNear(RotationsPerSecond.of(0), RotationsPerSecond.of(2))) {
+    if (speed.isNear(RotationsPerSecond.of(0), RotationsPerSecond.of(0.5))) {
       indexerTalon.stopMotor();
     } else {
       indexerTalon.setControl(indexerVelocityRequest.withVelocity(speed));
@@ -158,7 +165,7 @@ public class HopperIOTalonFX implements HopperIO {
   @Override
   public void setTopIndexerSpeed(AngularVelocity speed) {
     if (HopperConstants.USE_TOP_INDEXER) {
-      if (speed.isNear(RotationsPerSecond.of(0), RotationsPerSecond.of(2))) {
+      if (speed.isNear(RotationsPerSecond.of(0), RotationsPerSecond.of(0.5))) {
         topIndexerTalon.stopMotor();
       } else {
         topIndexerTalon.setControl(topIndexerVelocityRequest.withVelocity(speed));
@@ -172,9 +179,9 @@ public class HopperIOTalonFX implements HopperIO {
         new CurrentLimitsConfigs()
             .withStatorCurrentLimit(active ? 20.0 : 40.0)
             .withStatorCurrentLimitEnable(true);
-    indexerTalon.getConfigurator().apply(limits);
+    indexerTalon.getConfigurator().apply(limits, 0.0);
     if (HopperConstants.USE_TOP_INDEXER) {
-      topIndexerTalon.getConfigurator().apply(limits);
+      topIndexerTalon.getConfigurator().apply(limits, 0.0);
     }
   }
 

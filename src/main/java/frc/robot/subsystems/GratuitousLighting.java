@@ -27,8 +27,6 @@ public class GratuitousLighting extends SubsystemBase {
   // (ledCount - size) / frameRate = (68 - 10) / 100.0
   private static final double SHOOTING_ANIM_CYCLE_S = (68 - 10) / 50.0;
 
-  private double shootingAnimStart = -1;
-
   public void setTestResult(Boolean passed) {
     testResult = passed;
   }
@@ -104,14 +102,14 @@ public class GratuitousLighting extends SubsystemBase {
     CurrentState state = superState.get();
     if (state == CurrentState.SHOOTING
         || state == CurrentState.SPINNING_UP
-        || state == CurrentState.PASSING) {
+        || state == CurrentState.PASSING
+        || state == CurrentState.PIT_SHOOTING) {
       candle.setControl(shootingAnimation);
       candle2.setControl(shootingAnimation);
     } else if (state == CurrentState.INTAKING) {
       candle.setControl(intakingAnimation);
       candle2.setControl(intakingAnimation);
     } else {
-      shootingAnimStart = -1;
       candle.setControl(idleAnimation);
       candle2.setControl(idleAnimation);
     }

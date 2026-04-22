@@ -294,33 +294,31 @@ public class RobotContainer {
         .rightTrigger()
         .whileTrue(
             Commands.parallel(
-                    DriveCommands.joystickDriveAtAngle(
-                        drive,
-                        () -> -controller.getLeftY(),
-                        () -> -controller.getLeftX(),
-                        () -> superstructure.getShotSetpoint().robotPose.getRotation()),
-                    superstructure.setWantedSuperStateCommand(
-                        () ->
-                            Constants.SHOULD_PASS.apply(drive.getPose().getX())
-                                ? Superstructure.WantedState.PASS_INTAKE
-                                : Superstructure.WantedState.SHOOT_INTAKE))
-                .until(() -> controller.leftBumper().getAsBoolean()))
+                DriveCommands.joystickDriveAtAngle(
+                    drive,
+                    () -> -controller.getLeftY(),
+                    () -> -controller.getLeftX(),
+                    () -> superstructure.getShotSetpoint().robotPose.getRotation()),
+                superstructure.setWantedSuperStateCommand(
+                    () ->
+                        Constants.SHOULD_PASS.apply(drive.getPose().getX())
+                            ? Superstructure.WantedState.PASS_INTAKE
+                            : Superstructure.WantedState.SHOOT_INTAKE)))
         .onFalse(superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.IDLE));
     controller
         .rightBumper()
         .whileTrue(
             Commands.parallel(
-                    DriveCommands.joystickDriveAtAngle(
-                        drive,
-                        () -> -controller.getLeftY(),
-                        () -> -controller.getLeftX(),
-                        () -> superstructure.getShotSetpoint().robotPose.getRotation()),
-                    superstructure.setWantedSuperStateCommand(
-                        () ->
-                            Constants.SHOULD_PASS.apply(drive.getPose().getX())
-                                ? Superstructure.WantedState.PASSING
-                                : Superstructure.WantedState.SHOOTING))
-                .until(() -> controller.leftBumper().getAsBoolean()))
+                DriveCommands.joystickDriveAtAngle(
+                    drive,
+                    () -> -controller.getLeftY(),
+                    () -> -controller.getLeftX(),
+                    () -> superstructure.getShotSetpoint().robotPose.getRotation()),
+                superstructure.setWantedSuperStateCommand(
+                    () ->
+                        Constants.SHOULD_PASS.apply(drive.getPose().getX())
+                            ? Superstructure.WantedState.PASSING
+                            : Superstructure.WantedState.SHOOTING)))
         .onFalse(superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.IDLE));
 
     // Intake and Reverse Intake
@@ -342,7 +340,11 @@ public class RobotContainer {
                 intakeRoller.stopIntake(),
                 Commands.runOnce(() -> hopper.setTopIndexerSpeed(RotationsPerSecond.of(0))),
                 Commands.runOnce(() -> hopper.setIndexerSpeed(RotationsPerSecond.of(0)))));
-    controller.leftBumper().toggleOnTrue(superstructure.wantIntaking());
+    controller
+        .leftBumper()
+        .onTrue(
+            superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.INTAKING))
+        .onFalse(superstructure.setWantedSuperStateCommand(() -> Superstructure.WantedState.IDLE));
 
     // Intake Flip Position
     controller
@@ -370,33 +372,16 @@ public class RobotContainer {
             Math.hypot(controller.getLeftX(), controller.getLeftY()) > OVERRIDE_DEADBAND
                 || Math.abs(controller.getRightX()) > OVERRIDE_DEADBAND;
 
-    // B button: continuous ball intake — follow the detected ball cluster path while intaking,
-    // replanning automatically as new detections arrive. Driver stick movement cancels.
-    // controller
-    //     .b()
-    //     .whileTrue(
-    //         Commands.parallel(
-    //                 objectDetection.continuousBallIntakeCommand(drive),
-    //                 superstructure.wantIntaking())
-    //             .until(driverOverride))
-    //     .onFalse(superstructure.setWantedSuperStateCommand(() ->
-    // Superstructure.WantedState.IDLE));
-
     // B button: pathfind to trench start, press intake into outer wall, then drive back at 1.0 m/s
     controller.b().whileTrue(AutomaticCommands.automaticCommand(drive, () -> false));
     controller.x().whileTrue(AutomaticCommands.neutralToAllianceCommand(drive, () -> false));
 
     // D-Pad: targeted automations
-    // controller.povUp().whileTrue(AutomaticCommands.hubBackWallCommand(drive, driverOverride));
-    // controller.povDown().whileTrue(AutomaticCommands.wallShootSetupCommand(drive,
-    // driverOverride));
-    // controller.povLeft().whileTrue(AutomaticCommands.underTowerCommand(drive, driverOverride));
     controller
         .povLeft()
         .whileTrue(
             Commands.startEnd(
-                () ->
-                    superstructure.setWantedSuperState(Superstructure.WantedState.MANUAL_SHOOTING),
+                () -> superstructure.setWantedSuperState(Superstructure.WantedState.PIT_SHOOT),
                 () -> superstructure.setWantedSuperState(Superstructure.WantedState.IDLE),
                 superstructure));
 

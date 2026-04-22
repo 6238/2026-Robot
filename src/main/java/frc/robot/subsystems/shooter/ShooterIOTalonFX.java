@@ -137,7 +137,13 @@ public class ShooterIOTalonFX implements ShooterIO {
             feederVelocity,
             feederSupplyCurent,
             feederAppliedVoltage);
-    statusSignalCollector.setUpdateFrequencyForAll(50);
+    flywheelVelocity.setUpdateFrequency(50);
+    feederVelocity.setUpdateFrequency(50);
+    flywheelSupplyCurent.setUpdateFrequency(20);
+    flywheel2SupplyCurent.setUpdateFrequency(20);
+    flywheelAppliedVoltage.setUpdateFrequency(20);
+    feederSupplyCurent.setUpdateFrequency(20);
+    feederAppliedVoltage.setUpdateFrequency(20);
     ParentDevice.optimizeBusUtilizationForAll(flywheelTalon, flywheel2Talon, feederTalon);
     beamBreak.start();
   }
@@ -198,8 +204,8 @@ public class ShooterIOTalonFX implements ShooterIO {
             .withSupplyCurrentLowerLimit(active ? 30.0 : 40.0)
             .withStatorCurrentLimit(active ? 80.0 : 130.0)
             .withStatorCurrentLimitEnable(true);
-    flywheelTalon.getConfigurator().apply(flywheelLimits);
-    flywheel2Talon.getConfigurator().apply(flywheelLimits);
+    flywheelTalon.getConfigurator().apply(flywheelLimits, 0.0);
+    flywheel2Talon.getConfigurator().apply(flywheelLimits, 0.0);
 
     var feederLimits =
         new CurrentLimitsConfigs()
@@ -208,7 +214,7 @@ public class ShooterIOTalonFX implements ShooterIO {
             .withSupplyCurrentLowerLimit(active ? 25.0 : 40.0)
             .withStatorCurrentLimit(active ? 40.0 : 80.0)
             .withStatorCurrentLimitEnable(true);
-    feederTalon.getConfigurator().apply(feederLimits);
+    feederTalon.getConfigurator().apply(feederLimits, 0.0);
   }
 
   public void setFeederSpeed(AngularVelocity speed) {

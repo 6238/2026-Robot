@@ -189,15 +189,12 @@ public class ModuleIOTalonFX implements ModuleIO {
     // Configure periodic frames
     BaseStatusSignal.setUpdateFrequencyForAll(
         Drive.ODOMETRY_FREQUENCY, drivePosition, turnPosition);
+    // Control signals: 50 Hz (used in closed-loop each cycle)
     BaseStatusSignal.setUpdateFrequencyForAll(
-        50.0,
-        driveVelocity,
-        driveAppliedVolts,
-        driveSupplyCurrent,
-        turnAbsolutePosition,
-        turnVelocity,
-        turnAppliedVolts,
-        turnSupplyCurrent);
+        50.0, driveVelocity, turnAbsolutePosition, turnVelocity);
+    // Monitoring signals: 20 Hz (logging only, not on any control path)
+    BaseStatusSignal.setUpdateFrequencyForAll(
+        20.0, driveAppliedVolts, driveSupplyCurrent, turnAppliedVolts, turnSupplyCurrent);
     ParentDevice.optimizeBusUtilizationForAll(driveTalon, turnTalon);
 
     signals =

@@ -23,7 +23,7 @@ public class ShooterConstants {
   public static final int FLYWHEEL_MOTOR_ID = 39;
   public static final int FLYWHEEL2_MOTOR_ID = 48;
   public static final int FEEDER_MOTOR_ID = 40;
-  public static final int BEAM_BREAK_DIO_PORT = 0; // TODO: set correct roboRIO DIO port
+  public static final int BEAM_BREAK_DIO_PORT = 0;
   // Set true if sensor reads HIGH when beam is broken (NPN/sourcing output)
   public static final boolean BEAM_BREAK_INVERTED = false;
 
@@ -110,11 +110,24 @@ public class ShooterConstants {
   public static final AngularVelocity BIG_FLYWHEEL_TOLERANCE_BEFORE_SHOT =
       RotationsPerSecond.of(0.8);
   public static final Distance HUB_POSITION_TOLERANCE = Meters.of(0.04);
-  public static final Angle HUB_ROTATION_TOLERANCE = Degrees.of(3);
+  // Entry tolerances (SPINNING_UP -> SHOOTING/PASSING transition)
+  public static final Angle HUB_ROTATION_TOLERANCE = Degrees.of(5);
   public static final Angle HUB_ROTATION_TOLERANCE_TIGHT = Degrees.of(3);
+  // Drop-back tolerances (SHOOTING/PASSING -> SPINNING_UP) — intentionally much wider
+  public static final Angle HUB_DROPBACK_TOLERANCE = Degrees.of(9.0);
+  public static final Angle HUB_PASSING_DROPBACK_TOLERANCE = Degrees.of(12.5);
   public static final double MIN_SHOT_DISTANCE_METERS = 2.2;
   public static final double HUB_NEAR_DISTANCE_METERS = 3.0;
   public static final double HUB_HIGH_ROBOT_SPEED_MPS = 2.5;
+  // When true, flywheel pre-spins to SPINUP_FLYWHEEL_SPEED whenever the robot is enabled in IDLE
+  public static final boolean SPINUP_WHEN_IDLE = false;
+  // Wider flywheel tolerance for the initial SPINNING_UP->SHOOTING/PASSING transition only.
+  // Avoids waiting for the flywheel to randomly land in the tight 0.5 RPS window.
+  public static final AngularVelocity FLYWHEEL_SPINUP_TRANSITION_TOLERANCE =
+      RotationsPerSecond.of(2.0);
+  // Passing starts as soon as flywheel exceeds this floor — no need to reach target speed first.
+  public static final double PASSING_FLYWHEEL_MIN_RPS = 30.0;
+  public static final double PASSING_FLYWHEEL_MAX_RPS = 100.0;
 
   // Ball speed physics:
   //   ball_speed_mps = flywheel_rps × (2π × wheel_radius) / ENERGY_TRANSFER_COEFF

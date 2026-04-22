@@ -74,11 +74,11 @@ public class IntakeRollerIOTalonFX implements IntakeRollerIO {
     intakeSupplyCurrent = intakeTalon.getSupplyCurrent();
     intakeVoltage = intakeTalon.getMotorVoltage();
     intakeFollowerVelocity = intakeFollowerTalon.getVelocity();
-    intakeFollowerVelocity.setUpdateFrequency(50);
+    intakeFollowerVelocity.setUpdateFrequency(20);
 
     statusSignalCollector =
         new BetterStatusSignalCollection(intakeVelocity, intakeSupplyCurrent, intakeVoltage);
-    statusSignalCollector.setUpdateFrequencyForAll(50);
+    statusSignalCollector.setUpdateFrequencyForAll(20);
     ParentDevice.optimizeBusUtilizationForAll(intakeTalon, intakeFollowerTalon);
   }
 
@@ -120,8 +120,8 @@ public class IntakeRollerIOTalonFX implements IntakeRollerIO {
             .withSupplyCurrentLowerLimit(active ? 15.0 : 25.0)
             .withStatorCurrentLimit(active ? 35.0 : 70.0)
             .withStatorCurrentLimitEnable(true);
-    intakeTalon.getConfigurator().apply(limits);
-    intakeFollowerTalon.getConfigurator().apply(limits);
+    intakeTalon.getConfigurator().apply(limits, 0.0);
+    intakeFollowerTalon.getConfigurator().apply(limits, 0.0);
   }
 
   @Override
