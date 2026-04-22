@@ -125,6 +125,9 @@ public class ShooterConstants {
   // Avoids waiting for the flywheel to randomly land in the tight 0.5 RPS window.
   public static final AngularVelocity FLYWHEEL_SPINUP_TRANSITION_TOLERANCE =
       RotationsPerSecond.of(2.0);
+  // Passing starts as soon as flywheel exceeds this floor — no need to reach target speed first.
+  public static final double PASSING_FLYWHEEL_MIN_RPS = 30.0;
+  public static final double PASSING_FLYWHEEL_MAX_RPS = 100.0;
 
   // Ball speed physics:
   //   ball_speed_mps = flywheel_rps × (2π × wheel_radius) / ENERGY_TRANSFER_COEFF

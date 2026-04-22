@@ -259,8 +259,15 @@ public class Superstructure extends SubsystemBase {
         hopper.setIndexerSpeed(RotationsPerSecond.of(firstSpinup ? -5 : 0));
         hopper.setTopIndexerSpeed(RotationsPerSecond.of(firstSpinup ? -5 : 0));
         shooter.setFlywheelRPM(shotSetpoint.flywheelSpeed);
-        if (shooter.flywheelUpToSpeed(ShooterConstants.FLYWHEEL_SPINUP_TRANSITION_TOLERANCE)
-            && checkHubTolerance()) {
+        boolean isPassing =
+            wantedSuperState == WantedState.PASSING
+                || wantedSuperState == WantedState.PASS_INTAKE;
+        boolean flywheelReady =
+            isPassing
+                ? shooter.getCurrentFlywheelSpeed().in(RotationsPerSecond)
+                    >= ShooterConstants.PASSING_FLYWHEEL_MIN_RPS
+                : shooter.flywheelUpToSpeed(ShooterConstants.FLYWHEEL_SPINUP_TRANSITION_TOLERANCE);
+        if (flywheelReady && checkHubTolerance()) {
           hubInToleranceLoops++;
         } else {
           hubInToleranceLoops = 0;

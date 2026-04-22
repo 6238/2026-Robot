@@ -91,7 +91,9 @@ public class ShotPlanner {
 
     double predictedDistanceM = robotTranslation.getDistance(virtualTarget);
     double flywheelSpeed =
-        Math.min(ShooterConstants.PASSING_FLYWHEEL_MAP.get(predictedDistanceM), 80.0);
+        Math.min(
+            ShooterConstants.PASSING_FLYWHEEL_MAP.get(predictedDistanceM),
+            ShooterConstants.PASSING_FLYWHEEL_MAX_RPS);
     double feederSpeed = ShooterConstants.FEEDER_MAP.get(predictedDistanceM);
 
     if (!Constants.MINIMAL_LOGGING) {
