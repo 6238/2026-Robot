@@ -30,10 +30,10 @@ public class HopperConstants {
   public static final double simulatedHopperThroughput = 8;
 
   public static final LoggedNetworkNumber INDEXER_SPEED =
-      new LoggedNetworkNumber("Hopper/IndexerSpeedRPS", 40);
+      new LoggedNetworkNumber("Hopper/IndexerSpeedRPS", 65);
 
   public static final LoggedNetworkNumber TOP_INDEXER_SPEED =
-      new LoggedNetworkNumber("Hopper/TopIndexerSpeedRPS", 40);
+      new LoggedNetworkNumber("Hopper/TopIndexerSpeedRPS", 65);
 
   public static final LoggedNetworkPIDFeedforwardGains INDEXER_GAINS =
       new LoggedNetworkPIDFeedforwardGains(

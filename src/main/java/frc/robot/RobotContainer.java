@@ -265,11 +265,10 @@ public class RobotContainer {
   private void configureButtonBindings() {
     // Drive Command — trench Y-align always on; hold B to disable
     drive.setDefaultCommand(
-        AutomaticCommands.trenchAwareJoystickDrive(
+        DriveCommands.joystickDrive(
             drive,
-            intakePivot,
+            () -> controller.getLeftX(),
             () -> -controller.getLeftY(),
-            () -> -controller.getLeftX(),
             () -> -controller.getRightX()));
 
     // Reset Drive Rotation
@@ -292,7 +291,8 @@ public class RobotContainer {
                     drive,
                     () -> -controller.getLeftY(),
                     () -> -controller.getLeftX(),
-                    () -> superstructure.getShotSetpoint().robotPose.getRotation()),
+                    () -> superstructure.getShotSetpoint().robotPose.getRotation(),
+                    () -> !Constants.SHOULD_PASS.apply(drive.getPose().getX())),
                 superstructure.setWantedSuperStateCommand(
                     () ->
                         Constants.SHOULD_PASS.apply(drive.getPose().getX())
@@ -307,7 +307,8 @@ public class RobotContainer {
                     drive,
                     () -> -controller.getLeftY(),
                     () -> -controller.getLeftX(),
-                    () -> superstructure.getShotSetpoint().robotPose.getRotation()),
+                    () -> superstructure.getShotSetpoint().robotPose.getRotation(),
+                    () -> !Constants.SHOULD_PASS.apply(drive.getPose().getX())),
                 superstructure.setWantedSuperStateCommand(
                     () ->
                         Constants.SHOULD_PASS.apply(drive.getPose().getX())
@@ -389,6 +390,7 @@ public class RobotContainer {
     // B button: pathfind to trench start, press intake into outer wall, then drive back at 1.0 m/s
     controller.b().whileTrue(AutomaticCommands.automaticCommand(drive, () -> false));
     controller.x().whileTrue(AutomaticCommands.neutralToAllianceCommand(drive, () -> false));
+    controller.povUp().whileTrue(AutomaticCommands.superPassCommand(drive));
 
     // D-Pad: targeted automations
     controller
@@ -400,18 +402,18 @@ public class RobotContainer {
                 superstructure));
 
     // Y button: toggle defense mode (raises drive current, lowers other subsystem current)
-    controller
-        .povRight()
-        .onTrue(
-            Commands.runOnce(
-                () -> {
-                  defenseModeActive = !defenseModeActive;
-                  drive.setDefenseMode(defenseModeActive);
-                  shooter.setDefenseMode(defenseModeActive);
-                  hopper.setDefenseMode(defenseModeActive);
-                  intakeRoller.setDefenseMode(defenseModeActive);
-                  intakePivot.setDefenseMode(defenseModeActive);
-                }));
+    // controller
+    //     .povRight()
+    //     .onTrue(
+    //         Commands.runOnce(
+    //             () -> {
+    //               defenseModeActive = !defenseModeActive;
+    //               drive.setDefenseMode(defenseModeActive);
+    //               shooter.setDefenseMode(defenseModeActive);
+    //               hopper.setDefenseMode(defenseModeActive);
+    //               intakeRoller.setDefenseMode(defenseModeActive);
+    //               intakePivot.setDefenseMode(defenseModeActive);
+    //             }));
   }
 
   /**

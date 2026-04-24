@@ -82,7 +82,7 @@ public class IntakeConstants {
   public static final LoggedNetworkNumber OSCILLATE_FREQUENCY_HZ =
       new LoggedNetworkNumber("Intake/OscillateFrequency", 4.0);
   public static final LoggedNetworkNumber OSCILLATE_SWEEP_RATE_DPS =
-      new LoggedNetworkNumber("Intake/OscillateSweepRate", 10.0);
+      new LoggedNetworkNumber("Intake/OscillateSweepRate", 12.0);
   // Fraction of each oscillation period spent above center (0.5 = symmetric, >0.5 = more time up)
   public static final LoggedNetworkNumber OSCILLATE_DUTY_CYCLE =
       new LoggedNetworkNumber("Intake/OscillateDutyCycle", 0.7);

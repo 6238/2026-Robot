@@ -75,6 +75,9 @@ public class ShooterConstants {
   public static final MotionMagicConfigs FLYWHEEL_MOTION_MAGIC_CONFIGS =
       new MotionMagicConfigs().withMotionMagicAcceleration(300);
 
+  public static final MotionMagicConfigs FEEDER_MOTION_MAGIC_CONFIGS =
+      new MotionMagicConfigs().withMotionMagicAcceleration(600);
+
   public static final LoggedNetworkPIDFeedforwardGains FEEDER_GAINS =
       new LoggedNetworkPIDFeedforwardGains(
           0.6, // kP
@@ -115,6 +118,10 @@ public class ShooterConstants {
   public static final AngularVelocity FEEDER_TOLERANCE_BEFORE_SHOT = RotationsPerSecond.of(2.0);
   public static final LoggedNetworkNumber FEEDER_REVERSE_VOLTAGE =
       new LoggedNetworkNumber("Shooter/FeederReverseVolts", 8.0);
+  public static final LoggedNetworkNumber JAM_FEEDER_MIN_VELOCITY_RPS =
+      new LoggedNetworkNumber("Shooter/JamFeederMinVelocityRPS", 10.0);
+  public static final double JAM_REVERSE_DURATION_SECONDS = 0.3;
+  public static final double JAM_COOLDOWN_SECONDS = 1.5;
   public static final AngularVelocity BIG_FLYWHEEL_TOLERANCE_BEFORE_SHOT =
       RotationsPerSecond.of(0.8);
   public static final Distance HUB_POSITION_TOLERANCE = Meters.of(0.04);
@@ -158,10 +165,10 @@ public class ShooterConstants {
 
   static {
     FLYWHEEL_MAP = new ExtrapolatingDoubleTreeMap();
-    FLYWHEEL_MAP.put(2.32, 43.4);
-    FLYWHEEL_MAP.put(2.53, 44.6);
-    FLYWHEEL_MAP.put(3.52, 52.1);
-    FLYWHEEL_MAP.put(4.14, 55.5);
+    FLYWHEEL_MAP.put(2.32, 42.7 * 0.95);
+    FLYWHEEL_MAP.put(2.53, 43.9 * 0.95);
+    FLYWHEEL_MAP.put(3.52, 53.2 * 0.95);
+    FLYWHEEL_MAP.put(4.14, 54.6 * 0.95);
 
     // Feeder map mirrors flywheel map as a starting point — tune to share velocity load.
     // Both changing together halves the per-motor dip on ball contact.
@@ -177,7 +184,7 @@ public class ShooterConstants {
     for (double d = 0.5; d <= 8.0; d += 0.25) {
       double rps = FLYWHEEL_MAP.get(d);
       double tFlight = d / (rps * BALL_SPEED_PER_FLYWHEEL_RPS * cosHood);
-      LEAD_TIME_MAP.put(d, tFlight);
+      LEAD_TIME_MAP.put(d, tFlight * (1 + d * d / 32));
     }
 
     PASSING_FLYWHEEL_MAP = new ExtrapolatingDoubleTreeMap();

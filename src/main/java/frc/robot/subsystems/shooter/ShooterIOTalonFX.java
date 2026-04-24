@@ -90,10 +90,10 @@ public class ShooterIOTalonFX implements ShooterIO {
     feederConfig.Feedback.SensorToMechanismRatio = ShooterConstants.FEEDER_GEARING;
     feederConfig.Slot0 = ShooterConstants.FEEDER_GAINS.toSlot0Configs();
     feederConfig.MotorOutput.Inverted = ShooterConstants.FEEDER_INVERTED;
-    feederConfig.MotionMagic = ShooterConstants.FLYWHEEL_MOTION_MAGIC_CONFIGS;
+    feederConfig.MotionMagic = ShooterConstants.FEEDER_MOTION_MAGIC_CONFIGS;
 
     feederConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-    feederConfig.CurrentLimits.StatorCurrentLimit = 80;
+    feederConfig.CurrentLimits.StatorCurrentLimit = 120;
 
     feederConfig.CurrentLimits.SupplyCurrentLimit = 50;
     feederConfig.CurrentLimits.SupplyCurrentLowerLimit = 40;

@@ -36,6 +36,7 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
@@ -214,6 +215,15 @@ public class DriveCommands {
       DoubleSupplier xSupplier,
       DoubleSupplier ySupplier,
       Supplier<Rotation2d> rotationSupplier) {
+    return joystickDriveAtAngle(drive, xSupplier, ySupplier, rotationSupplier, () -> true);
+  }
+
+  public static Command joystickDriveAtAngle(
+      Drive drive,
+      DoubleSupplier xSupplier,
+      DoubleSupplier ySupplier,
+      Supplier<Rotation2d> rotationSupplier,
+      BooleanSupplier enableXLock) {
 
     // Create PID controller
     ProfiledPIDController angleController =
@@ -240,9 +250,13 @@ public class DriveCommands {
               // X-lock with hysteresis: engage at <0.75°, disengage at >2° or when moving
               double rotationErrorDeg =
                   Math.abs(drive.getRotation().getDegrees() - rotationSupplier.get().getDegrees());
-              if (linearVelocity.getNorm() == 0.0 && rotationErrorDeg < 1.00) {
-                xLockActive[0] = true;
-              } else if (linearVelocity.getNorm() != 0.0 || rotationErrorDeg > 2.75) {
+              if (enableXLock.getAsBoolean()) {
+                if (linearVelocity.getNorm() <= 0.1 && rotationErrorDeg < 1.00) {
+                  xLockActive[0] = true;
+                } else if (linearVelocity.getNorm() >= 0.1 || rotationErrorDeg > 2.75) {
+                  xLockActive[0] = false;
+                }
+              } else {
                 xLockActive[0] = false;
               }
               if (xLockActive[0]) {

@@ -4,6 +4,7 @@ import static edu.wpi.first.units.Units.Degrees;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.path.PathConstraints;
+import com.pathplanner.lib.path.PathPlannerPath;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -243,11 +244,38 @@ public class AutomaticCommands {
                           drive,
                           () -> 0.75,
                           () -> 0.0,
-                          () -> superstructure.getShotSetpoint().robotPose.getRotation()),
+                          () -> superstructure.getShotSetpoint().robotPose.getRotation(),
+                          () -> false),
                       superstructure.setWantedSuperStateCommand(
                           () -> Superstructure.WantedState.PASS_INTAKE)));
         },
         Set.of(drive, superstructure));
+  }
+
+  // ── D-Pad Up ──────────────────────────────────────────────────────────────
+
+  /**
+   * D-Pad Up: pathfinds to the start of the 254 super pass route then follows it. Picks bottom-half
+   * or top-half path variant based on robot Y position, then applies alliance flip for red.
+   */
+  public static Command superPassCommand(Drive drive) {
+    return Commands.defer(
+        () -> {
+          boolean isTopHalf = drive.getPose().getY() > FieldFlipUtil.FIELD_WIDTH_METERS / 2.0;
+          boolean isRed = DriverStation.getAlliance().orElse(Alliance.Blue).equals(Alliance.Blue);
+          String pathName = isTopHalf ? "Upward Elliot is Special" : "Elliot is Special";
+          PathPlannerPath path;
+          try {
+            path = PathPlannerPath.fromPathFile(pathName);
+          } catch (Exception e) {
+            return Commands.none();
+          }
+          if (isRed) path = path.flipPath();
+          Logger.recordOutput("AutomaticCommands/superPass/pathName", pathName);
+          Logger.recordOutput("AutomaticCommands/superPass/isRed", isRed);
+          return AutoBuilder.pathfindThenFollowPath(path, CONSTRAINTS);
+        },
+        Set.of(drive));
   }
 
   private static Pose2d flipVertical(Pose2d pose) {

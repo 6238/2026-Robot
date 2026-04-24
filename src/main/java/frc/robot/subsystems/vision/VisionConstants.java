@@ -37,7 +37,7 @@ public class VisionConstants {
           new Translation3d(Inches.of(12.978 - 6), Inches.of(-8.173559), Inches.of(20)),
           new Rotation3d(
               Degrees.of(0).in(Radians),
-              Degrees.of(14).in(Radians),
+              Degrees.of(-14).in(Radians),
               Degrees.of(-5.35).in(Radians)));
 
   public static String camera1Name = "SIDE";
@@ -67,6 +67,6 @@ public class VisionConstants {
   public static double[] cameraStdDevFactors =
       new double[] {
         1.0, // Camera 0
-        1.4,
+        1.0,
       };
 }
