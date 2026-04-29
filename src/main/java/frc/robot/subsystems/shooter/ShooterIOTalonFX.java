@@ -183,6 +183,7 @@ public class ShooterIOTalonFX implements ShooterIO {
     flywheelTalon.setControl(
         flywheelVelocityVoltage
             .withVelocity(speed)
+            .withLimitReverseMotion(true)
             .withAcceleration(
                 recovering ? ShooterConstants.FLYWHEEL_RECOVERY_ACCELERATION_RPS2 : 0));
   }
@@ -225,6 +226,7 @@ public class ShooterIOTalonFX implements ShooterIO {
     feederTalon.setControl(
         feederVelocityVoltage
             .withVelocity(speed)
+            .withLimitReverseMotion(true)
             .withAcceleration(
                 recovering ? ShooterConstants.FLYWHEEL_RECOVERY_ACCELERATION_RPS2 : 0));
   }
