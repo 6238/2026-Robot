@@ -74,7 +74,7 @@ public class IntakePivotIOTalonFX implements IntakePivotIO {
 
     CANcoderConfiguration cc_cfg = new CANcoderConfiguration();
     cc_cfg.MagnetSensor.SensorDirection = SensorDirectionValue.Clockwise_Positive;
-    cc_cfg.MagnetSensor.MagnetOffset = -0.025;
+    cc_cfg.MagnetSensor.MagnetOffset = -0.16;
     cancoder.getConfigurator().apply(cc_cfg);
 
     intakeArmPosition = intakeArmTalon.getPosition();

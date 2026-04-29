@@ -28,6 +28,8 @@ public class ShooterConstants {
   public static final LoggedNetworkNumber FUSED_JAM_CURRENT_AMPS =
       new LoggedNetworkNumber("Shooter/FusedJamCurrentAmps", 8.0);
 
+  public static final LoggedNetworkNumber SHOOTER_MULT = new LoggedNetworkNumber("SHOOTER_MULT", 1);
+
   public static final int FLYWHEEL_MOTOR_ID = 39;
   public static final int FLYWHEEL2_MOTOR_ID = 48;
   public static final int FEEDER_MOTOR_ID = 40;
@@ -165,10 +167,10 @@ public class ShooterConstants {
 
   static {
     FLYWHEEL_MAP = new ExtrapolatingDoubleTreeMap();
-    FLYWHEEL_MAP.put(2.32, 42.7 * 0.95);
-    FLYWHEEL_MAP.put(2.53, 43.9 * 0.95);
-    FLYWHEEL_MAP.put(3.52, 53.2 * 0.95);
-    FLYWHEEL_MAP.put(4.14, 54.6 * 0.95);
+    FLYWHEEL_MAP.put(2.32, 42.7 * SHOOTER_MULT.get());
+    FLYWHEEL_MAP.put(2.53, 43.9 * SHOOTER_MULT.get());
+    FLYWHEEL_MAP.put(3.52, 53.2 * 0.97 * SHOOTER_MULT.get());
+    FLYWHEEL_MAP.put(4.14, 54.6 * 0.97 * SHOOTER_MULT.get());
 
     // Feeder map mirrors flywheel map as a starting point — tune to share velocity load.
     // Both changing together halves the per-motor dip on ball contact.

@@ -206,7 +206,7 @@ public class RobotContainer {
     }
 
     intakeRoller.setPivotAngleSupplier(() -> intakePivot.inputs.intakeArmPosition.in(Degrees));
-    // superstructure.hubSpinupActive = () -> shouldSpinupFlywheel(DriverStation.getMatchTime());
+    superstructure.hubSpinupActive = () -> shouldSpinupFlywheel(DriverStation.getMatchTime());
     lighting.superState = () -> superstructure.currentSuperState;
 
     // Set up auto routinesw
@@ -267,8 +267,8 @@ public class RobotContainer {
     drive.setDefaultCommand(
         DriveCommands.joystickDrive(
             drive,
-            () -> controller.getLeftX(),
             () -> -controller.getLeftY(),
+            () -> -controller.getLeftX(),
             () -> -controller.getRightX()));
 
     // Reset Drive Rotation
