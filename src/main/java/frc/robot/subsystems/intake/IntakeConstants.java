@@ -30,7 +30,7 @@ public class IntakeConstants {
       InvertedValue.CounterClockwise_Positive;
   public static final Angle INTAKE_START_VALUE = Degrees.of(100.0);
   public static final LoggedNetworkNumber INTAKE_DOWN_VALUE =
-      new LoggedNetworkNumber("INTAKE_DOWN_ANGLE", -2.5);
+      new LoggedNetworkNumber("INTAKE_DOWN_ANGLE", 6.5);
   public static final LoggedNetworkNumber INTAKE_UP_VALUE =
       new LoggedNetworkNumber("INTAKE_UP_ANGLE", 85.0);
   public static final LoggedNetworkNumber SPINNING_UP_INTAKE_ANGLE =

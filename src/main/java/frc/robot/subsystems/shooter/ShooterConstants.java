@@ -122,8 +122,9 @@ public class ShooterConstants {
       new LoggedNetworkNumber("Shooter/FeederReverseVolts", 8.0);
   public static final LoggedNetworkNumber JAM_FEEDER_MIN_VELOCITY_RPS =
       new LoggedNetworkNumber("Shooter/JamFeederMinVelocityRPS", 10.0);
-  public static final double JAM_REVERSE_DURATION_SECONDS = 0.3;
-  public static final double JAM_COOLDOWN_SECONDS = 1.5;
+  public static final LoggedNetworkNumber JAM_REVERSE_DURATION_SECONDS =
+      new LoggedNetworkNumber("JAM_REVERSE_SECONDS", 0.3);
+  public static final double JAM_COOLDOWN_SECONDS = 0.3;
   public static final AngularVelocity BIG_FLYWHEEL_TOLERANCE_BEFORE_SHOT =
       RotationsPerSecond.of(0.8);
   public static final Distance HUB_POSITION_TOLERANCE = Meters.of(0.04);

@@ -377,10 +377,12 @@ public class Superstructure extends SubsystemBase {
       jamReverseActive = true;
       jamReverseTimer.restart();
       if (!Constants.MINIMAL_LOGGING) Logger.recordOutput("Superstructure/JamDetected", true);
+    } else {
+      if (!Constants.MINIMAL_LOGGING) Logger.recordOutput("Superstructure/JamDetected", false);
     }
 
     if (jamReverseActive) {
-      if (jamReverseTimer.hasElapsed(ShooterConstants.JAM_REVERSE_DURATION_SECONDS)) {
+      if (jamReverseTimer.hasElapsed(ShooterConstants.JAM_REVERSE_DURATION_SECONDS.get())) {
         jamReverseActive = false;
         jamCooldownTimer.restart();
       } else {
