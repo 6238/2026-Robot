@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 1.9765306122448978,
-        "y": 6.904081632653061
+        "x": 2.000674356699201,
+        "y": 6.871889973380656
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.3478347166948663,
-        "y": 7.83826546480428
+        "x": 2.3719784611491694,
+        "y": 7.8060738055318755
       },
       "isLocked": false,
       "linkedName": "Upper Trench Shoot"
@@ -77,7 +77,7 @@
   "folder": "Upper Trench 2.5",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": -48.69685862301559
+    "rotation": -46.296063498017126
   },
   "useDefaultConstraints": false
 }

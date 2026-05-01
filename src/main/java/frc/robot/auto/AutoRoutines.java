@@ -78,7 +78,7 @@ public class AutoRoutines {
                         () -> Superstructure.WantedState.INTAKING))),
             shootCommand(4.5),
             AutoBuilder.followPath(lowerTrenchCycle2),
-            shootCommand(4),
+            shootCommand(6),
             AutoBuilder.followPath(lowerTrenchCycle3)));
 
     PathPlannerPath lowerTrenchDelayMidPath =
@@ -135,7 +135,7 @@ public class AutoRoutines {
                         () -> Superstructure.WantedState.INTAKING))),
             shootCommand(4.5),
             AutoBuilder.followPath(upperTrenchCycle2),
-            shootCommand(4),
+            shootCommand(6),
             AutoBuilder.followPath(upperTrenchCycle3)));
 
     PathPlannerPath upperTrenchDelayMidPath =
@@ -229,6 +229,22 @@ public class AutoRoutines {
                     superstructure.setWantedSuperStateCommand(
                         () -> Superstructure.WantedState.INTAKING))),
             shootCommand(10)));
+
+    PathPlannerPath twofivefourplus = PathPlannerPath.fromPathFile("254plus");
+
+    autoChooser.addOption(
+        "254 follow plus",
+        Commands.sequence(
+            Commands.defer(() -> Commands.waitSeconds(autoDelay.get()), Set.of()),
+            resetPoseCommand(twofivefour),
+            Commands.parallel(
+                AutoBuilder.followPath(twofivefour),
+                Commands.sequence(
+                    Commands.waitSeconds(0.1),
+                    superstructure.setWantedSuperStateCommand(
+                        () -> Superstructure.WantedState.INTAKING))),
+            shootCommand(7.5),
+            AutoBuilder.followPath(twofivefourplus)));
 
     return autoChooser;
   }

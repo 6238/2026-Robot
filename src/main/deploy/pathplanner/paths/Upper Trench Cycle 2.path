@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 1.9765306122448978,
-        "y": 6.904081632653061
+        "x": 2.000674356699201,
+        "y": 6.871889973380656
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.258207630878438,
-        "y": 7.892616858917481
+        "x": 2.612315882874889,
+        "y": 7.298429458740017
       },
       "isLocked": false,
       "linkedName": "Upper Trench Shoot"
@@ -64,12 +64,12 @@
     },
     {
       "anchor": {
-        "x": 1.9765306122448978,
-        "y": 6.904081632653061
+        "x": 2.000674356699201,
+        "y": 6.871889973380656
       },
       "prevControl": {
-        "x": 1.7483902687958879,
-        "y": 7.006316576243635
+        "x": 1.772534013250191,
+        "y": 6.97412491697123
       },
       "nextControl": null,
       "isLocked": false,
@@ -129,13 +129,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": -48.69685862301559
+    "rotation": -46.296063498017126
   },
   "reversed": false,
   "folder": "Upper Trench 2.5",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": -48.69685862301559
+    "rotation": -46.296063498017126
   },
   "useDefaultConstraints": false
 }

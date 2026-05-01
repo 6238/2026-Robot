@@ -325,11 +325,11 @@ public class RobotContainer {
                 Commands.runOnce(
                     () ->
                         hopper.setTopIndexerSpeed(
-                            RotationsPerSecond.of(HopperConstants.TOP_INDEXER_SPEED.get()))),
+                            RotationsPerSecond.of(-HopperConstants.TOP_INDEXER_SPEED.get()))),
                 Commands.runOnce(
                     () ->
                         hopper.setIndexerSpeed(
-                            RotationsPerSecond.of(HopperConstants.INDEXER_SPEED.get())))))
+                            RotationsPerSecond.of(-HopperConstants.INDEXER_SPEED.get())))))
         .onFalse(
             Commands.parallel(
                 intakeRoller.stopIntake(),
