@@ -28,15 +28,15 @@ public class IntakeConstants {
   public static final double INTAKE_ARM_GEARING = 35 * 2;
   public static final InvertedValue INTAKE_ARM_MOTOR_DIRECTION =
       InvertedValue.CounterClockwise_Positive;
-  public static final Angle INTAKE_START_VALUE = Degrees.of(100.0);
+  public static final Angle INTAKE_START_VALUE = Degrees.of(120.0);
   public static final LoggedNetworkNumber INTAKE_DOWN_VALUE =
-      new LoggedNetworkNumber("INTAKE_DOWN_ANGLE", 6.5);
+      new LoggedNetworkNumber("INTAKE_DOWN_ANGLE", 7.5);
   public static final LoggedNetworkNumber INTAKE_UP_VALUE =
       new LoggedNetworkNumber("INTAKE_UP_ANGLE", 85.0);
   public static final LoggedNetworkNumber SPINNING_UP_INTAKE_ANGLE =
       new LoggedNetworkNumber("INTAKE_SPINNING_UP_ANGLE", 30.0);
   public static final LoggedNetworkPIDFeedforwardGains INTAKE_ARM_GAINS =
-      new LoggedNetworkPIDFeedforwardGains(48, 1, 5, 0.17, 7.8, 0, 0.3, "Intake_ARM");
+      new LoggedNetworkPIDFeedforwardGains(19, 2, 6, 0.16, 6.5, 0, 0.3, "Intake_ARM");
   public static final MotionMagicConfigs INTAKE_ARM_MOTION_MAGIC_CONFIGS =
       new MotionMagicConfigs()
           .withMotionMagicCruiseVelocity(RotationsPerSecond.of(1.5))
