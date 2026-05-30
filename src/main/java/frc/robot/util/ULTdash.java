@@ -65,6 +65,12 @@ public class ULTdash {
         return w;
     }
 
+    public FieldWidget field(String id, String source, String label) {
+        FieldWidget w = new FieldWidget(id, source, label);
+        widgets.put(id, w);
+        return w;
+    }
+
     /** Call from robotPeriodic(). Re-publishes all widget definitions every 2 seconds. */
     public void periodic() {
         double now = Timer.getFPGATimestamp();
@@ -169,6 +175,11 @@ public class ULTdash {
             return this;
         }
 
+        public GaugeWidget clearThresholds() {
+            thresholds.clear();
+            return this;
+        }
+
         @Override
         String buildConfig() {
             return "{\"min\":" + min + ",\"max\":" + max
@@ -215,6 +226,23 @@ public class ULTdash {
             return "{\"min\":" + min + ",\"max\":" + max
                     + ",\"windowSeconds\":" + windowSeconds
                     + ",\"unit\":\"" + esc(unit) + "\"}";
+        }
+    }
+
+    public static final class FieldWidget extends BaseWidget<FieldWidget> {
+        private double robotWidth = 0.9;
+        private double robotLength = 0.9;
+
+        FieldWidget(String id, String source, String label) {
+            super(id, "field", source, label);
+        }
+
+        public FieldWidget robotWidth(double w) { this.robotWidth = w; return this; }
+        public FieldWidget robotLength(double l) { this.robotLength = l; return this; }
+
+        @Override
+        String buildConfig() {
+            return "{\"robotWidth\":" + robotWidth + ",\"robotLength\":" + robotLength + "}";
         }
     }
 
