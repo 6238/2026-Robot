@@ -18,10 +18,10 @@ class DriveCommandsCurveTest {
   }
 
   @Test
-  void curve_atHalfDeflection_lessThanHalf() {
+  void curve_atHalfDeflection_greaterThanHalf() {
     double result = DriveCommands.applyCurve(0.5);
-    assertTrue(result < 0.5, "Expected curve output < 0.5 at stick=0.5, got " + result);
-    assertTrue(result > 0.0, "Expected curve output > 0 at stick=0.5");
+    assertTrue(result > 0.5, "Expected curve output > 0.5 at stick=0.5, got " + result);
+    assertTrue(result < 1.0, "Expected curve output < 1.0 at stick=0.5");
   }
 
   @Test

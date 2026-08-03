@@ -1,6 +1,11 @@
 {
+  "java.jdt.ls.java.home": "C:\\Users\\Public\\wpilib\\2026\\jdk",
   "java.configuration.updateBuildConfiguration": "automatic",
   "java.server.launchMode": "Standard",
+  "terminal.integrated.env.windows": {
+    "JAVA_HOME": "C:\\Users\\Public\\wpilib\\2026\\jdk",
+    "PATH": "C:\\Users\\Public\\wpilib\\2026\\jdk\\bin;${env:PATH}"
+  },
   "files.exclude": {
     "**/.git": true,
     "**/.svn": true,
