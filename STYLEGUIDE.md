@@ -63,6 +63,18 @@ Do not commit build or test outputs. These are gitignored (see `.gitignore`), in
 
 **Exception:** committed robot config under `src/main/java/frc/robot/generated/` (e.g. TunerConstants) is intentional and stays tracked.
 
+## Code
+
+- Java **17**; match existing package layout under `frc.robot`
+- Prefer the existing AdvantageKit pattern: `FooIO` + hardware/sim impls + subsystem that owns `FooIOInputsAutoLogged` — details in [`AGENT.md`](AGENT.md)
+- Keep diffs focused; don’t reformat or refactor unrelated code
+
+## Tests
+
+- Mock the `IO` interface, not the subsystem class
+- In `@BeforeEach`, set all `*Connected` flags to `true` in `updateInputs` (avoids alert/rumble NPEs)
+- Use `command.initialize()` for simple `runOnce`/`runEnd` commands; add `HAL.initialize(500, 0)` in `@BeforeAll` when testing timing/`Alert`
+
 ## Related docs
 
 - [`AGENT.md`](AGENT.md) — agent commands and architecture
