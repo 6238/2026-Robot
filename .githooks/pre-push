@@ -1,0 +1,18 @@
+#!/bin/sh
+# Fail the push if Spotless formatting is dirty.
+# Shared via core.hooksPath=.githooks (run once per clone):
+#   git config core.hooksPath .githooks
+
+set -e
+cd "$(git rev-parse --show-toplevel)" || exit 1
+
+echo "pre-push: running Spotless check..."
+
+if [ -f "./gradlew" ]; then
+  ./gradlew spotlessCheck --console=plain
+elif [ -f "./gradlew.bat" ]; then
+  ./gradlew.bat spotlessCheck --console=plain
+else
+  echo "pre-push: gradlew not found" >&2
+  exit 1
+fi
