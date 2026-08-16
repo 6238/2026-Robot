@@ -1,17 +1,27 @@
 # FRC Team 6238 — 2026 Robot
 
-WPILib Command-based Java robot with [AdvantageKit](https://github.com/Mechanical-Advantage/AdvantageKit) logging and replay.
+WPILib **Command-based Java** robot for the 2026 season, with [AdvantageKit](https://github.com/Mechanical-Advantage/AdvantageKit) logging/replay.
+
+Team number: **6238** · Language: **Java 17** · Build: **GradleRIO 2026**
+
+**New here?** Follow [`INSTALLATION_INSTRUCTIONS.md`](INSTALLATION_INSTRUCTIONS.md) to install the toolchain and run your first build.
+
+| Doc | Purpose |
+|-----|---------|
+| [`INSTALLATION_INSTRUCTIONS.md`](INSTALLATION_INSTRUCTIONS.md) | Install toolchain, build, deploy |
+| [`STYLEGUIDE.md`](STYLEGUIDE.md) | Branch names, formatting, tests |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | High-level architecture |
+| [`AGENTS.md`](AGENTS.md) | Instructions for coding agents |
 
 ---
 
-## Table of Contents
+## Table of Contents (robot software)
 
 - [Subsystem Structure](#subsystem-structure)
 - [Superstructure State Machine](#superstructure-state-machine)
 - [Autonomous Routines](#autonomous-routines)
 - [Vision & Filtering](#vision--filtering)
 - [Special Features](#special-features)
-- [Build & Deploy](#build--deploy)
 
 ---
 
@@ -262,29 +272,3 @@ In `SIM` mode:
 - `RobotBumpSim` simulates field ramps/obstacles
 - `IntakeSimulation::OverTheBumperIntake()` models game piece pickup
 - `Superstructure::simulateShot()` computes ball trajectories from flywheel RPS → surface speed → projectile physics, logging hits/misses against the hub
-
----
-
-## Build & Deploy
-
-```bash
-# Build (runs Spotless formatter automatically before compile)
-./gradlew build
-
-# Build without tests
-./gradlew build -x test
-
-# Run all tests
-./gradlew test
-
-# Deploy to robot
-./gradlew deploy
-
-# Run AdvantageKit log replay
-./gradlew replayWatch
-
-# Apply formatting manually (Google Java Format)
-./gradlew spotlessApply
-```
-
-Spotless formatting is enforced on every `compileJava`. All `.java`, `.gradle`, `.json`, and `.md` files are formatted automatically.

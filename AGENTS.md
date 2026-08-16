@@ -2,7 +2,7 @@
 
 Guidance for any coding agent working in this repository.
 
-For cold-start environment setup (JDK 17, `JAVA_HOME`, first Gradle build) on a generic machine, see [`AGENT_SETUP.md`](AGENT_SETUP.md).
+For cold-start environment setup (JDK 17, `JAVA_HOME`, first Gradle build) on a generic machine, see [`AGENT_SETUP.md`](AGENT_SETUP.md). Install and build steps: [`INSTALLATION_INSTRUCTIONS.md`](INSTALLATION_INSTRUCTIONS.md).
 
 ## Branch naming
 

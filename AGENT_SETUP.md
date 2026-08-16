@@ -2,6 +2,8 @@
 
 Instructions for a cold agent (or developer) setting up a build environment for this repository on a **generic machine**. Do not assume WPILib VS Code, a previous session, or team-specific tooling is already configured.
 
+For a shorter install guide, see [`INSTALLATION_INSTRUCTIONS.md`](INSTALLATION_INSTRUCTIONS.md).
+
 ## What this repo is
 
 FRC Team 6238 **2026** robot code:

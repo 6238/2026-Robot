@@ -77,5 +77,6 @@ Do not commit build or test outputs. These are gitignored (see `.gitignore`), in
 
 ## Related docs
 
+- [`INSTALLATION_INSTRUCTIONS.md`](INSTALLATION_INSTRUCTIONS.md) — install toolchain, build, deploy
 - [`AGENTS.md`](AGENTS.md) — agent commands and architecture
 - [`AGENT_SETUP.md`](AGENT_SETUP.md) — cold-start environment setup
