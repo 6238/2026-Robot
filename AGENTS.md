@@ -6,7 +6,7 @@ For cold-start environment setup (JDK 17, `JAVA_HOME`, first Gradle build) on a 
 
 ## Branch naming
 
-All branches: `<firstname>-<last-initial>/<dash-delimited-short-name>` (lowercase), e.g. `maxim-g/hopper-jam-fix`. See [`STYLEGUIDE.md`](STYLEGUIDE.md).
+All branches: `<firstname>-<last-initial>/<dash-delimited-short-name>` (lowercase), e.g. `maxim-g/hopper-jam-fix`. See [`STYLEGUIDE.md`](STYLEGUIDE.md) for branch naming and pull-request description style.
 
 ## Commands
 

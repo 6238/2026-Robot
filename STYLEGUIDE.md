@@ -35,6 +35,16 @@ If the author's name is unknown, ask before creating a branch.
 
 Also enforced in `.cursor/rules/branch-naming.mdc`.
 
+## Pull requests
+
+Titles: short and operative (what changed).
+
+Bodies: lean operative paragraphs — `Add <thing> to <do X> because <reason>.` Explain briefly why this solves the problem and why it does not break existing behavior.
+
+Do **not** include `Made with Cursor` or other tool footers. Prefer `gh pr create --body-file …` so nothing appends extras.
+
+Also enforced in `.cursor/rules/pull-request-style.mdc`.
+
 ## Formatting (Spotless)
 
 - Formatter: **Google Java Format** via Spotless
