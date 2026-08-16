@@ -4,6 +4,10 @@ Guidance for any coding agent working in this repository.
 
 For cold-start environment setup (JDK 17, `JAVA_HOME`, first Gradle build) on a generic machine, see [`AGENT_SETUP.md`](AGENT_SETUP.md).
 
+## Branch naming
+
+All branches: `<firstname>-<last-initial>/<dash-delimited-short-name>` (lowercase), e.g. `maxim-g/hopper-jam-fix`. See `.cursor/rules/branch-naming.mdc`.
+
 ## Commands
 
 ```bash
