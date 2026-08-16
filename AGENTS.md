@@ -29,6 +29,8 @@ If the author's name is unknown, ask before creating the branch. Human-facing co
 2. **After that PR is merged to `main` and closed:** remove the tracking—rebase (or otherwise reset) `maxim-g/experimental` onto updated `origin/main` so those PR merge commits are gone and experimental only keeps work not yet on `main`. Delete the remote PR branch if it still exists.
 3. Repeat for every PR opened from experimental. Do not leave merged PR branches merged into experimental indefinitely.
 
+In Cursor, use the **sync-experimental-prs** skill to push relevant experimental changes into open PR branches and merge those PR branches back into experimental while they are open.
+
 ## Commands
 
 ```bash
