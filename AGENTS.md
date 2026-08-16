@@ -21,6 +21,14 @@ For cold-start environment setup (JDK 17, `JAVA_HOME`, first Gradle build) on a 
 
 If the author's name is unknown, ask before creating the branch. Human-facing copy also lives in [`STYLEGUIDE.md`](STYLEGUIDE.md).
 
+## Experimental branch and sliced PRs
+
+`maxim-g/experimental` (or the current long-lived integration branch) may hold work that is opened as smaller PRs onto `main`.
+
+1. **While a sliced PR is open:** merge that PR’s branch into `maxim-g/experimental` so experimental tracks every in-flight PR opened from it.
+2. **After that PR is merged to `main` and closed:** remove the tracking—rebase (or otherwise reset) `maxim-g/experimental` onto updated `origin/main` so those PR merge commits are gone and experimental only keeps work not yet on `main`. Delete the remote PR branch if it still exists.
+3. Repeat for every PR opened from experimental. Do not leave merged PR branches merged into experimental indefinitely.
+
 ## Commands
 
 ```bash
