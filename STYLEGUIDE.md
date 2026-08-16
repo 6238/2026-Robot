@@ -33,7 +33,7 @@ MAXIM-G/Foo
 
 If the author's name is unknown, ask before creating a branch.
 
-Also enforced in `.cursor/rules/branch-naming.mdc`.
+Canonical copy for **all coding agents** is in [`AGENTS.md`](AGENTS.md). Cursor also loads `.cursor/rules/branch-naming.mdc`, which points at that same rule.
 
 ## Formatting (Spotless)
 

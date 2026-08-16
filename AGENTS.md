@@ -6,7 +6,20 @@ For cold-start environment setup (JDK 17, `JAVA_HOME`, first Gradle build) on a 
 
 ## Branch naming
 
-All branches: `<firstname>-<last-initial>/<dash-delimited-short-name>` (lowercase), e.g. `maxim-g/hopper-jam-fix`. See [`STYLEGUIDE.md`](STYLEGUIDE.md).
+**Required for every agent** (Cursor, Claude, Codex, etc.) when creating or renaming branches:
+
+```text
+<firstname>-<last-initial>/<dash-delimited-short-name>
+```
+
+- `firstname`: lowercase given name of the author
+- `last-initial`: lowercase first letter of the author's last name
+- short name: lowercase, dash-delimited, concise (feature/fix topic)
+
+**Good:** `maxim-g/hopper-jam-fix`, `liav-a/vision-std-devs`
+**Bad:** `maxim-experimental`, `fix/update-stale-unit-tests`, `feature/MyFeature`, `MAXIM-G/Foo`
+
+If the author's name is unknown, ask before creating the branch. Human-facing copy also lives in [`STYLEGUIDE.md`](STYLEGUIDE.md).
 
 ## Commands
 
