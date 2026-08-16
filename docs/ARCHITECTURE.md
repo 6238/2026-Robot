@@ -273,6 +273,6 @@ Also in this bucket: CANdle lighting, on-robot test mode, MapleSim arena, `./gra
 
 ## Related
 
-- [`AGENT.md`](../AGENT.md) — commands, IO pattern, tests
+- [`AGENTS.md`](../AGENTS.md) — commands, IO pattern, tests
 - [`README.md`](../README.md) — operator summary
 - [`docs/superpowers/`](superpowers/) — feature specs
