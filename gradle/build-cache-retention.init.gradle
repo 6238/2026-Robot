@@ -1,0 +1,11 @@
+// Project-local build-cache retention (Gradle 8.8+).
+// Install once per machine (Gradle user home), e.g.:
+//   Windows: copy to %USERPROFILE%\.gradle\init.d\
+//   macOS/Linux: copy to ~/.gradle/init.d/
+// Or run: ./gradlew -I gradle/build-cache-retention.init.gradle <task>
+
+beforeSettings { settings ->
+    settings.caches {
+        buildCache.removeUnusedEntriesAfterDays = 30
+    }
+}

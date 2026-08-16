@@ -26,10 +26,13 @@ pluginManagement {
     }
 }
 
+// Local build cache directory. Retention (30 days) is set in
+// gradle/build-cache-retention.init.gradle — install under ~/.gradle/init.d/
+// or pass -I gradle/build-cache-retention.init.gradle (Gradle forbids setting
+// retention from settings.gradle as of 8.8+).
 buildCache {
     local {
         directory = new File(rootDir, 'build-cache')
-        removeUnusedEntriesAfterDays = 30
     }
 }
 
