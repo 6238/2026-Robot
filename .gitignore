@@ -136,14 +136,17 @@ $RECYCLE.BIN/
 *.lnk
 
 ### Gradle ###
-.gradle
-/build/
+.gradle/
+**/build/
+/build-cache/
+bin/
+out/
 
 # Ignore Gradle GUI config
 gradle-app.setting
 
 # Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
-!gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.jar
 
 # Cache of project
 .gradletasknamecache
@@ -156,14 +159,12 @@ gradle-app.setting
 .classpath
 .project
 .settings/
-bin/
 
 # IntelliJ
 *.iml
 *.ipr
 *.iws
 .idea/
-out/
 
 # Fleet
 .fleet
@@ -171,10 +172,16 @@ out/
 # Simulation GUI and other tools window save file
 networktables.json
 simgui.json
+simgui-ds.json
 *-window.json
 
-# Simulation data log directory
+# Simulation / AdvantageKit / driver-station data logs
 logs/
+*.wpilog
+*.hlog
+
+# gversion output (regenerated every build)
+src/main/java/frc/robot/BuildConstants.java
 
 # Folder that has CTRE Phoenix Sim device config storage
 ctre_sim/
