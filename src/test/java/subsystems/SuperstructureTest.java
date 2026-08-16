@@ -5,10 +5,13 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.wpilibj.simulation.DriverStationSim;
+import edu.wpi.first.wpilibj.simulation.SimHooks;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.drive.Drive;
@@ -22,6 +25,7 @@ import frc.robot.subsystems.superstructure.Superstructure.WantedState;
 import java.util.function.Supplier;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -35,9 +39,17 @@ public class SuperstructureTest {
   Drive mockDrive;
   SwerveDriveSimulation mockDriveSimulation;
 
+  @BeforeAll
+  static void halInit() {
+    HAL.initialize(500, 0);
+  }
+
   @BeforeEach
   @SuppressWarnings("unchecked")
   void setup() {
+    SimHooks.pauseTiming();
+    SimHooks.restartTiming();
+    DriverStationSim.setEnabled(false);
     mockShooter = Mockito.mock(Shooter.class);
     mockHopper = Mockito.mock(Hopper.class);
     mockIntake = Mockito.mock(IntakePivot.class);
@@ -58,6 +70,9 @@ public class SuperstructureTest {
 
     // Default: feeder up to speed (tests that need it false can override per-test)
     when(mockShooter.feederUpToSpeed()).thenReturn(true);
+    when(mockShooter.flywheelUpToSpeed()).thenReturn(true);
+    when(mockShooter.flywheelUpToSpeed(any(AngularVelocity.class))).thenReturn(true);
+    when(mockShooter.getCurrentFlywheelSpeed()).thenReturn(RotationsPerSecond.of(35));
 
     // Default: drive pose/rotation at origin — within the 3.5° hub tolerance
     when(mockDrive.getPose()).thenReturn(new Pose2d());
@@ -72,6 +87,7 @@ public class SuperstructureTest {
   @AfterEach
   void tearDown() {
     CommandScheduler.getInstance().cancelAll();
+    SimHooks.resumeTiming();
     superstructure = null;
   }
 
@@ -149,6 +165,8 @@ public class SuperstructureTest {
     superstructure.wantedSuperState = WantedState.SHOOTING;
     superstructure.currentSuperState = CurrentState.SPINNING_UP;
 
+    // Need 2 consecutive in-tolerance loops before SPINNING_UP → SHOOTING.
+    superstructure.applyStates();
     superstructure.applyStates();
 
     assertEquals(CurrentState.SHOOTING, superstructure.currentSuperState);
@@ -161,6 +179,8 @@ public class SuperstructureTest {
     superstructure.wantedSuperState = WantedState.PASSING;
     superstructure.currentSuperState = CurrentState.SPINNING_UP;
 
+    // Need 2 consecutive in-tolerance loops before SPINNING_UP → PASSING.
+    superstructure.applyStates();
     superstructure.applyStates();
 
     assertEquals(CurrentState.PASSING, superstructure.currentSuperState);
@@ -201,6 +221,9 @@ public class SuperstructureTest {
 
   @Test
   void idleState_zerosFlywheelWhenHubBecomesInactive() {
+    // Timing is paused in setup; advance past post-shot hold so IDLE can zero the flywheel.
+    SimHooks.stepTiming(Superstructure.POST_SHOT_HOLD_SECONDS + 0.1);
+
     // First loop: hub active → sets wasHubSpinupActive = true
     superstructure.hubSpinupActive = () -> true;
     superstructure.currentSuperState = CurrentState.IDLE;
