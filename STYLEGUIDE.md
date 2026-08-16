@@ -66,7 +66,7 @@ Do not commit build or test outputs. These are gitignored (see `.gitignore`), in
 ## Code
 
 - Java **17**; match existing package layout under `frc.robot`
-- Prefer the existing AdvantageKit pattern: `FooIO` + hardware/sim impls + subsystem that owns `FooIOInputsAutoLogged` — details in [`AGENT.md`](AGENT.md)
+- Prefer the existing AdvantageKit pattern: `FooIO` + hardware/sim impls + subsystem that owns `FooIOInputsAutoLogged` — details in [`AGENTS.md`](AGENTS.md)
 - Keep diffs focused; don’t reformat or refactor unrelated code
 
 ## Tests
@@ -77,5 +77,5 @@ Do not commit build or test outputs. These are gitignored (see `.gitignore`), in
 
 ## Related docs
 
-- [`AGENT.md`](AGENT.md) — agent commands and architecture
+- [`AGENTS.md`](AGENTS.md) — agent commands and architecture
 - [`AGENT_SETUP.md`](AGENT_SETUP.md) — cold-start environment setup
