@@ -69,7 +69,7 @@ public class Superstructure extends SubsystemBase {
   private final Timer noShotCooldownTimer = new Timer();
   // Holds flywheel at shot speed for 0.5 s after returning to IDLE
   private final Timer postShotHoldTimer = new Timer();
-  private static final double POST_SHOT_HOLD_SECONDS = 0.5;
+  public static final double POST_SHOT_HOLD_SECONDS = 0.5;
   private boolean crawlUpScheduled = false;
   // Consecutive loops where both flywheel and hub are within entry tolerance; must reach 2 before
   // transitioning SPINNING_UP -> SHOOTING/PASSING (prevents heading-overshoot false-positives).

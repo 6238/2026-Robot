@@ -165,6 +165,7 @@ public class SuperstructureTest {
     superstructure.wantedSuperState = WantedState.SHOOTING;
     superstructure.currentSuperState = CurrentState.SPINNING_UP;
 
+    // Need 2 consecutive in-tolerance loops before SPINNING_UP → SHOOTING.
     superstructure.applyStates();
     superstructure.applyStates();
 
@@ -178,6 +179,7 @@ public class SuperstructureTest {
     superstructure.wantedSuperState = WantedState.PASSING;
     superstructure.currentSuperState = CurrentState.SPINNING_UP;
 
+    // Need 2 consecutive in-tolerance loops before SPINNING_UP → PASSING.
     superstructure.applyStates();
     superstructure.applyStates();
 
@@ -219,7 +221,8 @@ public class SuperstructureTest {
 
   @Test
   void idleState_zerosFlywheelWhenHubBecomesInactive() {
-    SimHooks.stepTiming(0.6);
+    // Timing is paused in setup; advance past post-shot hold so IDLE can zero the flywheel.
+    SimHooks.stepTiming(Superstructure.POST_SHOT_HOLD_SECONDS + 0.1);
 
     // First loop: hub active → sets wasHubSpinupActive = true
     superstructure.hubSpinupActive = () -> true;
