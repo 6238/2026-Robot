@@ -1,0 +1,10 @@
+---
+description: Git branch naming — follow AGENTS.md (all agents, not Cursor-only)
+alwaysApply: true
+---
+
+# Branch naming
+
+Follow the **Branch naming** section in `AGENTS.md` (repo root). That file is the repo-wide rule for every coding agent (Cursor, Claude, Codex, and others)—not a Cursor-only convention.
+
+Summary: `<firstname>-<last-initial>/<dash-delimited-short-name>` (lowercase). Ask if the author name is unknown.
